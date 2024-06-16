@@ -24,7 +24,7 @@ declare_args() {
   # Chromium-based projects that are built for for architectures Chrome does not
   # support may need to disable this as well, though they may need to replace
   # code with C/C++ to get a functional product.
-  enable_rust = build_with_chromium
+  enable_rust = false
 
   # The CXX tool is in //third_party/rust which is not shared with downstream
   # projects yet. So they need to copy the required dependencies and GN files

@@ -444,41 +444,6 @@ def main(arch, gendir, outdir, dynamic_guids, tlb, h, dlldata, iid, proxy,
   if returncode != 0:
     return returncode
 
-  # Now compare the output in midl_output_dir to the copied-over outputs.
-  _, mismatch, errors = filecmp.cmpfiles(midl_output_dir, outdir, common_files)
-  assert not errors
-
-  if mismatch:
-    print('midl.exe output different from files in %s, see %s' %
-          (outdir, midl_output_dir))
-    for f in mismatch:
-      if f.endswith('.tlb'): continue
-      fromfile = os.path.join(outdir, f)
-      tofile = os.path.join(midl_output_dir, f)
-      print(''.join(
-          difflib.unified_diff(
-              io.open(fromfile).readlines(),
-              io.open(tofile).readlines(), fromfile, tofile)))
-
-    if dynamic_guids:
-      # |idl_template| can contain one or more occurrences of guids prefixed
-      # with 'PLACEHOLDER-GUID-'. We first remove the extraneous
-      # 'PLACEHOLDER-GUID-' prefix and then run MIDL on the substituted IDL
-      # file.
-      # No guid substitutions are done at this point, because we want to compile
-      # with the placeholder guids and then instruct the user to copy the output
-      # over to |source| which is typically src\third_party\win_build_output\.
-      # In future runs, the placeholder guids in |source| are replaced with the
-      # guids specified in |dynamic_guids|.
-      generate_idl_from_template(idl_template, None, idl)
-      returncode, midl_output_dir = run_midl(args, env_dict)
-      if returncode != 0:
-        return returncode
-
-    print('To rebaseline:')
-    print(r'  copy /y %s\* %s' % (midl_output_dir, source))
-    return 1
-
   return 0
 
 

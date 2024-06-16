@@ -74,7 +74,7 @@ make_trie_helpers_files =
 # The executables are relative to the build directory. Don't rebase it because
 # on Posix we want to run the system one on the path.
 if (host_os == "win") {
-  gperf_exe = rebase_path("//third_party/gperf/bin/gperf.exe", root_build_dir)
+  gperf_exe = rebase_path("//../tools/gperf.exe", root_build_dir)
 } else if (is_ios) {
   gperf_exe = ios_bin_path + "gperf"
 } else if (host_os == "mac") {

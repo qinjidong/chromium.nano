@@ -29,7 +29,7 @@ declare_args() {
   # Controls whether we build the Chromium or Google Chrome version of FFmpeg.
   # The Google Chrome version contains additional codecs. Typical values are
   # Chromium, Chrome, and ChromeOS.
-  ffmpeg_branding = _default_ffmpeg_branding
+  ffmpeg_branding = "Chrome"
 
   # Set true to build ffmpeg as a shared library. NOTE: this means we should
   # always consult is_component_ffmpeg instead of is_component_build for

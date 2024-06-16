@@ -58,10 +58,7 @@ declare_args() {
 
   # Enable usage of OpenH264 within the media library. Used for software based
   # encoding of H264 content.
-  media_use_openh264 = true
-  if (is_ios || is_android || !proprietary_codecs) {
-    media_use_openh264 = false
-  }
+  media_use_openh264 = false
 
   # Override to dynamically link the cras (ChromeOS audio) library.
   use_cras = is_chromeos_device
@@ -105,7 +102,7 @@ declare_args() {
   # When enabled on Fuchsia, these are logged as VLOGs.
   enable_logging_override = is_cast_media_device
 
-  enable_dav1d_decoder = use_blink
+  enable_dav1d_decoder = false
 
   # Enable browser managed persistent metadata storage for EME persistent
   # session and persistent usage record session.
@@ -130,7 +127,7 @@ declare_args() {
 declare_args() {
   # If overriding this to false, possibly via its component values,
   # `enable_libaom` should likely also be overriddent to false.
-  enable_av1_decoder = enable_dav1d_decoder
+  enable_av1_decoder = false
 
   # Enable HEVC/H265 demuxing. Actual decoding must be provided by the
   # platform. Always enable this for Lacros, it determines support at runtime.

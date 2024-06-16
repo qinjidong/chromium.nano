@@ -123,8 +123,7 @@ def ReadInput(input):
 
 def Preprocess(rc_file_data, flags):
   """Runs the input file through the preprocessor."""
-  clang = os.path.join(SRC_DIR, 'third_party', 'llvm-build',
-                       'Release+Asserts', 'bin', 'clang-cl')
+  clang = os.path.join(SRC_DIR, '..', 'tools', 'clang', 'bin', 'clang-cl')
   # Let preprocessor write to a temp file so that it doesn't interfere
   # with /showIncludes output on stdout.
   if sys.platform == 'win32':
@@ -162,15 +161,7 @@ def Preprocess(rc_file_data, flags):
 
 
 def RunRc(preprocessed_output, is_utf8, flags):
-  if sys.platform.startswith('linux'):
-    rc = os.path.join(THIS_DIR, 'linux64', 'rc')
-  elif sys.platform == 'darwin':
-    rc = os.path.join(THIS_DIR, 'mac', 'rc')
-  elif sys.platform == 'win32':
-    rc = os.path.join(THIS_DIR, 'win', 'rc.exe')
-  else:
-    print('rc.py: error: unsupported platform', sys.platform, file=sys.stderr)
-    sys.exit(1)
+  rc = os.path.join(THIS_DIR, '..', 'tools', 'rc.exe')
   rc_cmd = [rc]
   # Make sure rc-relative resources can be found:
   if os.path.dirname(flags.input):

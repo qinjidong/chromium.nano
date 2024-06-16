@@ -17,8 +17,7 @@ import zip_helpers
 
 _CHROMIUM_SRC = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir,
                              os.pardir)
-_LLVM_CLANG_PATH = os.path.join(_CHROMIUM_SRC, 'third_party', 'llvm-build',
-                                'Release+Asserts', 'bin', 'clang')
+_LLVM_CLANG_PATH = os.path.join(_CHROMIUM_SRC, '..', 'tools', 'clang', 'bin', 'clang')
 
 def _ParsePackageName(data):
   m = re.search(r'^\s*package\s+(.*?)\s*;', data, re.MULTILINE)

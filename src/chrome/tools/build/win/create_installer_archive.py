@@ -43,6 +43,10 @@ VERSION_FILE = "VERSION"
 g_archive_inputs = []
 
 
+def GetSrcDir():
+  return os.path.join(os.path.split(os.path.realpath(__file__))[0], '../../../..')
+
+
 def BuildVersion():
     """Returns the full build version string constructed from information in
     VERSION_FILE.  Any segment not found in that file will default to '0'.
@@ -228,8 +232,7 @@ def GetLZMAExec(build_dir):
     if sys.platform == 'win32':
         executable += '.exe'
 
-    return os.path.join(build_dir, "..", "..", "third_party", "lzma_sdk", "bin",
-                        "host_platform", executable)
+    return os.path.join(GetSrcDir(), "..", "tools",  executable)
 
 
 def GetPrevVersion(build_dir, temp_dir, last_chrome_installer, output_name):

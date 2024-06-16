@@ -11,7 +11,7 @@ declare_args() {
   target_sysroot = ""
 
   # The path to directory containing linux sysroot images.
-  target_sysroot_dir = "//build/linux"
+  target_sysroot_dir = "//../tools/sysroots"
 
   # The path of the sysroot for the current toolchain. If empty, default
   # sysroot is used.

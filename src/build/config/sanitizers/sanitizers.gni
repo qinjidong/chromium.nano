@@ -53,9 +53,7 @@ declare_args() {
   # See http://clang.llvm.org/docs/ControlFlowIntegrity.html
   #
   # TODO(pcc): Remove this flag if/when CFI is enabled in all official builds.
-  is_cfi = is_official_build && is_clang &&
-           ((target_os == "linux" && target_cpu == "x64") ||
-            (is_chromeos && is_chromeos_device))
+  is_cfi = false
 
   # Enable checks for indirect function calls via a function pointer.
   # TODO(pcc): remove this when we're ready to add these checks by default.
@@ -123,7 +121,7 @@ declare_args() {
   # can change the behaviour for the false case, and only build the non high-end
   # jobs, so that they do not appear in the zip. As for now, this behaviour
   # ensures nothing breaks.
-  high_end_fuzzer_targets = false
+  high_end_fuzzer_targets = true
 }
 
 declare_args() {

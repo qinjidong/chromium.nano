@@ -24,10 +24,7 @@ declare_args() {
   # Enables allowlist generation for IDR_ grit defines seen by the compiler.
   # Currently works only on some platforms and enabled by default for official
   # builds. Requires debug info.
-  enable_resource_allowlist_generation =
-      is_official_build &&
-      # Don't enable for Android-on-Chrome OS.
-      (target_os == "android" || target_os == "win")
+  enable_resource_allowlist_generation = false
 
   # Use -MD instead of -MMD for compiler commands. This is useful for tracking
   # the comprehensive set of dependencies.  It's also required when building

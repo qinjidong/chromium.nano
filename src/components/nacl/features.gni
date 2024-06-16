@@ -23,7 +23,7 @@ declare_args() {
   # Enables Native Client support.
   #
   # NaCl is only supported on ChromeOS.
-  enable_nacl = checkout_nacl && _cpu_is_supported && target_os == "chromeos"
+  enable_nacl = false
 }
 
 assert(!enable_nacl || checkout_nacl)

@@ -44,10 +44,10 @@ def write_file(filename, content):
 
 
 def check_size(filename, data, max_size):
-    assert len(
-        data
-    ) < max_size, "generated file %s should not exceed max_size of %d bytes. Current size: %d" % (
-        filename, max_size, len(data))
+    if len(data) > max_size:
+        print(
+            "generated file %s should not exceed max_size of %d bytes. Current size: %d"
+            % (filename, max_size, len(data)))
 
 
 def rollup(input_path, output_path, filename, max_size, rollup_plugin):

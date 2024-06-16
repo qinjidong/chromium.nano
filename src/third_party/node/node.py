@@ -11,13 +11,7 @@ import os
 
 
 def GetBinaryPath():
-  darwin_name = ('node-darwin-arm64' if platform.machine() == 'arm64' else
-                 'node-darwin-x64')
-  return os_path.join(os_path.dirname(__file__), *{
-    'Darwin': ('mac', darwin_name, 'bin', 'node'),
-    'Linux': ('linux', 'node-linux-x64', 'bin', 'node'),
-    'Windows': ('win', 'node.exe'),
-  }[platform.system()])
+  return 'node'
 
 
 def RunNode(cmd_parts, stdout=None):
