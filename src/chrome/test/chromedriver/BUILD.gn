@@ -69,36 +69,6 @@ action("embed_mobile_devices_in_cpp") {
   args += rebase_path(ts_files, root_build_dir)
 }
 
-minify_js("minify_bidimapper") {
-  deps = [ "//third_party/bidimapper:bidimapper" ]
-  input_dir =
-      get_label_info("//third_party/bidimapper:bidimapper", "target_gen_dir")
-  in_folder = "$input_dir"
-  in_files = [ "mapper.js" ]
-  out_folder = "$target_gen_dir/bidimapper/minified"
-}
-
-action("embed_bidimapper_in_cpp") {
-  script = "embed_bidimapper_in_cpp.py"
-
-  input_dir = get_label_info(":minify_bidimapper", "target_gen_dir")
-  js_files = [ "$input_dir/bidimapper/minified/mapper.js" ]
-
-  inputs = [ "cpp_source.py" ] + js_files
-
-  outputs = [
-    "$target_gen_dir/bidimapper/bidimapper.cc",
-    "$target_gen_dir/bidimapper/bidimapper.h",
-  ]
-  args = [
-    "--directory",
-    rebase_path("$target_gen_dir/bidimapper", root_build_dir),
-  ]
-  args += rebase_path(js_files, root_build_dir)
-
-  deps = [ ":minify_bidimapper" ]
-}
-
 action("embed_user_data_dir_in_cpp") {
   script = "embed_user_data_dir_in_cpp.py"
 
@@ -263,11 +233,9 @@ source_set("automation_client_lib") {
   # Also compile the generated files.
   sources += get_target_outputs(":embed_js_in_cpp")
   sources += get_target_outputs(":embed_mobile_devices_in_cpp")
-  sources += get_target_outputs(":embed_bidimapper_in_cpp")
   sources += get_target_outputs(":embed_user_data_dir_in_cpp")
 
   deps = [
-    ":embed_bidimapper_in_cpp",
     ":embed_js_in_cpp",
     ":embed_mobile_devices_in_cpp",
     ":embed_user_data_dir_in_cpp",
@@ -369,7 +337,6 @@ source_set("lib") {
     "//services/network:network_service",
     "//services/network/public/cpp",
     "//services/network/public/mojom",
-    "//third_party/selenium-atoms:atoms",
     "//third_party/zlib",
     "//third_party/zlib/google:zip",
     "//ui/base",
@@ -608,7 +575,6 @@ test("chromedriver_unittests") {
     "//services/network/public/mojom",
     "//testing/gmock",
     "//testing/gtest",
-    "//third_party/selenium-atoms:atoms",
     "//ui/base",
     "//ui/events:test_support",
     "//ui/gfx",

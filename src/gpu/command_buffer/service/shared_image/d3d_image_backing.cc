@@ -574,68 +574,6 @@ void D3DImageBacking::OnCopyToStagingTextureDone(
   std::move(readback_cb).Run(ReadbackFromStagingTexture(pixmaps));
 }
 
-std::unique_ptr<DawnImageRepresentation> D3DImageBacking::ProduceDawn(
-    SharedImageManager* manager,
-    MemoryTypeTracker* tracker,
-    const wgpu::Device& device,
-    wgpu::BackendType backend_type,
-    std::vector<wgpu::TextureFormat> view_formats,
-    scoped_refptr<SharedContextState> context_state) {
-#if BUILDFLAG(DAWN_ENABLE_BACKEND_OPENGLES)
-  if (backend_type == wgpu::BackendType::OpenGLES) {
-    std::unique_ptr<GLTextureImageRepresentationBase> gl_representation =
-        ProduceGLTexturePassthrough(manager, tracker);
-    auto* d3d_representation =
-        static_cast<GLTexturePassthroughD3DImageRepresentation*>(
-            gl_representation.get());
-    void* egl_image = d3d_representation->GetEGLImage();
-    if (!egl_image) {
-      LOG(ERROR) << "EGL image is null.";
-      return nullptr;
-    }
-    return std::make_unique<DawnEGLImageRepresentation>(
-        std::move(gl_representation), egl_image, manager, this, tracker,
-        device);
-  }
-#endif
-
-  if (backend_type != wgpu::BackendType::D3D11 &&
-      backend_type != wgpu::BackendType::D3D12) {
-    LOG(ERROR) << "Unsupported Dawn backend: "
-               << static_cast<WGPUBackendType>(backend_type);
-    return nullptr;
-  }
-
-  // Persistently open the shared handle by caching it on this backing.
-  auto& shared_texture_memory = GetDawnSharedTextureMemory(device.Get());
-  if (!shared_texture_memory) {
-    Microsoft::WRL::ComPtr<ID3D11Device> dawn_d3d11_device;
-    if (backend_type == wgpu::BackendType::D3D11) {
-      dawn_d3d11_device = dawn::native::d3d11::GetD3D11Device(device.Get());
-    }
-    if (dawn_d3d11_device == texture_d3d11_device_) {
-      shared_texture_memory =
-          CreateDawnSharedTextureMemory(device, d3d11_texture_);
-    } else {
-      CHECK(dxgi_shared_handle_state_);
-      const HANDLE shared_handle = dxgi_shared_handle_state_->GetSharedHandle();
-      CHECK(base::win::HandleTraits::IsHandleValid(shared_handle));
-      bool use_keyed_mutex =
-          d3d11_texture_desc_.MiscFlags & D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
-      shared_texture_memory =
-          CreateDawnSharedTextureMemory(device, use_keyed_mutex, shared_handle);
-    }
-
-    if (!shared_texture_memory) {
-      LOG(ERROR) << "Failed to create shared_texture_memory.";
-      return nullptr;
-    }
-  }
-
-  return std::make_unique<DawnD3DImageRepresentation>(
-      manager, this, tracker, device, backend_type, view_formats);
-}
-
 void D3DImageBacking::UpdateExternalFence(
     scoped_refptr<gfx::D3DSharedFence> external_fence) {
   // TODO(crbug.com/40192861): Handle cases that write_fences_ is not empty.
@@ -653,7 +591,6 @@ D3DImageBacking::ProduceVideoDecode(SharedImageManager* manager,
 std::vector<scoped_refptr<gfx::D3DSharedFence>>
 D3DImageBacking::GetPendingWaitFences(
     const Microsoft::WRL::ComPtr<ID3D11Device>& wait_d3d11_device,
-    const wgpu::Device& wait_dawn_device,
     bool write_access) {
   // We don't need to use fences for single device scenarios (no shared handle),
   // or if we're using a keyed mutex instead.
@@ -687,9 +624,7 @@ D3DImageBacking::GetPendingWaitFences(
     write_fences_.insert(texture_device_fence);
   }
 
-  const auto& dawn_signaled_fences =
-      wait_dawn_device ? dawn_signaled_fences_map_[wait_dawn_device.Get()]
-                       : D3DSharedFenceSet();
+  const auto& dawn_signaled_fences = D3DSharedFenceSet();
 
   // TODO(crbug.com/335003893): Investigate how to avoid passing any fences back
   // to Dawn that were previously signaled by Dawn. Currently there's no way to
@@ -712,146 +647,6 @@ D3DImageBacking::GetPendingWaitFences(
   return wait_fences;
 }
 
-wgpu::Texture D3DImageBacking::BeginAccessDawn(
-    const wgpu::Device& device,
-    wgpu::BackendType backend_type,
-    wgpu::TextureUsage wgpu_usage,
-    std::vector<wgpu::TextureFormat> view_formats) {
-  const bool write_access = wgpu_usage & (wgpu::TextureUsage::CopyDst |
-                                          wgpu::TextureUsage::StorageBinding |
-                                          wgpu::TextureUsage::RenderAttachment);
-
-  if (!ValidateBeginAccess(write_access)) {
-    return nullptr;
-  }
-
-  Microsoft::WRL::ComPtr<ID3D11Device> dawn_d3d11_device;
-  if (backend_type == wgpu::BackendType::D3D11) {
-    dawn_d3d11_device = dawn::native::d3d11::GetD3D11Device(device.Get());
-    CHECK(dawn_d3d11_device);
-  }
-
-  // Dawn access is allowed without shared handle for single device scenarios.
-  CHECK(dxgi_shared_handle_state_ ||
-        dawn_d3d11_device == texture_d3d11_device_);
-
-  auto& shared_texture_memory = GetDawnSharedTextureMemory(device);
-  CHECK(shared_texture_memory);
-
-  // Defer clearing fences until later to handle Dawn failure to import texture.
-  std::vector<scoped_refptr<gfx::D3DSharedFence>> wait_fences =
-      GetPendingWaitFences(dawn_d3d11_device, device, write_access);
-  std::vector<wgpu::SharedFence> shared_fences;
-  std::vector<uint64_t> signaled_values;
-  for (auto& wait_fence : wait_fences) {
-    wgpu::SharedFenceDXGISharedHandleDescriptor dxgi_desc;
-    dxgi_desc.handle = wait_fence->GetSharedHandle();
-    wgpu::SharedFenceDescriptor fence_desc;
-    fence_desc.nextInChain = &dxgi_desc;
-    // TODO(crbug.com/335003893): Look into caching the wgpu::SharedFence object
-    // in gfx::D3DSharedFence.
-    shared_fences.push_back(device.ImportSharedFence(&fence_desc));
-    signaled_values.push_back(wait_fence->GetFenceValue());
-  }
-
-  wgpu::SharedTextureMemoryD3DSwapchainBeginState swapchain_begin_state = {};
-  swapchain_begin_state.isSwapchain =
-      (usage() & SHARED_IMAGE_USAGE_WEBGPU_SWAP_CHAIN_TEXTURE);
-
-  wgpu::SharedTextureMemoryBeginAccessDescriptor desc = {};
-  desc.initialized = IsCleared();
-  // TODO(crbug.com/335003893): Figure out a clear way to express what's allowed
-  // and what's not to the client.
-  desc.concurrentRead = !write_access && IsCleared();
-  desc.fenceCount = shared_fences.size();
-  desc.fences = shared_fences.data();
-  desc.signaledValues = signaled_values.data();
-  desc.nextInChain = &swapchain_begin_state;
-
-  wgpu::Texture texture =
-      CreateDawnSharedTexture(shared_texture_memory, wgpu_usage, view_formats);
-  if (!texture || !shared_texture_memory.BeginAccess(texture, &desc)) {
-    LOG(ERROR) << "Failed to begin access and produce WGPUTexture";
-    return nullptr;
-  }
-
-  // Clear fences and update state iff Dawn BeginAccess succeeds.
-  BeginAccessCommon(write_access);
-  return texture;
-}
-
-void D3DImageBacking::EndAccessDawn(const wgpu::Device& device,
-                                    wgpu::Texture texture) {
-  DCHECK(texture);
-  if (dawn::native::IsTextureSubresourceInitialized(texture.Get(), 0, 1, 0,
-                                                    1)) {
-    SetCleared();
-  }
-
-  // Shared texture memory is removed from cache on first EndAccess after device
-  // is lost. It's ok to skip synchronization because it should've already been
-  // synchronized before the entry was removed from the cache.
-  if (auto& shared_texture_memory = GetDawnSharedTextureMemory(device.Get())) {
-    // EndAccess returns a null fence handle if the device was lost, but that's
-    // OK since we check for it explicitly below.
-    wgpu::SharedTextureMemoryEndAccessState end_state = {};
-    shared_texture_memory.EndAccess(texture.Get(), &end_state);
-
-    D3DSharedFenceSet signaled_fences;
-    if (use_fence_synchronization()) {
-      auto& cached_fences = dawn_signaled_fences_map_[device.Get()];
-      for (size_t i = 0; i < end_state.fenceCount; ++i) {
-        auto& signaled_value = end_state.signaledValues[i];
-        auto& fence = end_state.fences[i];
-        wgpu::SharedFenceDXGISharedHandleExportInfo shared_handle_info;
-        wgpu::SharedFenceExportInfo export_info;
-        export_info.nextInChain = &shared_handle_info;
-        fence.ExportInfo(&export_info);
-        DCHECK_EQ(export_info.type, wgpu::SharedFenceType::DXGISharedHandle);
-
-        // Try to find and reuse the last signaled fence if it's the same fence.
-        scoped_refptr<gfx::D3DSharedFence> signaled_fence;
-        for (auto& cached_fence : cached_fences) {
-          if (cached_fence->IsSameFenceAsHandle(shared_handle_info.handle)) {
-            signaled_fence = cached_fence;
-            break;
-          }
-        }
-        if (!signaled_fence) {
-          signaled_fence = gfx::D3DSharedFence::CreateFromUnownedHandle(
-              shared_handle_info.handle);
-        }
-        if (signaled_fence) {
-          signaled_fence->Update(signaled_value);
-          signaled_fences.insert(signaled_fence);
-        } else {
-          LOG(ERROR) << "Failed to import D3D fence from Dawn on EndAccess";
-        }
-      }
-      // Cache the fences.
-      cached_fences = signaled_fences;
-    }
-
-    if (shared_texture_memory.IsDeviceLost()) {
-      // Erase from cache if external image is invalid i.e. device was lost.
-      dawn_signaled_fences_map_.erase(device.Get());
-      if (dxgi_shared_handle_state_) {
-        dxgi_shared_handle_state_->EraseDawnSharedTextureMemory(device.Get());
-      }
-    }
-
-    EndAccessCommon(signaled_fences);
-  }
-}
-
-wgpu::SharedTextureMemory& D3DImageBacking::GetDawnSharedTextureMemory(
-    const wgpu::Device& device) {
-  return dxgi_shared_handle_state_
-             ? dxgi_shared_handle_state_->GetDawnSharedTextureMemory(
-                   device.Get())
-             : dawn_shared_texture_memory_;
-}
-
 bool D3DImageBacking::BeginAccessD3D11(
     Microsoft::WRL::ComPtr<ID3D11Device> d3d11_device,
     bool write_access) {
@@ -861,7 +656,7 @@ bool D3DImageBacking::BeginAccessD3D11(
 
   // Defer clearing fences until later to handle D3D11 failure to synchronize.
   std::vector<scoped_refptr<gfx::D3DSharedFence>> wait_fences =
-      GetPendingWaitFences(d3d11_device, /*dawn_device=*/nullptr, write_access);
+      GetPendingWaitFences(d3d11_device, write_access);
   for (auto& wait_fence : wait_fences) {
     if (!wait_fence->WaitD3D11(d3d11_device)) {
       LOG(ERROR) << "Failed to wait for fence";

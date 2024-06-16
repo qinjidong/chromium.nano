@@ -96,12 +96,6 @@ class GPU_GLES2_EXPORT DXGISwapChainImageBacking
   // Called by the Skia representation to indicate where it intends to draw.
   bool DidBeginWriteAccess(const gfx::Rect& swap_rect);
 
-  friend class DawnRepresentationDXGISwapChain;
-  wgpu::Texture BeginAccessDawn(const wgpu::Device& device,
-                                wgpu::TextureUsage usage,
-                                const gfx::Rect& update_rect);
-  void EndAccessDawn(const wgpu::Device& device, wgpu::Texture texture);
-
   std::optional<gfx::Rect> pending_swap_rect_;
 
   Microsoft::WRL::ComPtr<ID3D11Device> d3d11_device_;

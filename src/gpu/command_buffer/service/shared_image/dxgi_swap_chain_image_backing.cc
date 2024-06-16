@@ -397,34 +397,4 @@ DXGISwapChainImageBacking::ProduceSkiaGraphite(
 #endif  // BUILDFLAG(SKIA_USE_DAWN)
 }
 
-wgpu::Texture DXGISwapChainImageBacking::BeginAccessDawn(
-    const wgpu::Device& device,
-    wgpu::TextureUsage usage,
-    const gfx::Rect& update_rect) {
-  DidBeginWriteAccess(update_rect);
-
-  CHECK(shared_texture_memory_);
-  wgpu::SharedTextureMemoryD3DSwapchainBeginState swapchain_begin_state = {};
-  swapchain_begin_state.isSwapchain = true;
-
-  wgpu::SharedTextureMemoryBeginAccessDescriptor desc = {};
-  desc.initialized = true;
-  desc.nextInChain = &swapchain_begin_state;
-
-  wgpu::Texture texture = CreateDawnSharedTexture(shared_texture_memory_, usage,
-                                                  /*view_formats=*/{});
-  if (!texture || !shared_texture_memory_.BeginAccess(texture, &desc)) {
-    LOG(ERROR) << "Failed to begin access and produce WGPUTexture";
-    return nullptr;
-  }
-  return texture;
-}
-
-void DXGISwapChainImageBacking::EndAccessDawn(const wgpu::Device& device,
-                                              wgpu::Texture texture) {
-  wgpu::SharedTextureMemoryEndAccessState end_state = {};
-  shared_texture_memory_.EndAccess(texture.Get(), &end_state);
-  texture.Destroy();
-}
-
 }  // namespace gpu

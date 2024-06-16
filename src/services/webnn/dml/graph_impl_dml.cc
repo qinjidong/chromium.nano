@@ -3937,33 +3937,7 @@ base::expected<void, mojom::ErrorPtr> CreateOperatorNodeForSoftmax(
   std::array<const NodeOutput*, 1> inputs = {input};
 
   const OperatorNode* softmax_node = nullptr;
-  if (adapter->IsDMLFeatureLevelSupported(DML_FEATURE_LEVEL_5_1)) {
-    // TODO(crbug.com/338094927): Support the N-D input and axis parameter for
-    // softmax to align with WebNN spec:
-    // https://www.w3.org/TR/webnn/#api-mlgraphbuilder-softmax-input-axis
-    //
-    // DML_ACTIVATION_SOFTMAX1_OPERATOR_DESC is equivalent to
-    // DML_ACTIVATION_SOFTMAX_OPERATOR_DESC when AxisCount
-    // == 1, and Axes == {DimensionCount - 1}:
-    // https://learn.microsoft.com/en-us/windows/ai/directml/api/ns-directml-dml_activation_softmax1_operator_desc#remarks
-    const auto input_rank = input_tensor_desc.GetDimensions().size();
-    CHECK_EQ(input_rank, 2u);
-    std::array<uint32_t, 1> axes = {1};
-    DML_ACTIVATION_SOFTMAX1_OPERATOR_DESC softmax1_operator_desc{
-        .InputTensor = &input_tensor_desc.GetDMLTensorDesc(),
-        .OutputTensor = &output_tensor_desc.GetDMLTensorDesc(),
-        .AxisCount = base::checked_cast<uint32_t>(axes.size()),
-        .Axes = axes.data()};
-
-    softmax_node = graph_builder.CreateOperatorNode(
-        DML_OPERATOR_ACTIVATION_SOFTMAX1, &softmax1_operator_desc, inputs);
-    if (!softmax_node) {
-      return base::unexpected(
-          mojom::Error::New(mojom::Error::Code::kUnknownError,
-                            "Failed to create softmax1 operator to implement "
-                            "WebNN softmax operation."));
-    }
-  } else {
+  {
     DML_ACTIVATION_SOFTMAX_OPERATOR_DESC softmax_operator_desc{
         .InputTensor = &input_tensor_desc.GetDMLTensorDesc(),
         .OutputTensor = &output_tensor_desc.GetDMLTensorDesc()};
@@ -5266,13 +5240,7 @@ void GraphImplDml::CreateAndBuild(
         // TODO(crbug.com/338686898): Emulate gelu with decomposed operations on
         // platforms with low feature level according to
         // https://webmachinelearning.github.io/webnn/#api-mlgraphbuilder-gelu-method
-        if (adapter->IsDMLFeatureLevelSupported(DML_FEATURE_LEVEL_5_1)) {
-          create_operator_result =
-              CreateOperatorNodeForUnary<DML_ACTIVATION_GELU_OPERATOR_DESC,
-                                         DML_OPERATOR_ACTIVATION_GELU>(
-                  id_to_operand_map, operation->get_gelu(), graph_builder,
-                  id_to_node_output_map);
-        } else {
+        {
           create_operator_result = base::unexpected(CreateError(
               mojom::Error::Code::kUnknownError,
               "Failed to create Gelu operator because the DirectML feature "

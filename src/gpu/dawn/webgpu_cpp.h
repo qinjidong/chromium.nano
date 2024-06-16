@@ -5413,12 +5413,7 @@ static_assert(offsetof(SharedTextureMemoryDmaBufPlane, stride) == offsetof(WGPUS
 
 // SharedTextureMemoryEndAccessState implementation
 SharedTextureMemoryEndAccessState::SharedTextureMemoryEndAccessState() = default;
-SharedTextureMemoryEndAccessState::~SharedTextureMemoryEndAccessState() {
-    if (this->fences != nullptr || this->signaledValues != nullptr) {
-        wgpuSharedTextureMemoryEndAccessStateFreeMembers(
-            *reinterpret_cast<WGPUSharedTextureMemoryEndAccessState*>(this));
-    }
-}
+SharedTextureMemoryEndAccessState::~SharedTextureMemoryEndAccessState() {}
 
 SharedTextureMemoryEndAccessState::SharedTextureMemoryEndAccessState(SharedTextureMemoryEndAccessState&& rhs)
     : initialized(rhs.initialized),
@@ -7349,8 +7344,7 @@ SharedFence Device::ImportSharedFence(SharedFenceDescriptor const * descriptor) 
     return SharedFence::Acquire(result);
 }
 SharedTextureMemory Device::ImportSharedTextureMemory(SharedTextureMemoryDescriptor const * descriptor) const {
-    auto result = wgpuDeviceImportSharedTextureMemory(Get(), reinterpret_cast<WGPUSharedTextureMemoryDescriptor const * >(descriptor));
-    return SharedTextureMemory::Acquire(result);
+    return {};
 }
 void Device::InjectError(ErrorType type, char const * message) const {
     wgpuDeviceInjectError(Get(), static_cast<WGPUErrorType>(type), reinterpret_cast<char const * >(message));
@@ -7385,16 +7379,8 @@ void Device::Tick() const {
 void Device::ValidateTextureDescriptor(TextureDescriptor const * descriptor) const {
     wgpuDeviceValidateTextureDescriptor(Get(), reinterpret_cast<WGPUTextureDescriptor const * >(descriptor));
 }
-void Device::WGPUAddRef(WGPUDevice handle) {
-    if (handle != nullptr) {
-        wgpuDeviceAddRef(handle);
-    }
-}
-void Device::WGPURelease(WGPUDevice handle) {
-    if (handle != nullptr) {
-        wgpuDeviceRelease(handle);
-    }
-}
+void Device::WGPUAddRef(WGPUDevice handle) {}
+void Device::WGPURelease(WGPUDevice handle) {}
 static_assert(sizeof(Device) == sizeof(WGPUDevice), "sizeof mismatch for Device");
 static_assert(alignof(Device) == alignof(WGPUDevice), "alignof mismatch for Device");
 
@@ -7854,38 +7840,24 @@ static_assert(alignof(SharedFence) == alignof(WGPUSharedFence), "alignof mismatc
 // SharedTextureMemory implementation
 
 Bool SharedTextureMemory::BeginAccess(Texture const& texture, SharedTextureMemoryBeginAccessDescriptor const * descriptor) const {
-    auto result = wgpuSharedTextureMemoryBeginAccess(Get(), texture.Get(), reinterpret_cast<WGPUSharedTextureMemoryBeginAccessDescriptor const * >(descriptor));
-    return result;
+    return false;
 }
 Texture SharedTextureMemory::CreateTexture(TextureDescriptor const * descriptor) const {
-    auto result = wgpuSharedTextureMemoryCreateTexture(Get(), reinterpret_cast<WGPUTextureDescriptor const * >(descriptor));
-    return Texture::Acquire(result);
+    return {};
 }
 Bool SharedTextureMemory::EndAccess(Texture const& texture, SharedTextureMemoryEndAccessState * descriptor) const {
     *descriptor = SharedTextureMemoryEndAccessState();
-    auto result = wgpuSharedTextureMemoryEndAccess(Get(), texture.Get(), reinterpret_cast<WGPUSharedTextureMemoryEndAccessState * >(descriptor));
-    return result;
+    return false;
 }
-void SharedTextureMemory::GetProperties(SharedTextureMemoryProperties * properties) const {
-    wgpuSharedTextureMemoryGetProperties(Get(), reinterpret_cast<WGPUSharedTextureMemoryProperties * >(properties));
-}
+void SharedTextureMemory::GetProperties(SharedTextureMemoryProperties * properties) const {}
 Bool SharedTextureMemory::IsDeviceLost() const {
-    auto result = wgpuSharedTextureMemoryIsDeviceLost(Get());
-    return result;
+    return false;
 }
 void SharedTextureMemory::SetLabel(char const * label) const {
     wgpuSharedTextureMemorySetLabel(Get(), reinterpret_cast<char const * >(label));
 }
-void SharedTextureMemory::WGPUAddRef(WGPUSharedTextureMemory handle) {
-    if (handle != nullptr) {
-        wgpuSharedTextureMemoryAddRef(handle);
-    }
-}
-void SharedTextureMemory::WGPURelease(WGPUSharedTextureMemory handle) {
-    if (handle != nullptr) {
-        wgpuSharedTextureMemoryRelease(handle);
-    }
-}
+void SharedTextureMemory::WGPUAddRef(WGPUSharedTextureMemory handle) {}
+void SharedTextureMemory::WGPURelease(WGPUSharedTextureMemory handle) {}
 static_assert(sizeof(SharedTextureMemory) == sizeof(WGPUSharedTextureMemory), "sizeof mismatch for SharedTextureMemory");
 static_assert(alignof(SharedTextureMemory) == alignof(WGPUSharedTextureMemory), "alignof mismatch for SharedTextureMemory");
 
@@ -7960,9 +7932,7 @@ TextureView Texture::CreateView(TextureViewDescriptor const * descriptor) const 
     auto result = wgpuTextureCreateView(Get(), reinterpret_cast<WGPUTextureViewDescriptor const * >(descriptor));
     return TextureView::Acquire(result);
 }
-void Texture::Destroy() const {
-    wgpuTextureDestroy(Get());
-}
+void Texture::Destroy() const {}
 uint32_t Texture::GetDepthOrArrayLayers() const {
     auto result = wgpuTextureGetDepthOrArrayLayers(Get());
     return result;
@@ -7998,16 +7968,8 @@ uint32_t Texture::GetWidth() const {
 void Texture::SetLabel(char const * label) const {
     wgpuTextureSetLabel(Get(), reinterpret_cast<char const * >(label));
 }
-void Texture::WGPUAddRef(WGPUTexture handle) {
-    if (handle != nullptr) {
-        wgpuTextureAddRef(handle);
-    }
-}
-void Texture::WGPURelease(WGPUTexture handle) {
-    if (handle != nullptr) {
-        wgpuTextureRelease(handle);
-    }
-}
+void Texture::WGPUAddRef(WGPUTexture handle) {}
+void Texture::WGPURelease(WGPUTexture handle) {}
 static_assert(sizeof(Texture) == sizeof(WGPUTexture), "sizeof mismatch for Texture");
 static_assert(alignof(Texture) == alignof(WGPUTexture), "alignof mismatch for Texture");
 

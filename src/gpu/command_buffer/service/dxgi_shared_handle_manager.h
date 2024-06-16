@@ -109,17 +109,6 @@ class GPU_GLES2_EXPORT DXGISharedHandleState
       base::flat_map<Microsoft::WRL::ComPtr<ID3D11Device>, D3D11TextureState>;
   D3D11TextureStateMap d3d11_texture_state_map_;
 
-  // When Dawn uses keyed mutex for synchronization with the D3D11 backend, we
-  // want a single instance of SharedTextureMemory (per device) for each unique
-  // texture even if we have multiple duplicated handles (and shared images)
-  // pointing to the texture. Caching the SharedTextureMemory here enables this.
-  // Note that it's ok to use raw WGPUDevice pointers here since the shared
-  // texture memory acts like a weak pointer to the device, and we can detect if
-  // the entry is valid by checking SharedTextureMemory::IsDeviceLost().
-  using DawnSharedTextureMemoryCache =
-      base::flat_map<WGPUDevice, wgpu::SharedTextureMemory>;
-  DawnSharedTextureMemoryCache dawn_shared_texture_memory_cache_;
-
   // True if the texture has an underlying keyed mutex.
   bool has_keyed_mutex_ = false;
 

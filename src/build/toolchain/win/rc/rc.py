@@ -161,7 +161,7 @@ def Preprocess(rc_file_data, flags):
 
 
 def RunRc(preprocessed_output, is_utf8, flags):
-  rc = os.path.join(THIS_DIR, '..', 'tools', 'rc.exe')
+  rc = os.path.join(THIS_DIR, '..', '..', '..', '..', '..', 'tools', 'rc.exe')
   rc_cmd = [rc]
   # Make sure rc-relative resources can be found:
   if os.path.dirname(flags.input):

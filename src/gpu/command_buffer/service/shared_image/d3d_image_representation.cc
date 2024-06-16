@@ -64,47 +64,6 @@ void GLTexturePassthroughD3DImageRepresentation::EndAccess() {
   d3d_image_backing->EndAccessD3D11(d3d11_device_);
 }
 
-DawnD3DImageRepresentation::DawnD3DImageRepresentation(
-    SharedImageManager* manager,
-    SharedImageBacking* backing,
-    MemoryTypeTracker* tracker,
-    const wgpu::Device& device,
-    wgpu::BackendType backend_type,
-    std::vector<wgpu::TextureFormat> view_formats)
-    : DawnImageRepresentation(manager, backing, tracker),
-      device_(device),
-      backend_type_(backend_type),
-      view_formats_(view_formats) {
-  DCHECK(device_);
-}
-
-DawnD3DImageRepresentation::~DawnD3DImageRepresentation() {
-  EndAccess();
-}
-
-wgpu::Texture DawnD3DImageRepresentation::BeginAccess(
-    wgpu::TextureUsage usage) {
-  D3DImageBacking* d3d_image_backing = static_cast<D3DImageBacking*>(backing());
-  texture_ = d3d_image_backing->BeginAccessDawn(device_, backend_type_, usage,
-                                                view_formats_);
-  return texture_;
-}
-
-void DawnD3DImageRepresentation::EndAccess() {
-  if (!texture_)
-    return;
-
-  // Do this before further operations since those could end up destroying the
-  // Dawn device and we want the fence to be duplicated before then.
-  D3DImageBacking* d3d_image_backing = static_cast<D3DImageBacking*>(backing());
-  d3d_image_backing->EndAccessDawn(device_, texture_);
-
-  // All further operations on the textures are errors (they would be racy
-  // with other backings).
-  texture_.Destroy();
-  texture_ = nullptr;
-}
-
 OverlayD3DImageRepresentation::OverlayD3DImageRepresentation(
     SharedImageManager* manager,
     SharedImageBacking* backing,

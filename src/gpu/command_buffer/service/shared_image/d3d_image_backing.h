@@ -104,25 +104,12 @@ class GPU_GLES2_EXPORT D3DImageBacking final
   void ReadbackToMemoryAsync(const std::vector<SkPixmap>& pixmaps,
                              base::OnceCallback<void(bool)> callback) override;
   bool PresentSwapChain() override;
-  std::unique_ptr<DawnImageRepresentation> ProduceDawn(
-      SharedImageManager* manager,
-      MemoryTypeTracker* tracker,
-      const wgpu::Device& device,
-      wgpu::BackendType backend_type,
-      std::vector<wgpu::TextureFormat> view_formats,
-      scoped_refptr<SharedContextState> context_state) override;
   void UpdateExternalFence(
       scoped_refptr<gfx::D3DSharedFence> external_fence) override;
 
   bool BeginAccessD3D11(Microsoft::WRL::ComPtr<ID3D11Device> d3d11_device,
                         bool write_access);
   void EndAccessD3D11(Microsoft::WRL::ComPtr<ID3D11Device> d3d11_device);
-
-  wgpu::Texture BeginAccessDawn(const wgpu::Device& device,
-                                wgpu::BackendType backend_type,
-                                wgpu::TextureUsage usage,
-                                std::vector<wgpu::TextureFormat> view_formats);
-  void EndAccessDawn(const wgpu::Device& device, wgpu::Texture texture);
 
   std::optional<gl::DCLayerOverlayImage> GetDCLayerOverlayImage();
 
@@ -270,13 +257,7 @@ class GPU_GLES2_EXPORT D3DImageBacking final
   // |dawn_signaled_fence_map_|.
   std::vector<scoped_refptr<gfx::D3DSharedFence>> GetPendingWaitFences(
       const Microsoft::WRL::ComPtr<ID3D11Device>& wait_d3d11_device,
-      const wgpu::Device& wait_dawn_device,
       bool write_access);
-
-  // Uses either DXGISharedHandleState or internal |dawn_shared_texture_memory_|
-  // depending on whether the texture has a shared handle or not.
-  wgpu::SharedTextureMemory& GetDawnSharedTextureMemory(
-      const wgpu::Device& device);
 
   // Texture could be nullptr if an empty backing is needed for testing.
   Microsoft::WRL::ComPtr<ID3D11Texture2D> d3d11_texture_;
@@ -343,15 +324,6 @@ class GPU_GLES2_EXPORT D3DImageBacking final
   base::flat_map<Microsoft::WRL::ComPtr<ID3D11Device>,
                  scoped_refptr<gfx::D3DSharedFence>>
       d3d11_signaled_fence_map_;
-
-  // If a shared texture memory exists, it means Dawn produced the D3D12 side of
-  // the D3D11 texture created by ID3D12Device::OpenSharedHandle(). Only used if
-  // the backing doesn't have a shared handle e.g. for mappable D3D11 textures.
-  wgpu::SharedTextureMemory dawn_shared_texture_memory_;
-
-  // Signaled fences imported from Dawn at EndAccess. This can be reused if
-  // D3DSharedFence::IsSameFenceAsHandle() is true for fence handle from Dawn.
-  base::flat_map<WGPUDevice, D3DSharedFenceSet> dawn_signaled_fences_map_;
 
   std::optional<base::WaitableEventWatcher> pending_copy_event_watcher_;
 

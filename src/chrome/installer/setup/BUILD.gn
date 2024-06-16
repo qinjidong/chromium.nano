@@ -110,7 +110,6 @@ if (is_win) {
       "//components/zucchini:zucchini_io",
       "//components/zucchini:zucchini_lib",
       "//courgette:courgette_lib",
-      "//third_party/bspatch",
       "//third_party/crashpad/crashpad/client",
       "//third_party/crashpad/crashpad/util",
       "//ui/base:fullscreen_win",

@@ -47,27 +47,6 @@ class GLTexturePassthroughD3DImageRepresentation
       gl_texture_holders_;
 };
 
-// Representation of a D3DImageBacking as a Dawn Texture
-class DawnD3DImageRepresentation : public DawnImageRepresentation {
- public:
-  DawnD3DImageRepresentation(SharedImageManager* manager,
-                             SharedImageBacking* backing,
-                             MemoryTypeTracker* tracker,
-                             const wgpu::Device& device,
-                             wgpu::BackendType backend_type,
-                             std::vector<wgpu::TextureFormat> view_formats);
-  ~DawnD3DImageRepresentation() override;
-
-  wgpu::Texture BeginAccess(wgpu::TextureUsage usage) override;
-  void EndAccess() override;
-
- private:
-  const wgpu::Device device_;
-  const wgpu::BackendType backend_type_;
-  wgpu::Texture texture_;
-  std::vector<wgpu::TextureFormat> view_formats_;
-};
-
 // Representation of a D3DImageBacking as an overlay.
 class OverlayD3DImageRepresentation : public OverlayImageRepresentation {
  public:

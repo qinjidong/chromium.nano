@@ -25,7 +25,7 @@ template("node") {
     }
     if (is_win && host_os == "win") {
       inputs += [
-        "//third_party/node/win/node.exe",
+        # "//third_party/node/win/node.exe",
       ]
     }
     if (is_mac && host_os == "mac") {
