@@ -8,7 +8,7 @@ if (is_android) {
   import("//build/config/android/rules.gni")
 }
 
-_JAVAP_PATH = "//third_party/jdk/current/bin/javap"
+_JAVAP_PATH = "//../tools/android/jdk/current/bin/javap"
 
 declare_args() {
   # Enables JNI multiplexing to reduce JNI native methods overhead.
@@ -588,10 +588,10 @@ template("native_with_jni") {
         configs +=
             [ "//third_party/jni_zero:jni_include_dir($default_toolchain)" ]
         if (is_robolectric &&
-            filter_include(configs, [ "//third_party/jdk" ]) == []) {
+            filter_include(configs, [ "//../tools/android/jdk" ]) == []) {
           # Adding jdk config if not already included - that's what the
           # filter_include is for.
-          configs += [ "//third_party/jdk" ]
+          configs += [ "//../tools/android/jdk" ]
         }
         deps += [ ":$_jni_registration_target_name($default_toolchain)" ]
         if (!defined(sources)) {

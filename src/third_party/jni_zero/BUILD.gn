@@ -34,7 +34,7 @@ component("jni_zero") {
   if (is_android) {
     libs = [ "log" ]
   } else if (is_robolectric) {
-    public_configs = [ "//third_party/jdk:jdk" ]
+    public_configs = [ "//../tools/android/jdk:jdk" ]
   }
   configs += [ ":toolchain_define" ]
 }

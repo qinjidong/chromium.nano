@@ -33,12 +33,12 @@ DIR_SOURCE_ROOT = os.path.relpath(
         os.path.join(
             os.path.dirname(__file__), os.pardir, os.pardir, os.pardir,
             os.pardir)))
-JAVA_HOME = os.path.join(DIR_SOURCE_ROOT, 'third_party', 'jdk', 'current')
+JAVA_HOME = os.path.join(DIR_SOURCE_ROOT, '..', 'tools', 'android', 'jdk', 'current')
 JAVA_PATH = os.path.join(JAVA_HOME, 'bin', 'java')
 JAVA_PATH_FOR_INPUTS = f'{JAVA_PATH}.chromium'
 JAVAC_PATH = os.path.join(JAVA_HOME, 'bin', 'javac')
 JAVAP_PATH = os.path.join(JAVA_HOME, 'bin', 'javap')
-KOTLIN_HOME = os.path.join(DIR_SOURCE_ROOT, 'third_party', 'kotlinc', 'current')
+KOTLIN_HOME = os.path.join(DIR_SOURCE_ROOT, '..', 'tools', 'android', 'kotlinc', 'current')
 KOTLINC_PATH = os.path.join(KOTLIN_HOME, 'bin', 'kotlinc')
 
 

@@ -79,7 +79,7 @@ group("run_perf_test") {
 
   if (is_android) {
     # Required when running with bundles (to run "bundletool").
-    data_deps += [ "//third_party/jdk:java_data" ]
+    data_deps += [ "//../tools/android/jdk:java_data" ]
   }
 }
 

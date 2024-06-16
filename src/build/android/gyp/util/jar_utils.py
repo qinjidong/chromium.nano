@@ -11,7 +11,7 @@ from typing import List, Optional, Union
 from util import build_utils
 
 _SRC_PATH = pathlib.Path(__file__).resolve().parents[4]
-_JDEPS_PATH = _SRC_PATH / 'third_party/jdk/current/bin/jdeps'
+_JDEPS_PATH = _SRC_PATH / '../tools/android/jdk/current/bin/jdeps'
 
 _IGNORED_JAR_PATHS = [
     # This matches org_ow2_asm_asm_commons and org_ow2_asm_asm_analysis, both of

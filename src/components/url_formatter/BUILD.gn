@@ -50,7 +50,7 @@ static_library("url_formatter") {
 
   if (is_robolectric) {
     # Make jni.h available.
-    configs += [ "//third_party/jdk" ]
+    configs += [ "//../tools/android/jdk" ]
   }
   if (is_android || is_robolectric) {
     sources += [ "url_formatter_android.cc" ]

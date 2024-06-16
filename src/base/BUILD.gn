@@ -1329,7 +1329,7 @@ component("base") {
 
   if (is_robolectric) {
     # Make jni.h available.
-    configs += [ "//third_party/jdk" ]
+    configs += [ "//../tools/android/jdk" ]
     deps += [ ":base_robolectric_jni" ]
   }
   if (is_android || is_robolectric) {
@@ -4381,7 +4381,7 @@ if (is_android || is_robolectric) {
     visibility = [ ":*" ]
 
     # Make jni.h available.
-    configs += [ "//third_party/jdk" ]
+    configs += [ "//../tools/android/jdk" ]
   }
 }  # is_android || is_robolectric
 

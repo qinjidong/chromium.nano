@@ -93,18 +93,18 @@ java_library_patterns = [
 # set of patterns that other targets can use to filter out java targets.
 java_target_patterns = java_library_patterns + java_resource_patterns
 
-_r8_path = "//third_party/r8/lib/r8.jar"
-_custom_r8_path = "//third_party/r8/custom_r8.jar"
+_r8_path = "//../tools/android/r8/lib/r8.jar"
+_custom_r8_path = "//../tools/android/r8/custom_r8.jar"
 
 # This duplication is intentional, so we avoid updating the r8.jar used by
 # dexing unless necessary, since each update invalidates all incremental dexing
 # and unnecessarily slows down all bots.
-_d8_path = "//third_party/r8/d8/lib/r8.jar"
-_custom_d8_path = "//third_party/r8/custom_d8.jar"
-_default_lint_jar_path = "//third_party/android_build_tools/lint/lint.jar"
-_custom_lint_jar_path = "//third_party/android_build_tools/lint/custom_lint.jar"
+_d8_path = "//../tools/android/r8/d8/lib/r8.jar"
+_custom_d8_path = "//../tools/android/r8/custom_d8.jar"
+_default_lint_jar_path = "//../tools/android/build_tools/lint/lint.jar"
+_custom_lint_jar_path = "//../tools/android/build_tools/lint/custom_lint.jar"
 _manifest_merger_jar_path =
-    "//third_party/android_build_tools/manifest_merger/manifest-merger.jar"
+    "//../tools/android/build_tools/manifest_merger/manifest-merger.jar"
 
 # Put the bug number in the target name so that false-positives have a hint in
 # the error message about why non-existent dependencies are there.
@@ -1091,7 +1091,7 @@ if (enable_java_templates) {
       } else {
         _lint_gen_dir = "$target_gen_dir/$target_name"
       }
-      _backported_methods = "//third_party/r8/backported_methods.txt"
+      _backported_methods = "//../tools/android/r8/backported_methods.txt"
 
       script = "//build/android/gyp/lint.py"
       depfile = "$target_gen_dir/$target_name.d"
@@ -1488,7 +1488,7 @@ if (enable_java_templates) {
         "--max-heap-size=$_max_heap_size",
       ]
       data = []
-      deps = [ "//third_party/jdk:java_data" ]
+      deps = [ "//../tools/android/jdk:java_data" ]
       if (defined(invoker.deps)) {
         deps += invoker.deps
       }
@@ -1648,7 +1648,7 @@ if (enable_java_templates) {
         inputs = [
                    "$android_sdk/optional/android.test.base.jar",
                    "$android_sdk/optional/org.apache.http.legacy.jar",
-                   "//third_party/jdk/current/bin/java",
+                   "//../tools/android/jdk/current/bin/java",
                    _custom_d8_path,
                    _d8_path,
                    android_sdk_jar,
@@ -3074,7 +3074,7 @@ if (enable_java_templates) {
       if (invoker.use_turbine) {
         script = "//build/android/gyp/turbine.py"
         inputs = [
-          "//third_party/jdk/current/bin/java",
+          "//../tools/android/jdk/current/bin/java",
           android_sdk_jar,
         ]
       } else {
@@ -3166,7 +3166,7 @@ if (enable_java_templates) {
       }
 
       if (invoker.use_turbine) {
-        _turbine_jar_path = "//third_party/turbine/turbine.jar"
+        _turbine_jar_path = "//../tools/android/turbine/turbine.jar"
         inputs += [ _turbine_jar_path ]
         outputs += [ invoker.generated_jar_path ]
         args += [

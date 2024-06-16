@@ -86,7 +86,7 @@ component("url") {
 
   if (is_robolectric) {
     # Make jni.h available.
-    public_configs = [ "//third_party/jdk" ]
+    public_configs = [ "//../tools/android/jdk" ]
   }
 
   if (is_win) {
@@ -391,7 +391,7 @@ if (!is_cronet_build && target_os == "android") {
       ]
 
       # Make jni.h available.
-      configs += [ "//third_party/jdk" ]
+      configs += [ "//../tools/android/jdk" ]
     }
   }
 }

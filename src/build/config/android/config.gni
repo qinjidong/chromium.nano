@@ -122,7 +122,7 @@ if (is_android || is_chromeos) {
   }
 
   if (!defined(default_android_ndk_root)) {
-    default_android_ndk_root = "//third_party/android_toolchain/ndk"
+    default_android_ndk_root = "//../tools/android/ndk"
     if (current_cpu == "riscv64") {
       # Today (2023-08-30) only the canary Android NDK supports RISC-V64.
       default_android_ndk_root = "//third_party/android_toolchain_canary/ndk"
@@ -132,7 +132,7 @@ if (is_android || is_chromeos) {
     assert(defined(default_android_ndk_version))
   }
 
-  public_android_sdk_root = "//third_party/android_sdk/public"
+  public_android_sdk_root = "//../tools/android/sdk"
   public_android_sdk_build_tools =
       "${public_android_sdk_root}/build-tools/34.0.0"
   public_android_sdk_version = "34"
@@ -253,7 +253,7 @@ if (is_android || is_chromeos) {
     # Location of aapt2 used for app bundles. For now, a more recent version
     # than the one distributed with the Android SDK is required.
     android_sdk_tools_bundle_aapt2_dir =
-        "//third_party/android_build_tools/aapt2"
+        "//../tools/android/build_tools/aapt2"
 
     # Causes expectation failures to break the build, otherwise, just warns on
     # stderr and writes a failure file to $android_configuration_failure_dir:
@@ -407,39 +407,39 @@ if (is_android || is_chromeos) {
   android_sdk_tools_bundle_aapt2 = "${android_sdk_tools_bundle_aapt2_dir}/aapt2"
 
   _common_inputs_for_jre_jdk = [
-    "//third_party/jdk/current/conf/logging.properties",
-    "//third_party/jdk/current/conf/security/java.security",
-    "//third_party/jdk/current/lib/ct.sym",
-    "//third_party/jdk/current/lib/jrt-fs.jar",
-    "//third_party/jdk/current/lib/jvm.cfg",
-    "//third_party/jdk/current/lib/libawt.so",
-    "//third_party/jdk/current/lib/libawt_headless.so",
-    "//third_party/jdk/current/lib/libawt_xawt.so",
-    "//third_party/jdk/current/lib/libjava.so",
-    "//third_party/jdk/current/lib/libjimage.so",
-    "//third_party/jdk/current/lib/libjli.so",
-    "//third_party/jdk/current/lib/libjsvml.so",
-    "//third_party/jdk/current/lib/libmanagement.so",
-    "//third_party/jdk/current/lib/libmanagement_ext.so",
-    "//third_party/jdk/current/lib/libnet.so",
-    "//third_party/jdk/current/lib/libnio.so",
-    "//third_party/jdk/current/lib/libverify.so",
-    "//third_party/jdk/current/lib/libzip.so",
-    "//third_party/jdk/current/lib/modules",
-    "//third_party/jdk/current/lib/server/classes.jsa",
-    "//third_party/jdk/current/lib/server/libjvm.so",
-    "//third_party/jdk/current/lib/tzdb.dat",
+    "//../tools/android/jdk/current/conf/logging.properties",
+    "//../tools/android/jdk/current/conf/security/java.security",
+    "//../tools/android/jdk/current/lib/ct.sym",
+    "//../tools/android/jdk/current/lib/jrt-fs.jar",
+    "//../tools/android/jdk/current/lib/jvm.cfg",
+    "//../tools/android/jdk/current/lib/libawt.so",
+    "//../tools/android/jdk/current/lib/libawt_headless.so",
+    "//../tools/android/jdk/current/lib/libawt_xawt.so",
+    "//../tools/android/jdk/current/lib/libjava.so",
+    "//../tools/android/jdk/current/lib/libjimage.so",
+    "//../tools/android/jdk/current/lib/libjli.so",
+    "//../tools/android/jdk/current/lib/libjsvml.so",
+    "//../tools/android/jdk/current/lib/libmanagement.so",
+    "//../tools/android/jdk/current/lib/libmanagement_ext.so",
+    "//../tools/android/jdk/current/lib/libnet.so",
+    "//../tools/android/jdk/current/lib/libnio.so",
+    "//../tools/android/jdk/current/lib/libverify.so",
+    "//../tools/android/jdk/current/lib/libzip.so",
+    "//../tools/android/jdk/current/lib/modules",
+    "//../tools/android/jdk/current/lib/server/classes.jsa",
+    "//../tools/android/jdk/current/lib/server/libjvm.so",
+    "//../tools/android/jdk/current/lib/tzdb.dat",
   ]
 
   # Actions that use java should add this as inputs so that they are rebuilt
   # when the JDK changes.
   java_paths_for_inputs = [
-                            "//third_party/jdk/current/bin/java",
-                            "//third_party/jdk/current/bin/java.chromium",
+                            "//../tools/android/jdk/current/bin/java",
+                            "//../tools/android/jdk/current/bin/java.chromium",
                           ] + _common_inputs_for_jre_jdk
 
   javac_paths_for_inputs =
-      [ "//third_party/jdk/current/bin/javac" ] + _common_inputs_for_jre_jdk
+      [ "//../tools/android/jdk/current/bin/javac" ] + _common_inputs_for_jre_jdk
 
   # TODO(crbug.com/40261378): Remove.
   use_upstream_errorprone_annotations_threadsafe = true
