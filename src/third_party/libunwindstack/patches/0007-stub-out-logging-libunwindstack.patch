@@ -1,0 +1,56 @@
+diff --git a/src/libunwindstack/LogAndroid.cpp b/src/libunwindstack/LogAndroid.cpp
+index bb8fdaf..248cf2b 100644
+--- a/src/libunwindstack/LogAndroid.cpp
++++ b/src/libunwindstack/LogAndroid.cpp
+@@ -21,7 +21,9 @@
+ #include <string>
+ 
+ #define LOG_TAG "unwind"
++#if 0
+ #include <log/log.h>
++#endif
+ 
+ #if defined(__BIONIC__) && !defined(__ANDROID_NDK__)
+ #include <async_safe/log.h>
+@@ -34,6 +36,7 @@ namespace unwindstack {
+ 
+ namespace Log {
+ 
++#if 0
+ // Send the data to the log.
+ static void LogWithPriority(int priority, uint8_t indent, const char* format, va_list args) {
+   std::string real_format;
+@@ -44,26 +47,33 @@ static void LogWithPriority(int priority, uint8_t indent, const char* format, va
+   }
+   LOG_PRI_VA(priority, LOG_TAG, real_format.c_str(), args);
+ }
++#endif
+ 
+ void Info(const char* format, ...) {
++#if 0
+   va_list args;
+   va_start(args, format);
+   LogWithPriority(ANDROID_LOG_INFO, 0, format, args);
+   va_end(args);
++#endif
+ }
+ 
+ void Info(uint8_t indent, const char* format, ...) {
++#if 0
+   va_list args;
+   va_start(args, format);
+   LogWithPriority(ANDROID_LOG_INFO, indent, format, args);
+   va_end(args);
++#endif
+ }
+ 
+ void Error(const char* format, ...) {
++#if 0
+   va_list args;
+   va_start(args, format);
+   LogWithPriority(ANDROID_LOG_ERROR, 0, format, args);
+   va_end(args);
++#endif
+ }
+ 
+ #if defined(__BIONIC__) && !defined(__ANDROID_NDK__)

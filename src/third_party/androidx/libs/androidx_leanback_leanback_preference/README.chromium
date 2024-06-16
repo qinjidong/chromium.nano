@@ -1,0 +1,15 @@
+Name: Leanback Preference
+Short Name: leanback-preference
+URL: https://developer.android.com/jetpack/androidx/releases/leanback#1.2.0-SNAPSHOT
+Version: 1.2.0-SNAPSHOT
+License: Apache Version 2.0
+License File: LICENSE
+CPEPrefix: unknown
+Security Critical: yes
+Shipped: yes
+
+Description:
+AndroidX Leanback Preference
+
+Local Modifications:
+No modifications.

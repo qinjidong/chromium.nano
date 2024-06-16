@@ -1,0 +1,15 @@
+Name: AppCompat Resources
+Short Name: appcompat-resources
+URL: https://developer.android.com/jetpack/androidx/releases/appcompat#1.7.0-SNAPSHOT
+Version: 1.7.0-SNAPSHOT
+License: Apache Version 2.0
+License File: LICENSE
+CPEPrefix: unknown
+Security Critical: yes
+Shipped: yes
+
+Description:
+Provides backward-compatible implementations of resource-related Android SDKfunctionality, including color state list theming.
+
+Local Modifications:
+No modifications.

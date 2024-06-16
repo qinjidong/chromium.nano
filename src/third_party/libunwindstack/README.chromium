@@ -1,0 +1,204 @@
+Name: libunwindstack
+URL: https://android.googlesource.com/platform/system/unwinding
+Revision: 235e2604e2fa3c1f8f7a68c5e285f9622e741e64
+Date: Sep 20, 2022
+License: Apache 2.0 and BSD
+License File: LICENSE
+Security Critical: yes
+
+Description:
+Canonical library to unwind Android call stacks.
+
+libunwindstack (and its relevant dependencies) are copied from Android's
+system/unwinding. libunwindstack handles many of the details of unwinding on Android,
+which is inherently more difficult than on other platforms due to the wider
+variety of frame types that occur on Android. These include Java frames, JITted
+Java frames, Chrome C++ frames, and system library C++ frames. Different frame
+types can have different call frame information (CFI) formats that the unwinder
+must parse to know how to move up the stack. These formats include DWARF,
+MiniDebugInfo, and EHABI. libunwindstack handles much of this complexity.
+
+libunwindstack is copied from the Android tree and utilizes common Android
+libraries from that tree. This is analagous to how a static library that is
+built within the Chromium tree might utilize //base and //threading. For
+libunwindstack, we copy its Android tree dependencies into this directory.
+
+libunwindstack uses libdexfile for symbolizing interpreted java frames on client side,
+doing the same on server side is not trivial at the moment. libdexfile is backwards
+compatible and could parse the dex files for chrome apk built with min-sdk version 23
+and dex version 35. And should be able to handle future min-sdk version bumps, given
+it can currently parse version from 35-40. libdexfile and its dependency libartbase
+comes from platform/art/ repo in AOSP.
+
+Dependent Android libraries pulled in partially:
+----------------------------------------------------------------------------------------------------------------------------------
+| name        | path in Android source code                                 | License | revisions                                |
+| ----------- | ----------------------------------------------------------- | ------- | ---------------------------------------- |
+| libprocinfo | system/libprocinfo/                                         | Apache  | ad9e6cd57e0135be0e76b7d0570141fb4aaf87a3 |
+| libbase     | system/libbase/                                             | Apache  | 55f3f005930249a1031e6aa5ccb84e47f5a84c8b |
+| libdexfile  | art/libdexfile/                                             | Apache  | 754936451408e6dfe23a301f6b638d658cbc5d59 |
+| libartbase  | art/libartbase/                                             | Apache  | 754936451408e6dfe23a301f6b638d658cbc5d59 |
+----------------------------------------------------------------------------------------------------------------------------------
+
+Steps to update libunwindstack:
+
+1. Update the contents to the upstream revision.
+
+   rm -rf src
+   mkdir temp src
+   git clone https://android.googlesource.com/platform/system/libprocinfo -b master src/libprocinfo
+   git clone https://android.googlesource.com/platform/system/libbase -b master src/android-base
+   git clone https://android.googlesource.com/platform/system/unwinding -b master temp/unwinding
+   git clone https://android.googlesource.com/platform/art -b master temp/art
+   cp -pr temp/unwinding/libunwindstack src/libunwindstack
+   cp -pr temp/art/libdexfile src/libartbase
+   cp -pr temp/art/libartbase src/libunwindstack
+   # ... get revisions of repositories
+   head {src,temp}/*/.git/refs/heads/master
+   rm -rf src/*/.git temp
+   find src/* -name .clang-format -exec rm \{\} \;
+   # ... manually update the revision info in README.chromium ...
+   git add --all
+   git commit -m 'step 1'
+
+2. Build and apply/update/add patches until the code compiles with component
+   debug builds. Some linker errors will not be surfaced on release builds
+   as it does aggresive code elimination. Update existing patches so that they
+   apply cleanly. Remove any patches that are no longer required.
+
+   # Apply patches
+   patch -p1 < patches/...  # etc.
+   # Build `stack_unwinder` module in component debug build
+   gn gen ../../out/libunwindstack_test_build --args=" \
+     target_os=\"android\" \
+     use_goma=true \
+     is_component_build=true \
+     is_debug=true" && \
+   autoninja -C ../../out/libunwindstack_test_build stack_unwinder
+
+   # Remove remnants of failed patch attempts.
+   find src -name \*.orig -o -name \*.rej | xargs rm
+   git add --all
+   git commit -m 'step 2'
+
+3. Prune to the subset of libunwindstack sources that should be compiled and
+   checked in.
+
+   tools/get_required_sources.sh out/libunwindstack_test_build > required_sources
+
+   # Replace BUILD.gn 'public' files with these:
+   grep src/libunwindstack/include required_sources | sed 's/.*/    "&",/'
+
+   # Replace BUILD.gn 'sources' files with these:
+   grep -v 'src/libunwindstack/include\|\.S$' required_sources | \
+     sed 's/.*/    "&",/'
+
+   # Remove unused files.
+   find src -type f | sort | comm -2 -3 - required_sources | xargs rm
+   find src -depth -type d -empty -exec rmdir \{\} \;
+   rm required_sources
+   git add -u src
+   git commit -m 'step 3'
+
+4. Prepare CLs to land the changes. Using `git rebase -i master` reorder the
+   commits as
+
+     step 1
+     step 3
+     step 2
+
+   and squash the step 3 commit into step 1.
+
+   Land a CL with step1, which contains the upstream libunwindstack changes to
+   the files we need. After landing `master` will be in a noncompiling state.
+
+   Land a CL with step2, which contains the Chrome-specific changes required to
+   build libunwindstack.
+
+
+Local modifications:
+- Android's base/ directory is renamed android-base/.
+- 0001-disable-fdsan.patch:
+
+  Disables fdsan on unique_fd.h. fdsan isn't available in Android NDK version 16
+  (it was first made available in 29, as per https://bit.ly/2W4II7E).
+
+- 0002-create-local-process-memory.patch:
+
+  Exposes an interface to create and return a Memory subclass for reading local
+  process memory, as a unique_ptr.
+
+- 0003-remove-file-logging.patch:
+
+  Stubs out PLOG() in android-base/file.cpp, which allows us to remove the
+  dependency on android-base/logging.cpp. logging.cpp is problematic because it
+  attempts to use BSD's getprogname(), which isn't available in Android NDK
+  version 16 (it was first made available in 21, as per https://bit.ly/2nX0nBs).
+
+- 0004-remove-std-iterator.patch
+
+  Removes all usages of std::iterator, which is deprecated in C++17.
+
+- 0005-dont-include-bionic-headers.patch
+
+  Some bionic headers are not part of NDK even though build flag __BIONIC__ is
+  defined when buliding with NDK. Adds extra check of !defined(__ANDROID_NDK__)
+  to not include those headers.
+
+- 0006-include-algorithm-header.patch
+
+  libunwindstack/DwarfSection.cpp uses std::upper_bound which is declared in
+  <algorithm> header, include header to compile it.
+
+- 0007-stub-out-logging-libunwindstack.patch
+
+  Stub out libunwindstack log methods. It helps to suppress log statements and
+  avoid liblog dependency which the upstream libunwindstack depends on.
+
+- 0008-remove-extra-semicolon.patch
+
+  Chrome builds with `-Wextra-semi`, redundant semicolons need to be removed to
+  build successfully.
+
+- 0009-disable-thread-annotations.patch
+
+  ART(Android RunTime) builds with `_LIBCPP_ENABLE_THREAD_SAFETY_ANNOTATIONS`
+  flag defined. Chromium's libdexfile and libunwindstack builds as part of
+  a single source_set, defining the flag would turn on safety checks for
+  both libunwindstack and libdexfile, libunwindstack upstream doesn't
+  annotate it's code for thread safety so the build errors out when built
+  with the flag.
+
+- 0010-replace-allocator-destroy-construct-calls.patch
+
+  Replace calls to destroy, construct members of allocator, with call to
+  destroy, construct defined in std::allocator_traits<T>
+
+- 0011-dont-compile-unused-functions.patch
+
+  Some unused symbols don't get eliminated for debug builds, explicitly
+  don't compile the unused sections. Required to make component debug builds
+  compile
+
+- 0012-remove-class-static-variables.patch
+
+  Chrome bans static initializers:
+  https://chromium.googlesource.com/chromium/src.git/+/HEAD/docs/static_initializers.md
+  This patch moves class static variables to function static variables so
+  they can be initialized on first use instead of being initialzed at
+  app launch.
+
+- 0013-do-not-redefine-ADDRESS_SANITIZER.patch
+
+  Do not redefine ADDRESS_SANITIZER macro as the chromium ASAN build already defines it.
+
+- 0014-cxx20.patch
+
+  Patches to fix the compile in -std=c++20 mode. These have been landed
+  upstream, so this patch can be removed at the next roll.
+
+- 0015-stl_util_filter.patch
+
+  Fix 'Filter' function shadowing its own template parameter, which recent Clang
+  versions treat as an error. The patch has been sent upstream as
+  https://android-review.git.corp.google.com/c/platform/art/+/2919786

@@ -1,0 +1,15 @@
+Name: MediaRouter
+Short Name: mediarouter
+URL: https://developer.android.com/jetpack/androidx/releases/mediarouter#1.8.0-SNAPSHOT
+Version: 1.8.0-SNAPSHOT
+License: Apache Version 2.0
+License File: LICENSE
+CPEPrefix: unknown
+Security Critical: yes
+Shipped: yes
+
+Description:
+Android MediaRouter Support Library
+
+Local Modifications:
+No modifications.

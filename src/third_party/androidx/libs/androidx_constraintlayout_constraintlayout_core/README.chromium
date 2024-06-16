@@ -1,0 +1,15 @@
+Name: ConstraintLayout Core
+Short Name: constraintlayout-core
+URL: https://developer.android.com/jetpack/androidx/releases/constraintlayout#1.1.0-SNAPSHOT
+Version: 1.1.0-SNAPSHOT
+License: Apache Version 2.0
+License File: LICENSE
+CPEPrefix: unknown
+Security Critical: yes
+Shipped: yes
+
+Description:
+This library contains engines and algorithms for constraint based layout and complex animations (it is used by the ConstraintLayout library)
+
+Local Modifications:
+No modifications.

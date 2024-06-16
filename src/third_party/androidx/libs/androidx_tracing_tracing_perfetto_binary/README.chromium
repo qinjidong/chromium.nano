@@ -1,0 +1,15 @@
+Name: Tracing Perfetto Binary
+Short Name: tracing-perfetto-binary
+URL: https://developer.android.com/jetpack/androidx/releases/tracing#1.0.0-SNAPSHOT
+Version: 1.0.0-SNAPSHOT
+License: Apache Version 2.0
+License File: LICENSE
+CPEPrefix: unknown
+Security Critical: no
+Shipped: no
+
+Description:
+Provides native binaries required by AndroidX Tracing: Perfetto SDK and is not intended to be used outside of that context.
+
+Local Modifications:
+No modifications.

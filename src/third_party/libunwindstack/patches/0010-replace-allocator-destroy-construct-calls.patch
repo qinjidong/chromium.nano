@@ -1,0 +1,31 @@
+diff --git a/src/libartbase/base/hash_set.h b/src/libartbase/base/hash_set.h
+index c4af1b6..d1acc6d 100644
+--- a/src/libartbase/base/hash_set.h
++++ b/src/libartbase/base/hash_set.h
+@@ -734,7 +734,7 @@ class HashSet {
+     data_ = allocfn_.allocate(num_buckets_);
+     owns_data_ = true;
+     for (size_t i = 0; i < num_buckets_; ++i) {
+-      allocfn_.construct(allocfn_.address(data_[i]));
++      std::allocator_traits<Alloc>::construct(allocfn_, std::addressof(data_[i]));
+       emptyfn_.MakeEmpty(data_[i]);
+     }
+   }
+@@ -742,7 +742,7 @@ class HashSet {
+   void DeallocateStorage() {
+     if (owns_data_) {
+       for (size_t i = 0; i < NumBuckets(); ++i) {
+-        allocfn_.destroy(allocfn_.address(data_[i]));
++        std::allocator_traits<Alloc>::destroy(allocfn_, std::addressof(data_[i]));
+       }
+       if (data_ != nullptr) {
+         allocfn_.deallocate(data_, NumBuckets());
+@@ -777,7 +777,7 @@ class HashSet {
+         data_[FirstAvailableSlot(IndexForHash(hashfn_(element)))] = std::move(element);
+       }
+       if (owned_data) {
+-        allocfn_.destroy(allocfn_.address(element));
++        std::allocator_traits<Alloc>::destroy(allocfn_, std::addressof(element));
+       }
+     }
+     if (owned_data) {

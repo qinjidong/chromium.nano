@@ -1,0 +1,38 @@
+diff --git a/src/libdexfile/dex/descriptors_names.cc b/src/libdexfile/dex/descriptors_names.cc
+index 44cb7cb..a5378dc 100644
+--- a/src/libdexfile/dex/descriptors_names.cc
++++ b/src/libdexfile/dex/descriptors_names.cc
+@@ -16,6 +16,8 @@
+ 
+ #include "descriptors_names.h"
+ 
++#include <algorithm>
++
+ #include "android-base/stringprintf.h"
+ #include "android-base/strings.h"
+ 
+diff --git a/src/libdexfile/external/dex_file_ext.cc b/src/libdexfile/external/dex_file_ext.cc
+index 7c0bf2d..bd0b9e6 100644
+--- a/src/libdexfile/external/dex_file_ext.cc
++++ b/src/libdexfile/external/dex_file_ext.cc
+@@ -22,6 +22,7 @@
+ #include <sys/types.h>
+ #include <unistd.h>
+ 
++#include <algorithm>
+ #include <cerrno>
+ #include <cstring>
+ #include <deque>
+diff --git a/src/libunwindstack/DwarfSection.cpp b/src/libunwindstack/DwarfSection.cpp
+index 34d37b0..7174866 100644
+--- a/src/libunwindstack/DwarfSection.cpp
++++ b/src/libunwindstack/DwarfSection.cpp
+@@ -16,6 +16,8 @@
+ 
+ #include <stdint.h>
+ 
++#include <algorithm>
++
+ #include <unwindstack/DwarfError.h>
+ #include <unwindstack/DwarfLocation.h>
+ #include <unwindstack/DwarfMemory.h>

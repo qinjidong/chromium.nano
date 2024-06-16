@@ -1,0 +1,15 @@
+Name: Slice Views
+Short Name: slice-view
+URL: https://developer.android.com/jetpack/androidx/releases/slice#1.1.0-SNAPSHOT
+Version: 1.1.0-SNAPSHOT
+License: Apache Version 2.0
+License File: LICENSE
+CPEPrefix: unknown
+Security Critical: yes
+Shipped: yes
+
+Description:
+A library that handles rendering of slice content into supported templates
+
+Local Modifications:
+No modifications.

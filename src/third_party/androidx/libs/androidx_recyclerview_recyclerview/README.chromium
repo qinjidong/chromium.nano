@@ -1,0 +1,15 @@
+Name: RecyclerView
+Short Name: recyclerview
+URL: https://developer.android.com/jetpack/androidx/releases/recyclerview#1.4.0-SNAPSHOT
+Version: 1.4.0-SNAPSHOT
+License: Apache Version 2.0
+License File: LICENSE
+CPEPrefix: unknown
+Security Critical: yes
+Shipped: yes
+
+Description:
+Android Support RecyclerView
+
+Local Modifications:
+No modifications.

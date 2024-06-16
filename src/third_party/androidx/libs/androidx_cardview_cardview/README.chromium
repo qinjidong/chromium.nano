@@ -1,0 +1,15 @@
+Name: CardView
+Short Name: cardview
+URL: https://developer.android.com/jetpack/androidx/releases/cardview#1.1.0-SNAPSHOT
+Version: 1.1.0-SNAPSHOT
+License: Apache Version 2.0
+License File: LICENSE
+CPEPrefix: unknown
+Security Critical: yes
+Shipped: yes
+
+Description:
+Android Support CardView
+
+Local Modifications:
+No modifications.

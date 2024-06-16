@@ -1,0 +1,15 @@
+Name: Benchmark - Common
+Short Name: benchmark-common
+URL: https://developer.android.com/jetpack/androidx/releases/benchmark#1.3.0-SNAPSHOT
+Version: 1.3.0-SNAPSHOT
+License: Apache Version 2.0
+License File: LICENSE
+CPEPrefix: unknown
+Security Critical: no
+Shipped: no
+
+Description:
+Android Benchmark - Common
+
+Local Modifications:
+No modifications.

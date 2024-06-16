@@ -1,0 +1,91 @@
+diff --git a/src/libartbase/base/safe_map.h b/src/libartbase/base/safe_map.h
+index 7ae85d4..c6d4353 100644
+--- a/src/libartbase/base/safe_map.h
++++ b/src/libartbase/base/safe_map.h
+@@ -149,7 +149,7 @@ class SafeMap {
+ 
+   template <typename CreateFn>
+   V& GetOrCreate(const K& k, CreateFn create) {
+-    static_assert(std::is_same_v<V, std::result_of_t<CreateFn()>>,
++    static_assert(std::is_same_v<V, std::invoke_result_t<CreateFn>>,
+                   "Argument `create` should return a value of type V.");
+     auto lb = lower_bound(k);
+     if (lb != end() && !key_comp()(k, lb->first)) {
+diff --git a/src/libartbase/base/string_view_cpp20.h b/src/libartbase/base/string_view_cpp20.h
+index 2c11a2f..9bd29d5 100644
+--- a/src/libartbase/base/string_view_cpp20.h
++++ b/src/libartbase/base/string_view_cpp20.h
+@@ -21,18 +21,23 @@
+ 
+ namespace art {
+ 
+-// Replacement functions for std::string_view::starts_with(), ends_with()
+-// which shall be available in C++20.
+-#if __cplusplus >= 202000L
+-#error "When upgrading to C++20, remove this error and file a bug to remove this workaround."
+-#endif
++// When this code is only compiled on C++20+, these wrappers can be removed and
++// calling code changed to call the string_view methods directly.
+ 
+ inline bool StartsWith(std::string_view sv, std::string_view prefix) {
++#if !defined(__cpp_lib_starts_ends_with) || __cpp_lib_starts_ends_with < 201711L
+   return sv.substr(0u, prefix.size()) == prefix;
++#else
++  return sv.starts_with(prefix);
++#endif
+ }
+ 
+ inline bool EndsWith(std::string_view sv, std::string_view suffix) {
++#if !defined(__cpp_lib_starts_ends_with) || __cpp_lib_starts_ends_with < 201711L
+   return sv.size() >= suffix.size() && sv.substr(sv.size() - suffix.size()) == suffix;
++#else
++  return sv.ends_with(suffix);
++#endif
+ }
+ 
+ }  // namespace art
+diff --git a/src/libunwindstack/Maps.cpp b/src/libunwindstack/Maps.cpp
+index 9527176..36f9d4c 100644
+--- a/src/libunwindstack/Maps.cpp
++++ b/src/libunwindstack/Maps.cpp
+@@ -183,7 +183,7 @@ bool LocalUpdatableMaps::Reparse(/*out*/ bool* any_changed) {
+     uint64_t start = new_map_info->start();
+     uint64_t end = new_map_info->end();
+     uint64_t flags = new_map_info->flags();
+-    const std::string& name = new_map_info->name();
++    const SharedString& name = new_map_info->name();
+     for (size_t old_map_idx = search_map_idx; old_map_idx < last_map_idx; old_map_idx++) {
+       auto& info = maps_[old_map_idx];
+       if (start == info->start() && end == info->end() && flags == info->flags() &&
+diff --git a/src/libunwindstack/include/unwindstack/SharedString.h b/src/libunwindstack/include/unwindstack/SharedString.h
+index 1eb4e21..bdf709e 100644
+--- a/src/libunwindstack/include/unwindstack/SharedString.h
++++ b/src/libunwindstack/include/unwindstack/SharedString.h
+@@ -18,6 +18,7 @@
+ 
+ #include <memory>
+ #include <string>
++#include <type_traits>
+ 
+ namespace unwindstack {
+ 
+@@ -46,7 +47,8 @@ class SharedString {
+   std::shared_ptr<const std::string> data_;
+ };
+ 
+-static inline bool operator==(const SharedString& a, SharedString& b) {
++template <typename T, typename = std::enable_if_t<std::is_same_v<T, SharedString>>>
++static inline bool operator==(const T& a, const T& b) {
+   return static_cast<std::string_view>(a) == static_cast<std::string_view>(b);
+ }
+ static inline bool operator==(const SharedString& a, std::string_view b) {
+@@ -55,7 +57,8 @@ static inline bool operator==(const SharedString& a, std::string_view b) {
+ static inline bool operator==(std::string_view a, const SharedString& b) {
+   return a == static_cast<std::string_view>(b);
+ }
+-static inline bool operator!=(const SharedString& a, SharedString& b) {
++template <typename T, typename = std::enable_if_t<std::is_same_v<T, SharedString>>>
++static inline bool operator!=(const T& a, const T& b) {
+   return !(a == b);
+ }
+ static inline bool operator!=(const SharedString& a, std::string_view b) {

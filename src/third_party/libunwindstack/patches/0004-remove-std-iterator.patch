@@ -1,0 +1,175 @@
+diff --git a/src/libartbase/base/stl_util.h b/src/libartbase/base/stl_util.h
+index 0ae4fd2..d16b01e 100644
+--- a/src/libartbase/base/stl_util.h
++++ b/src/libartbase/base/stl_util.h
+@@ -156,10 +156,14 @@ static inline std::vector<T*> MakeNonOwningPointerVector(const std::vector<std::
+ }
+ 
+ template <typename IterLeft, typename IterRight>
+-class ZipLeftIter : public std::iterator<
+-                        std::forward_iterator_tag,
+-                        std::pair<typename IterLeft::value_type, typename IterRight::value_type>> {
++class ZipLeftIter {
+  public:
++  using iterator_category = std::forward_iterator_tag;
++  using value_type = std::pair<typename IterLeft::value_type, typename IterRight::value_type>;
++  using difference_type = std::ptrdiff_t;
++  using pointer = std::pair<typename IterLeft::value_type, typename IterRight::value_type>*;
++  using reference = std::pair<typename IterLeft::value_type, typename IterRight::value_type>&;
++
+   ZipLeftIter(IterLeft left, IterRight right) : left_iter_(left), right_iter_(right) {}
+   ZipLeftIter<IterLeft, IterRight>& operator++() {
+     ++left_iter_;
+@@ -186,8 +190,13 @@ class ZipLeftIter : public std::iterator<
+   IterRight right_iter_;
+ };
+ 
+-class CountIter : public std::iterator<std::forward_iterator_tag, size_t, size_t, size_t, size_t> {
++class CountIter {
+  public:
++  using iterator_category = std::forward_iterator_tag;
++  using value_type = size_t;
++  using difference_type = size_t;
++  using pointer = size_t;
++  using reference = size_t;
+   CountIter() : count_(0) {}
+   explicit CountIter(size_t count) : count_(count) {}
+   CountIter& operator++() {
+@@ -238,9 +247,14 @@ static inline IterationRange<CountIter> Range(size_t end) {
+ }
+ 
+ template <typename RealIter, typename Filter>
+-struct FilterIterator
+-    : public std::iterator<std::forward_iterator_tag, typename RealIter::value_type> {
++struct FilterIterator {
+  public:
++  using iterator_category = std::forward_iterator_tag;
++  using value_type = typename RealIter::value_type;
++  using difference_type = std::ptrdiff_t;
++  using pointer = typename RealIter::value_type*;
++  using reference = typename RealIter::value_type&;
++
+   FilterIterator(RealIter rl,
+                  Filter cond,
+                  std::optional<RealIter> end = std::nullopt)
+@@ -324,8 +338,14 @@ SafePrinter<Val> SafePrint(const Val* v) {
+ }
+ 
+ // Helper struct for iterating a split-string without allocation.
+-struct SplitStringIter : public std::iterator<std::forward_iterator_tag, std::string_view> {
++struct SplitStringIter {
+  public:
++  using iterator_category = std::forward_iterator_tag;
++  using value_type = std::string_view;
++  using difference_type = std::ptrdiff_t;
++  using pointer = std::string_view*;
++  using reference = std::string_view&;
++
+   // Direct iterator constructor. The iteration state is only the current index.
+   // We use that with the split char and the full string to get the current and
+   // next segment.
+diff --git a/src/libdexfile/dex/class_accessor.h b/src/libdexfile/dex/class_accessor.h
+index a3ee2bd..7f7cdf6 100644
+--- a/src/libdexfile/dex/class_accessor.h
++++ b/src/libdexfile/dex/class_accessor.h
+@@ -177,11 +177,13 @@ class ClassAccessor {
+   };
+ 
+   template <typename DataType>
+-  class DataIterator : public std::iterator<std::forward_iterator_tag, DataType> {
++  class DataIterator {
+    public:
+-    using value_type = typename std::iterator<std::forward_iterator_tag, DataType>::value_type;
+-    using difference_type =
+-        typename std::iterator<std::forward_iterator_tag, value_type>::difference_type;
++    using iterator_category = std::forward_iterator_tag;
++    using value_type = DataType;
++    using difference_type = std::ptrdiff_t;
++    using pointer = DataType*;
++    using reference = DataType&;
+ 
+     DataIterator(const DexFile& dex_file,
+                  uint32_t position,
+diff --git a/src/libdexfile/dex/class_iterator.h b/src/libdexfile/dex/class_iterator.h
+index 8ed585b..9ace41b 100644
+--- a/src/libdexfile/dex/class_iterator.h
++++ b/src/libdexfile/dex/class_iterator.h
+@@ -41,10 +41,13 @@ class ClassIteratorData {
+ };
+ 
+ // Iterator for visiting classes in a Dex file.
+-class ClassIterator : public std::iterator<std::forward_iterator_tag, ClassIteratorData> {
++class ClassIterator {
+  public:
+-  using value_type = std::iterator<std::forward_iterator_tag, ClassIteratorData>::value_type;
+-  using difference_type = std::iterator<std::forward_iterator_tag, value_type>::difference_type;
++  using iterator_category = std::forward_iterator_tag;
++  using value_type = ClassIteratorData;
++  using difference_type = std::ptrdiff_t;
++  using pointer = ClassIteratorData*;
++  using reference = ClassIteratorData&;
+ 
+   ClassIterator(const DexFile& dex_file, uint32_t class_def_idx)
+       : data_(dex_file, class_def_idx) {}
+diff --git a/src/libdexfile/dex/dex_instruction_iterator.h b/src/libdexfile/dex/dex_instruction_iterator.h
+index 6c7f42a..0ce6c96 100644
+--- a/src/libdexfile/dex/dex_instruction_iterator.h
++++ b/src/libdexfile/dex/dex_instruction_iterator.h
+@@ -57,11 +57,13 @@ class DexInstructionPcPair {
+ };
+ 
+ // Base helper class to prevent duplicated comparators.
+-class DexInstructionIteratorBase : public
+-        std::iterator<std::forward_iterator_tag, DexInstructionPcPair> {
++class DexInstructionIteratorBase {
+  public:
+-  using value_type = std::iterator<std::forward_iterator_tag, DexInstructionPcPair>::value_type;
+-  using difference_type = std::iterator<std::forward_iterator_tag, value_type>::difference_type;
++  using iterator_category = std::forward_iterator_tag;
++  using value_type = DexInstructionPcPair;
++  using difference_type = std::ptrdiff_t;
++  using pointer = DexInstructionPcPair*;
++  using reference = DexInstructionPcPair&;
+ 
+   explicit DexInstructionIteratorBase(const Instruction* inst, uint32_t dex_pc)
+       : data_(reinterpret_cast<const uint16_t*>(inst), dex_pc) {}
+diff --git a/src/libunwindstack/ElfInterfaceArm.h b/src/libunwindstack/ElfInterfaceArm.h
+index 6ee6dc9..a2435f2 100644
+--- a/src/libunwindstack/ElfInterfaceArm.h
++++ b/src/libunwindstack/ElfInterfaceArm.h
+@@ -32,8 +32,14 @@ class ElfInterfaceArm : public ElfInterface32 {
+   ElfInterfaceArm(Memory* memory) : ElfInterface32(memory) {}
+   virtual ~ElfInterfaceArm() = default;
+ 
+-  class iterator : public std::iterator<std::bidirectional_iterator_tag, uint32_t> {
++  class iterator {
+    public:
++    using iterator_category = std::bidirectional_iterator_tag;
++    using value_type = uint32_t;
++    using difference_type = std::ptrdiff_t;
++    using pointer = uint32_t*;
++    using reference = uint32_t&;
++
+     iterator(ElfInterfaceArm* interface, size_t index) : interface_(interface), index_(index) { }
+ 
+     iterator& operator++() { index_++; return *this; }
+diff --git a/src/libunwindstack/include/unwindstack/DwarfSection.h b/src/libunwindstack/include/unwindstack/DwarfSection.h
+index 33435b2..c5f2015 100644
+--- a/src/libunwindstack/include/unwindstack/DwarfSection.h
++++ b/src/libunwindstack/include/unwindstack/DwarfSection.h
+@@ -42,8 +42,14 @@ class DwarfSection {
+   DwarfSection(Memory* memory);
+   virtual ~DwarfSection() = default;
+ 
+-  class iterator : public std::iterator<std::bidirectional_iterator_tag, DwarfFde*> {
++  class iterator {
+    public:
++    using iterator_category = std::bidirectional_iterator_tag;
++    using value_type = DwarfFde*;
++    using difference_type = std::ptrdiff_t;
++    using pointer = DwarfFde**;
++    using reference = DwarfFde*&;
++
+     iterator(DwarfSection* section, size_t index) : index_(index) {
+       section->GetFdes(&fdes_);
+       if (index_ == static_cast<size_t>(-1)) {

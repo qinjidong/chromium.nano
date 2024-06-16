@@ -1,0 +1,15 @@
+Name: Fragment Testing Extensions
+Short Name: fragment-testing
+URL: https://developer.android.com/jetpack/androidx/releases/fragment#1.8.0-SNAPSHOT
+Version: 1.8.0-SNAPSHOT
+License: Apache Version 2.0
+License File: LICENSE
+CPEPrefix: unknown
+Security Critical: no
+Shipped: no
+
+Description:
+Extensions for testing 'fragment' artifact
+
+Local Modifications:
+No modifications.

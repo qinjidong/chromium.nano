@@ -1,0 +1,15 @@
+Name: AppCompat
+Short Name: appcompat
+URL: https://developer.android.com/jetpack/androidx/releases/appcompat#1.7.0-SNAPSHOT
+Version: 1.7.0-SNAPSHOT
+License: Apache Version 2.0
+License File: LICENSE
+CPEPrefix: unknown
+Security Critical: yes
+Shipped: yes
+
+Description:
+Provides backwards-compatible implementations of UI-related Android SDK functionality, including dark mode and Material theming.
+
+Local Modifications:
+No modifications.
