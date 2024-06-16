@@ -5,7 +5,6 @@
 import("//build/buildflag_header.gni")
 import("//media/media_options.gni")
 import("//third_party/blink/renderer/modules/modules.gni")
-import("//third_party/libaom/options.gni")
 
 blink_modules_sources("mediarecorder") {
   sources = [
@@ -58,9 +57,5 @@ blink_modules_sources("mediarecorder") {
     ]
 
     deps += [ "//third_party/openh264:encoder" ]
-  }
-
-  if (enable_libaom) {
-    deps += [ "//third_party/libaom" ]
   }
 }

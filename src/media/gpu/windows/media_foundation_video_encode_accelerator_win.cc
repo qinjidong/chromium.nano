@@ -45,11 +45,6 @@
 #include "ui/gfx/color_space_win.h"
 #include "ui/gfx/gpu_memory_buffer.h"
 
-#if BUILDFLAG(ENABLE_LIBAOM)
-#include "media/gpu/windows/av1_video_rate_control_wrapper.h"
-#include "third_party/libaom/source/libaom/av1/ratectrl_rtc.h"
-#endif
-
 namespace media {
 
 namespace {
@@ -649,20 +644,12 @@ bool MediaFoundationVideoEncodeAccelerator::Initialize(
       num_temporal_layers_ <= 3;
 
   if (use_sw_brc && (codec_ == VideoCodec::kVP9
-#if BUILDFLAG(ENABLE_LIBAOM)
-                     || codec_ == VideoCodec::kAV1
-#endif
                      )) {
     VideoRateControlWrapper::RateControlConfig rate_config =
         CreateRateControllerConfig(bitrate_allocation_, input_visible_size_,
                                    frame_rate_, num_temporal_layers_, codec_);
     if (codec_ == VideoCodec::kVP9) {
       rate_ctrl_ = VP9RateControl::Create(rate_config);
-    } else if (codec_ == VideoCodec::kAV1) {
-#if BUILDFLAG(ENABLE_LIBAOM)
-      // If libaom is not enabled, |rate_ctrl_| will not be initialized.
-      rate_ctrl_ = AV1RateControl::Create(rate_config);
-#endif
     }
   }
   input_since_keyframe_count_ = 0;

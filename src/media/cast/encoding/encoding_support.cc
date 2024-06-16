@@ -7,17 +7,12 @@
 #include "media/base/media_switches.h"
 #include "media/base/video_codecs.h"
 #include "media/cast/encoding/external_video_encoder.h"
-#include "third_party/libaom/libaom_buildflags.h"
 
 namespace media::cast::encoding_support {
 namespace {
 
 bool IsCastStreamingAv1Enabled() {
-#if BUILDFLAG(ENABLE_LIBAOM)
-  return base::FeatureList::IsEnabled(kCastStreamingAv1);
-#else
   return false;
-#endif
 }
 
 bool IsHardwareEncodingEnabled(

@@ -7,7 +7,6 @@
 # be found in the AUTHORS file in the root of the source tree.
 
 import("//build/config/linux/pkg_config.gni")
-import("//third_party/libaom/options.gni")
 import("../webrtc.gni")
 
 group("media") {
@@ -505,13 +504,6 @@ rtc_library("rtc_internal_video_codecs") {
     "//third_party/abseil-cpp/absl/types:optional",
   ]
 
-  if (enable_libaom) {
-    defines += [ "RTC_USE_LIBAOM_AV1_ENCODER" ]
-    deps += [
-      "../api/video_codecs:video_encoder_factory_template_libaom_av1_adapter",
-    ]
-  }
-
   if (rtc_include_dav1d_in_internal_decoder_factory) {
     deps += [ "../modules/video_coding/codecs/av1:dav1d_decoder" ]
   }
@@ -972,10 +964,6 @@ if (rtc_include_tests) {
         "//third_party/abseil-cpp/absl/strings:string_view",
         "//third_party/abseil-cpp/absl/types:optional",
       ]
-
-      if (enable_libaom) {
-        defines += [ "RTC_USE_LIBAOM_AV1_ENCODER" ]
-      }
 
       sources = [
         "base/codec_unittest.cc",

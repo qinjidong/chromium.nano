@@ -4,7 +4,6 @@
 
 import("//testing/libfuzzer/fuzzer_test.gni")
 import("//testing/test.gni")
-import("//third_party/libaom/options.gni")
 import("//third_party/protobuf/proto_library.gni")
 
 proto_library("logging_proto") {
@@ -102,7 +101,6 @@ source_set("encoding") {
 
   deps = [
     ":common",
-    "//third_party/libaom:libaom_buildflags",
     "//third_party/openscreen/src/cast/streaming:common",
     "//third_party/opus",
   ]
@@ -114,15 +112,6 @@ source_set("encoding") {
       "CoreFoundation.framework",
       "CoreMedia.framework",
     ]
-  }
-
-  if (enable_libaom) {
-    sources += [
-      "encoding/av1_encoder.cc",
-      "encoding/av1_encoder.h",
-    ]
-
-    deps += [ "//third_party/libaom" ]
   }
 }
 

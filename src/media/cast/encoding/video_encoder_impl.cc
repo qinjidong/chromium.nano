@@ -12,10 +12,6 @@
 #include "base/functional/callback_helpers.h"
 #include "media/base/video_codecs.h"
 #include "media/base/video_frame.h"
-#include "third_party/libaom/libaom_buildflags.h"
-#if BUILDFLAG(ENABLE_LIBAOM)
-#include "media/cast/encoding/av1_encoder.h"
-#endif
 #include "media/base/video_encoder_metrics_provider.h"
 #include "media/cast/common/sender_encoded_frame.h"
 #include "media/cast/encoding/fake_software_video_encoder.h"
@@ -79,15 +75,6 @@ VideoEncoderImpl::VideoEncoderImpl(
              video_config.video_codec_params.value()
                  .enable_fake_codec_for_tests) {
     encoder_ = std::make_unique<FakeSoftwareVideoEncoder>(video_config);
-#if BUILDFLAG(ENABLE_LIBAOM)
-  } else if (codec == VideoCodec::kAV1) {
-    encoder_ =
-        std::make_unique<Av1Encoder>(video_config, std::move(metrics_provider));
-    cast_environment_->PostTask(
-        CastEnvironment::VIDEO, FROM_HERE,
-        base::BindOnce(&InitializeEncoderOnEncoderThread, cast_environment,
-                       encoder_.get()));
-#endif
   } else {
     DCHECK(false) << "Invalid config";  // Codec not supported.
   }

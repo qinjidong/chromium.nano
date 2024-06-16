@@ -362,7 +362,6 @@ rtc_library("libaom_av1_encoder_factory") {
     "../../rtc_base:stringutils",
     "//third_party/abseil-cpp/absl/algorithm:container",
     "//third_party/abseil-cpp/absl/cleanup",
-    "//third_party/libaom",
   ]
 }
 

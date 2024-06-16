@@ -46,7 +46,7 @@ buildflag_header("media_buildflags") {
     "ENABLE_HEVC_PARSER_AND_HW_DECODER=$enable_hevc_parser_and_hw_decoder",
     "ENABLE_PLATFORM_VVC=$enable_platform_vvc",
     "ENABLE_HLS_DEMUXER=$enable_hls_demuxer",
-    "ENABLE_LIBAOM=$enable_libaom",
+    "ENABLE_LIBAOM=false",
     "ENABLE_LIBRARY_CDMS=$enable_library_cdms",
     "ENABLE_LIBVPX=$media_use_libvpx",
     "ENABLE_LOGGING_OVERRIDE=$enable_logging_override",

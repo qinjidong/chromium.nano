@@ -434,14 +434,6 @@ source_set("base") {
     deps += [ "//third_party/libvpx" ]
   }
 
-  if (enable_libaom) {
-    sources += [
-      "libaom_thread_wrapper.cc",
-      "libaom_thread_wrapper.h",
-    ]
-    deps += [ "//third_party/libaom" ]
-  }
-
   if (is_linux && !is_castos) {
     sources += [ "user_input_monitor_linux.cc" ]
   } else if (is_mac) {
