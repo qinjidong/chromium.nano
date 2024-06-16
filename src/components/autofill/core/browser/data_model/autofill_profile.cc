@@ -536,10 +536,6 @@ bool AutofillProfile::IsPresentButInvalid(FieldType type) const {
     case ADDRESS_HOME_ZIP:
       return country == "US" && !IsValidZip(data);
 
-    case PHONE_HOME_WHOLE_NUMBER:
-      return !i18n::PhoneObject(data, country, /*infer_country_code=*/false)
-                  .IsValidNumber();
-
     case EMAIL_ADDRESS:
       return !IsValidEmailAddress(data);
 
@@ -695,14 +691,6 @@ bool AutofillProfile::IsSubsetOfForFieldSet(
         // conditions that follow.
         return false;
       }
-    } else if (type == PHONE_HOME_WHOLE_NUMBER ||
-               type == PHONE_HOME_CITY_AND_NUMBER) {
-      if (!i18n::PhoneNumbersMatch(
-              value, profile.GetInfo(type, app_locale),
-              base::UTF16ToASCII(GetRawInfo(ADDRESS_HOME_COUNTRY)),
-              app_locale)) {
-        return false;
-      }
     } else if (!comparator.Compare(value, profile.GetInfo(type, app_locale))) {
       return false;
     }
@@ -784,7 +772,6 @@ bool AutofillProfile::MergeDataFrom(const AutofillProfile& profile,
   if (!comparator.MergeNames(profile, *this, name) ||
       !comparator.MergeEmailAddresses(profile, *this, email) ||
       !comparator.MergeCompanyNames(profile, *this, company) ||
-      !comparator.MergePhoneNumbers(profile, *this, phone_number) ||
       !comparator.MergeAddresses(profile, *this, address)) {
     DUMP_WILL_BE_NOTREACHED_NORETURN();
     return false;

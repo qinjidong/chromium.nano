@@ -55,7 +55,6 @@ PhoneNumber& PhoneNumber::operator=(const PhoneNumber& number) {
 
   number_ = number.number_;
   profile_ = number.profile_;
-  cached_parsed_phone_ = number.cached_parsed_phone_;
   return *this;
 }
 
@@ -104,9 +103,6 @@ void PhoneNumber::SetRawInfoWithVerificationStatus(FieldType type,
   }
 
   number_ = value;
-
-  // Invalidate the cached number.
-  cached_parsed_phone_ = i18n::PhoneObject();
 }
 
 void PhoneNumber::GetMatchingTypes(const std::u16string& text,
@@ -178,101 +174,7 @@ void PhoneNumber::GetMatchingTypes(const std::u16string& text,
 // If the phone cannot be normalized, returns the stored value verbatim.
 std::u16string PhoneNumber::GetInfoImpl(const AutofillType& type,
                                         const std::string& app_locale) const {
-  FieldType storable_type = type.GetStorableType();
-  UpdateCacheIfNeeded(app_locale);
-
-  // When the phone number autofill has stored cannot be normalized, it
-  // responds to queries for complete numbers with whatever the raw stored value
-  // is, and simply return empty string for any queries for phone components.
-  if (!cached_parsed_phone_.IsValidNumber()) {
-    if (storable_type == PHONE_HOME_WHOLE_NUMBER ||
-        storable_type == PHONE_HOME_CITY_AND_NUMBER) {
-      return cached_parsed_phone_.GetWholeNumber();
-    }
-    return std::u16string();
-  }
-
-  auto GetTrunkPrefix = [&] {
-    const std::u16string national_number =
-        GetInfo(PHONE_HOME_CITY_AND_NUMBER, app_locale);
-    // Everything before the city code in the nationally formatted number.
-    return national_number.substr(
-        0, national_number.find(cached_parsed_phone_.city_code()));
-  };
-
-  switch (storable_type) {
-    case PHONE_HOME_WHOLE_NUMBER:
-      return cached_parsed_phone_.GetWholeNumber();
-
-    case PHONE_HOME_NUMBER:
-      return cached_parsed_phone_.number();
-
-    case PHONE_HOME_NUMBER_PREFIX: {
-      const std::u16string number = GetInfo(PHONE_HOME_NUMBER, app_locale);
-      const std::u16string number_suffix =
-          GetInfo(PHONE_HOME_NUMBER_SUFFIX, app_locale);
-      DCHECK(number.size() >= number_suffix.size());
-      // As PHONE_HOME_NUMBER = PHONE_HOME_NUMBER_PREFIX +
-      // PHONE_HOME_NUMBER_SUFFIX, extract the appropriate prefix from `number`.
-      return number.substr(0, number.size() - number_suffix.size());
-    }
-
-    case PHONE_HOME_NUMBER_SUFFIX: {
-      const std::u16string number = GetInfo(PHONE_HOME_NUMBER, app_locale);
-      // Libphonenumber doesn't provide functionality to split PHONE_HOME_NUMBER
-      // further, and the HTML standard doesn't specify which suffix
-      // autocomplete="tel-local-suffix" corresponds to. In all countries using
-      // this format that we are aware of (see unit tests), the suffix consists
-      // of the last 4 digits, while the length of the prefix varies.
-      constexpr size_t kHomePhoneNumberSuffixLength = 4;
-      return number.size() >= kHomePhoneNumberSuffixLength
-                 ? number.substr(number.size() - kHomePhoneNumberSuffixLength)
-                 : number;
-    }
-
-    case PHONE_HOME_CITY_CODE_WITH_TRUNK_PREFIX:
-      return GetTrunkPrefix() + cached_parsed_phone_.city_code();
-
-    case PHONE_HOME_CITY_CODE:
-      return cached_parsed_phone_.city_code();
-
-    case PHONE_HOME_COUNTRY_CODE:
-      return cached_parsed_phone_.country_code();
-
-    case PHONE_HOME_CITY_AND_NUMBER: {
-      // Just concatenating city code and phone number is insufficient because
-      // a number of non-US countries (e.g. Germany and France) use a leading 0
-      // to indicate that the next digits represent a city code.
-      std::u16string national_number =
-          cached_parsed_phone_.GetNationallyFormattedNumber();
-      // GetNationallyFormattedNumber optimizes for screen display, e.g. it
-      // shows a US number as (888) 123-1234. The following retains only the
-      // digits.
-      std::erase_if(national_number, [](char16_t c) {
-        return c > UCHAR_MAX ||
-               !absl::ascii_isdigit(static_cast<unsigned char>(c));
-      });
-      return national_number;
-    }
-
-    case PHONE_HOME_CITY_AND_NUMBER_WITHOUT_TRUNK_PREFIX: {
-      // Strip the trunk prefix from the nationally formatted number.
-      const std::u16string national_number =
-          GetInfo(PHONE_HOME_CITY_AND_NUMBER, app_locale);
-      const std::size_t trunk_prefix_len = GetTrunkPrefix().length();
-      DCHECK(trunk_prefix_len <= national_number.length());
-      return national_number.substr(trunk_prefix_len);
-    }
-
-    case PHONE_HOME_EXTENSION:
-      // Autofill doesn't support filling extensions, but some basic local
-      // heuristics classify them.
-      return std::u16string();
-
-    default:
-      NOTREACHED_IN_MIGRATION();
-      return std::u16string();
-  }
+  return std::u16string();
 }
 
 bool PhoneNumber::SetInfoWithVerificationStatusImpl(
@@ -280,52 +182,10 @@ bool PhoneNumber::SetInfoWithVerificationStatusImpl(
     const std::u16string& value,
     const std::string& app_locale,
     VerificationStatus status) {
-  SetRawInfoWithVerificationStatus(type.GetStorableType(), value, status);
-
-  if (number_.empty())
-    return true;
-
-  // `SetRawInfoWithVerificationStatus()` invalidated `cached_parsed_phone_` and
-  // calling `UpdateCacheIfNeeded()` will thus try parsing the `number_` here.
-  UpdateCacheIfNeeded(app_locale);
-  // If the number invalid, setting fails and `GetRawInfo()` and `GetInfo()`
-  // should return an empty string. Clear both representations of the number.
-  if (!cached_parsed_phone_.IsValidNumber()) {
-    number_.clear();
-    cached_parsed_phone_ = i18n::PhoneObject();
-    return false;
-  }
-  // Store a formatted (i.e., pretty printed) version of the number if it
-  // doesn't contain formatting marks.
-  if (base::ContainsOnlyChars(number_, u"+0123456789")) {
-    number_ = cached_parsed_phone_.GetFormattedNumber();
-  } else {
-    // Strip `number_` of extensions, e.g. "(123)-123 ext. 123" -> "(123)-123".
-    // In the if case, this is done by `GetFormattedNumber()` already. To
-    // preserve the formatting, everything after the last digit of the whole
-    // number is removed manually here. The whole number only consists of digits
-    // and has any extensions removed already.
-    size_t i = 0;
-    for (auto digit : cached_parsed_phone_.GetWholeNumber())
-      i = number_.find(digit, i) + 1;  // Skip `digit`.
-    number_ = number_.substr(0, i);
-  }
-  return true;
+  return false;
 }
 
-void PhoneNumber::UpdateCacheIfNeeded(const std::string& app_locale) const {
-  std::string region = GetRegion(*profile_, app_locale);
-  if (!number_.empty() && cached_parsed_phone_.region() != region) {
-    // To enable filling of country calling codes for nationally formatted
-    // numbers, infer it from the `profile_`'s country information while parsing
-    // the number.
-    cached_parsed_phone_ = i18n::PhoneObject(
-        number_, region,
-        /*infer_country_code=*/profile_->HasInfo(ADDRESS_HOME_COUNTRY) &&
-            base::FeatureList::IsEnabled(
-                features::kAutofillInferCountryCallingCode));
-  }
-}
+void PhoneNumber::UpdateCacheIfNeeded(const std::string& app_locale) const {}
 
 PhoneNumber::PhoneCombineHelper::PhoneCombineHelper() = default;
 

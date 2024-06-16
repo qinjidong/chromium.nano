@@ -22,29 +22,14 @@
 #include "components/autofill/core/browser/metrics/autofill_metrics.h"
 #include "components/autofill/core/common/autofill_clock.h"
 #include "components/autofill/core/common/autofill_l10n_util.h"
-#include "third_party/libphonenumber/phonenumber_api.h"
 
 using base::UTF16ToUTF8;
 using base::UTF8ToUTF16;
-using i18n::phonenumbers::PhoneNumberUtil;
 
 namespace autofill {
 namespace {
 
 constexpr char16_t kSpace[] = u" ";
-
-std::ostream& operator<<(std::ostream& os,
-                         const ::i18n::phonenumbers::PhoneNumber& n) {
-  os << "country_code: " << n.country_code() << " "
-     << "national_number: " << n.national_number();
-  if (n.has_italian_leading_zero())
-    os << " italian_leading_zero: " << n.italian_leading_zero();
-  if (n.has_number_of_leading_zeros())
-    os << " number_of_leading_zeros: " << n.number_of_leading_zeros();
-  if (n.has_raw_input())
-    os << " raw_input: \"" << n.raw_input() << "\"";
-  return os;
-}
 
 bool IsPunctuationOrWhitespace(const int8_t character) {
   switch (character) {
@@ -363,11 +348,6 @@ bool AutofillProfileComparator::AreMergeable(const AutofillProfile& p1,
     return false;
   }
 
-  if (!HaveMergeablePhoneNumbers(p1, p2)) {
-    DVLOG(1) << "Different phone numbers.";
-    return false;
-  }
-
   if (!HaveMergeableNames(p1, p2)) {
     DVLOG(1) << "Different names.";
     return false;
@@ -596,114 +576,7 @@ bool AutofillProfileComparator::MergePhoneNumbers(
     const AutofillProfile& p1,
     const AutofillProfile& p2,
     PhoneNumber& phone_number) const {
-  const FieldType kWholePhoneNumber = PHONE_HOME_WHOLE_NUMBER;
-  const std::u16string& s1 = p1.GetRawInfo(kWholePhoneNumber);
-  const std::u16string& s2 = p2.GetRawInfo(kWholePhoneNumber);
-
-  DCHECK(HaveMergeablePhoneNumbers(p1, p2))
-      << "Phone numbers are not mergeable: '" << s1 << "' vs '" << s2 << "'";
-
-  if (HasOnlySkippableCharacters(s1) && HasOnlySkippableCharacters(s2)) {
-    phone_number.SetRawInfo(kWholePhoneNumber, std::u16string());
-  }
-
-  if (HasOnlySkippableCharacters(s1)) {
-    phone_number.SetRawInfo(kWholePhoneNumber, s2);
-    return true;
-  }
-
-  if (HasOnlySkippableCharacters(s2) || s1 == s2) {
-    phone_number.SetRawInfo(kWholePhoneNumber, s1);
-    return true;
-  }
-
-  // Figure out a country code hint.
-  // TODO(crbug.com/40221178) |GetNonEmptyOf()| prefers |p1| in case both are
-  // non empty.
-  std::string region = UTF16ToUTF8(
-      GetNonEmptyOf(p1, p2, AutofillType(HtmlFieldType::kCountryCode)));
-  if (region.empty())
-    region = AutofillCountry::CountryCodeForLocale(app_locale_);
-
-  // Parse the phone numbers.
-  PhoneNumberUtil* phone_util = PhoneNumberUtil::GetInstance();
-
-  ::i18n::phonenumbers::PhoneNumber n1;
-  if (phone_util->ParseAndKeepRawInput(UTF16ToUTF8(s1), region, &n1) !=
-      PhoneNumberUtil::NO_PARSING_ERROR) {
-    return false;
-  }
-
-  ::i18n::phonenumbers::PhoneNumber n2;
-  if (phone_util->ParseAndKeepRawInput(UTF16ToUTF8(s2), region, &n2) !=
-      PhoneNumberUtil::NO_PARSING_ERROR) {
-    return false;
-  }
-
-  // `country_code()` defaults to the provided `region`. But if one of the
-  // numbers is in international format, we should prefer that country code.
-  auto HasInternationalCountryCode =
-      [](const ::i18n::phonenumbers::PhoneNumber& number) {
-        return number.country_code_source() !=
-               ::i18n::phonenumbers::PhoneNumber::FROM_DEFAULT_COUNTRY;
-      };
-
-  ::i18n::phonenumbers::PhoneNumber merged_number;
-  // There are three cases for country codes:
-  // - Both numbers are in international format, so because the numbers are
-  //   mergeable, they are equal.
-  // - Both are not in international format, so their country codes both default
-  //   to `region`.
-  // - One of them is in international format, so we prefer that country code.
-  DCHECK(HasInternationalCountryCode(n1) != HasInternationalCountryCode(n2) ||
-         n1.country_code() == n2.country_code());
-  merged_number.set_country_code(
-      HasInternationalCountryCode(n1) ? n1.country_code() : n2.country_code());
-  merged_number.set_national_number(
-      std::max(n1.national_number(), n2.national_number()));
-  if (n1.has_italian_leading_zero() || n2.has_italian_leading_zero()) {
-    merged_number.set_italian_leading_zero(n1.italian_leading_zero() ||
-                                           n2.italian_leading_zero());
-  }
-  if (n1.has_number_of_leading_zeros() || n2.has_number_of_leading_zeros()) {
-    merged_number.set_number_of_leading_zeros(
-        std::max(n1.number_of_leading_zeros(), n2.number_of_leading_zeros()));
-  }
-
-  // Format the `merged_number` in international format only if at least one
-  // of the country codes was derived from the number itself. This is done
-  // consistently with `::autofill::i18n::FormatValidatedNumber()` and
-  // `::autofill::i18n::ParsePhoneNumber()`, which backs the `PhoneNumber`
-  // implementation.
-  PhoneNumberUtil::PhoneNumberFormat format =
-      HasInternationalCountryCode(n1) || HasInternationalCountryCode(n2)
-          ? PhoneNumberUtil::INTERNATIONAL
-          : PhoneNumberUtil::NATIONAL;
-
-  std::string new_number;
-  phone_util->Format(merged_number, format, &new_number);
-
-  DVLOG(2) << "n1 = {" << n1 << "}";
-  DVLOG(2) << "n2 = {" << n2 << "}";
-  DVLOG(2) << "merged_number = {" << merged_number << "}";
-  DVLOG(2) << "new_number = \"" << new_number << "\"";
-
-  // Check if it's a North American number that's missing the area code.
-  // Libphonenumber doesn't know how to format short numbers; it will still
-  // include the country code prefix.
-  if (merged_number.country_code() == 1 &&
-      merged_number.national_number() <= 9999999 &&
-      new_number.starts_with("+1")) {
-    size_t offset = 2;  // The char just after "+1".
-    while (offset < new_number.size() &&
-           base::IsAsciiWhitespace(new_number[offset])) {
-      ++offset;
-    }
-    new_number = new_number.substr(offset);
-  }
-
-  phone_number.SetRawInfo(kWholePhoneNumber, UTF8ToUTF16(new_number));
-  return true;
+  return false;
 }
 
 bool AutofillProfileComparator::MergeAddresses(const AutofillProfile& p1,
@@ -928,37 +801,7 @@ bool AutofillProfileComparator::HaveMergeableCompanyNames(
 bool AutofillProfileComparator::HaveMergeablePhoneNumbers(
     const AutofillProfile& p1,
     const AutofillProfile& p2) const {
-  // We work with the raw phone numbers to avoid losing any helpful information
-  // as we parse.
-  const std::u16string& raw_phone_1 = p1.GetRawInfo(PHONE_HOME_WHOLE_NUMBER);
-  const std::u16string& raw_phone_2 = p2.GetRawInfo(PHONE_HOME_WHOLE_NUMBER);
-
-  // Are the two phone numbers trivially mergeable?
-  if (HasOnlySkippableCharacters(raw_phone_1) ||
-      HasOnlySkippableCharacters(raw_phone_2) || raw_phone_1 == raw_phone_2) {
-    return true;
-  }
-
-  // TODO(rogerm): Modify ::autofill::i18n::PhoneNumbersMatch to support
-  // SHORT_NSN_MATCH and just call that instead of accessing the underlying
-  // utility library directly?
-
-  // Parse and compare the phone numbers.
-  // The phone number util library needs the numbers in utf8.
-  PhoneNumberUtil* phone_util = PhoneNumberUtil::GetInstance();
-  switch (phone_util->IsNumberMatchWithTwoStrings(
-      base::UTF16ToUTF8(raw_phone_1), base::UTF16ToUTF8(raw_phone_2))) {
-    case PhoneNumberUtil::SHORT_NSN_MATCH:
-    case PhoneNumberUtil::NSN_MATCH:
-    case PhoneNumberUtil::EXACT_MATCH:
-      return true;
-    case PhoneNumberUtil::INVALID_NUMBER:
-    case PhoneNumberUtil::NO_MATCH:
-      return false;
-    default:
-      NOTREACHED_IN_MIGRATION();
-      return false;
-  }
+  return false;
 }
 
 bool AutofillProfileComparator::HaveMergeableAddresses(

@@ -402,7 +402,6 @@ group("gn_all") {
         "//gpu:gl_tests",
         "//gpu:gpu_perftests",
         "//media:media_perftests",
-        "//third_party/libphonenumber:libphonenumber_unittests",
         "//ui/compositor:compositor_unittests",
       ]
 

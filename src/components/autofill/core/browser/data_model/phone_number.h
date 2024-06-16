@@ -121,9 +121,6 @@ class PhoneNumber : public FormGroup {
   std::u16string number_;
   // Profile which stores the region used as hint when normalizing the number.
   raw_ptr<const AutofillProfile> profile_;
-
-  // Cached number.
-  mutable i18n::PhoneObject cached_parsed_phone_;
 };
 
 }  // namespace autofill

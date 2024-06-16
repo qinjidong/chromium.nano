@@ -769,7 +769,6 @@ static_library("browser") {
     "//services/network/public/cpp",
     "//services/network/public/mojom",
     "//third_party/icu",
-    "//third_party/libphonenumber",
     "//third_party/re2",
     "//third_party/zlib/google:compression_utils",
     "//ui/accessibility:accessibility",
@@ -1365,7 +1364,6 @@ source_set("unit_tests") {
     "//testing/gtest",
     "//third_party/libaddressinput:test_support",
     "//third_party/libaddressinput:util",
-    "//third_party/libphonenumber",
     "//third_party/re2:re2",
     "//ui/base",
     "//ui/base:test_support",
@@ -1438,7 +1436,6 @@ fuzzer_test("autofill_phone_number_i18n_fuzzer") {
     ":browser",
     "//base",
     "//base:i18n",
-    "//third_party/libphonenumber",
   ]
 
   dict = "geo/phone_number_i18n_fuzzer.dict"

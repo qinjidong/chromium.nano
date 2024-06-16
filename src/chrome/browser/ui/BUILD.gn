@@ -4771,7 +4771,6 @@ static_library("ui") {
       "//components/search_engines",
       "//third_party/iaccessible2",
       "//third_party/isimpledom",
-      "//third_party/libphonenumber",
       "//third_party/wtl",
       "//ui/aura",
       "//ui/base/ime",

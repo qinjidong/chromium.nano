@@ -8,12 +8,6 @@
 #include <memory>
 #include <string>
 
-namespace i18n {
-namespace phonenumbers {
-class PhoneNumber;
-}  // namespace phonenumbers
-}  // namespace i18n
-
 namespace autofill {
 
 class AutofillProfile;
@@ -26,13 +20,6 @@ namespace i18n {
 // takes non-trivial time (parsing with regex), so will be ignored.
 extern const size_t kMaxPhoneNumberSize;
 
-// Return true if the given |phone_number| object is likely to be a phone number
-// This method uses IsPossibleNumber from libphonenumber, instead of
-// IsValidNumber. IsPossibleNumber does a less strict check, it will not try to
-// check for carrier code validility.
-bool IsPossiblePhoneNumber(
-    const ::i18n::phonenumbers::PhoneNumber& phone_number);
-
 // Return true if the given |phone_number| is likely to be a phone number for
 // the |country_code|. This method uses IsPossibleNumber from libphonenumber,
 // instead of IsValidNumber. IsPossibleNumber does a less strict check, it
@@ -42,22 +29,6 @@ bool IsPossiblePhoneNumber(const std::string& phone_number,
 
 // Most of the following functions require |region| to operate. The |region| is
 // a ISO 3166 standard code ("US" for USA, "CZ" for Czech Republic, etc.).
-
-// Parses the number stored in |value| as a phone number interpreted in the
-// given |default_region|, and stores the results into the remaining arguments.
-// The |default_region| should be a 2-letter country code.  |inferred_region| is
-// set to the actual region of the number (which may be different than
-// |default_region| if |value| has an international country code, for example).
-// This is an internal function, exposed in the header file so that it can be
-// tested.
-[[nodiscard]] bool ParsePhoneNumber(
-    const std::u16string& value,
-    const std::string& default_region,
-    std::u16string* country_code,
-    std::u16string* city_code,
-    std::u16string* number,
-    std::string* inferred_region,
-    ::i18n::phonenumbers::PhoneNumber* i18n_number);
 
 // Normalizes phone number, by changing digits in the extended fonts
 // (such as \xFF1x) into '0'-'9'. Also strips out non-digit characters.
@@ -134,7 +105,7 @@ class PhoneObject {
 
   PhoneObject& operator=(const PhoneObject& other);
 
-  bool IsValidNumber() const { return i18n_number_ != NULL; }
+  bool IsValidNumber() const { return false; }
 
  private:
   // The region code for this phone number, inferred during parsing.
@@ -142,7 +113,6 @@ class PhoneObject {
 
   // The parsed number and its components.
   //
-  std::unique_ptr<::i18n::phonenumbers::PhoneNumber> i18n_number_;
   std::u16string city_code_;
   std::u16string country_code_;
   std::u16string number_;

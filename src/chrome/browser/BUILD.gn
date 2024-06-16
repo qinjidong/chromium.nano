@@ -3695,7 +3695,6 @@ static_library("browser") {
       "//third_party/cpu_features:ndk_compat",
       "//third_party/crashpad/crashpad/client",
       "//third_party/libaddressinput:util",
-      "//third_party/libphonenumber",
       "//third_party/smhasher:murmurhash2",
       "//ui/accessibility",
       "//url",

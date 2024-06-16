@@ -68,15 +68,7 @@ bool NormalizeProfileWithValidator(AutofillProfile* profile,
 // phone number if formatting was not possible (or already optimal).
 void FormatPhoneNumberToE164(AutofillProfile* profile,
                              const std::string& region_code,
-                             const std::string& app_locale) {
-  const std::string formatted_number = i18n::FormatPhoneForResponse(
-      base::UTF16ToUTF8(
-          profile->GetInfo(AutofillType(PHONE_HOME_WHOLE_NUMBER), app_locale)),
-      region_code);
-
-  profile->SetRawInfo(PHONE_HOME_WHOLE_NUMBER,
-                      base::UTF8ToUTF16(formatted_number));
-}
+                             const std::string& app_locale) {}
 
 std::unique_ptr<AddressValidator> CreateAddressValidator(
     std::unique_ptr<Source> source,
