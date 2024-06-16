@@ -93,10 +93,13 @@ void GIFImageDecoder::OnSetData(scoped_refptr<SegmentReader> data) {
     segment_stream->SetReader(std::move(data));
 
     SkCodec::Result codec_creation_result;
-    codec_ =
-        SkGifDecoder::Decode(std::move(segment_stream), &codec_creation_result);
-    if (codec_) {
-      CHECK_EQ(codec_->getEncodedFormat(), SkEncodedImageFormat::kGIF);
+    codec_ = SkCodec::MakeFromStream(std::move(segment_stream),
+                                     &codec_creation_result, nullptr);
+
+    // SkCodec supports many codecs, but this class is only for GIF decoding.
+    if (codec_ && codec_->getEncodedFormat() != SkEncodedImageFormat::kGIF) {
+      SetFailed();
+      return;
     }
 
     switch (codec_creation_result) {

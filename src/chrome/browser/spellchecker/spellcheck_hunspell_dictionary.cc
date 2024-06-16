@@ -40,7 +40,6 @@
 
 #if !BUILDFLAG(IS_ANDROID)
 #include "base/files/memory_mapped_file.h"
-#include "third_party/hunspell/google/bdict.h"  // nogncheck crbug.com/1125897
 #endif
 
 using content::BrowserThread;
@@ -243,17 +242,6 @@ void SpellcheckHunspellDictionary::OnSimpleLoaderComplete(
     return;
   }
 
-#if !BUILDFLAG(IS_ANDROID)
-  // To prevent corrupted dictionary data from causing a renderer crash, scan
-  // the dictionary data and verify it is sane before save it to a file.
-  if (!hunspell::BDict::Verify(base::as_byte_span(*data))) {
-    // Let PostTaskAndReply caller send to InformListenersOfInitialization
-    // through SaveDictionaryDataComplete().
-    SaveDictionaryDataComplete(false);
-    return;
-  }
-#endif
-
   task_runner_->PostTaskAndReplyWithResult(
       FROM_HERE,
       base::BindOnce(&SaveDictionaryData, std::move(data),
@@ -373,8 +361,7 @@ SpellcheckHunspellDictionary::OpenDictionaryFile(base::TaskRunner* task_runner,
 
   std::vector<uint8_t> data;
   data.resize(dictionary.file.GetLength());
-  if (!dictionary.file.ReadAndCheck(0, data) ||
-      !hunspell::BDict::Verify(data)) {
+  if (!dictionary.file.ReadAndCheck(0, data)) {
     dictionary.file.Close();
     base::DeleteFile(dictionary.path);
   }

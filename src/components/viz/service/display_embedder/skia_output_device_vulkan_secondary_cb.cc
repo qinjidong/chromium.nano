@@ -114,8 +114,6 @@ GrSemaphoresSubmitted SkiaOutputDeviceVulkanSecondaryCB::Flush(
     vk_end_semaphores.push_back(
         GrBackendSemaphores::GetVkSemaphore(gr_semaphore));
   }
-  vulkan_context_provider->EnqueueSecondaryCBSemaphores(
-      std::move(vk_end_semaphores));
   if (on_finished) {
     vulkan_context_provider->EnqueueSecondaryCBPostSubmitTask(
         std::move(on_finished));

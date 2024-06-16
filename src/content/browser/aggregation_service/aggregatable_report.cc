@@ -46,13 +46,8 @@
 #include "third_party/abseil-cpp/absl/numeric/int128.h"
 #include "third_party/blink/public/mojom/aggregation_service/aggregatable_report.mojom.h"
 #include "third_party/boringssl/src/include/openssl/hpke.h"
-#include "third_party/distributed_point_functions/shim/buildflags.h"
 #include "url/gurl.h"
 #include "url/origin.h"
-
-#if BUILDFLAG(USE_DISTRIBUTED_POINT_FUNCTIONS)
-#include "third_party/distributed_point_functions/shim/distributed_point_function_shim.h"
-#endif
 
 namespace content {
 
@@ -84,91 +79,6 @@ std::vector<GURL> GetDefaultProcessingUrls(
       return {GURL("https://server1.example"), GURL("https://server2.example")};
   }
 }
-
-#if BUILDFLAG(USE_DISTRIBUTED_POINT_FUNCTIONS)
-using DpfKey = distributed_point_functions::DpfKey;
-using DpfParameters = distributed_point_functions::DpfParameters;
-
-// Returns parameters that support each possible prefix length in
-// `[1, kBucketDomainBitLength]` with the same element_bitsize of
-// `kValueDomainBitLength`.
-std::vector<DpfParameters> ConstructDpfParameters() {
-  std::vector<DpfParameters> parameters(
-      AggregatableReport::kBucketDomainBitLength);
-  for (size_t i = 0; i < AggregatableReport::kBucketDomainBitLength; i++) {
-    parameters[i].set_log_domain_size(i + 1);
-
-    parameters[i].mutable_value_type()->mutable_integer()->set_bitsize(
-        AggregatableReport::kValueDomainBitLength);
-  }
-
-  return parameters;
-}
-
-// Returns empty vector in case of error.
-std::vector<DpfKey> GenerateDpfKeys(
-    const AggregationServicePayloadContents& contents) {
-  CHECK_EQ(contents.operation,
-           AggregationServicePayloadContents::Operation::kHistogram);
-  CHECK_EQ(contents.aggregation_mode,
-           blink::mojom::AggregationServiceMode::kExperimentalPoplar);
-  CHECK_EQ(contents.contributions.size(), 1u);
-
-  std::optional<std::pair<DpfKey, DpfKey>> maybe_dpf_keys =
-      distributed_point_functions::GenerateKeysIncremental(
-          ConstructDpfParameters(),
-          /*alpha=*/contents.contributions[0].bucket,
-          // We want the same beta, no matter which prefix length is used.
-          /*beta=*/
-          std::vector<absl::uint128>(AggregatableReport::kBucketDomainBitLength,
-                                     contents.contributions[0].value));
-
-  if (!maybe_dpf_keys.has_value()) {
-    return {};
-  }
-
-  std::vector<DpfKey> dpf_keys;
-  dpf_keys.push_back(std::move(maybe_dpf_keys->first));
-  dpf_keys.push_back(std::move(maybe_dpf_keys->second));
-  return dpf_keys;
-}
-
-// Returns a vector with a serialized CBOR map for each processing url. See
-// the AggregatableReport documentation for more detail on the expected format.
-// Returns an empty vector in case of error.
-std::vector<std::vector<uint8_t>>
-ConstructUnencryptedExperimentalPoplarPayloads(
-    const AggregationServicePayloadContents& payload_contents) {
-  std::vector<DpfKey> dpf_keys = GenerateDpfKeys(payload_contents);
-  if (dpf_keys.empty()) {
-    return {};
-  }
-  CHECK_EQ(dpf_keys.size(), 2u);
-
-  std::vector<std::vector<uint8_t>> unencrypted_payloads;
-  for (const DpfKey& dpf_key : dpf_keys) {
-    std::vector<uint8_t> serialized_key(dpf_key.ByteSizeLong());
-    bool succeeded =
-        dpf_key.SerializeToArray(serialized_key.data(), serialized_key.size());
-    CHECK(succeeded);
-
-    cbor::Value::MapValue value;
-    value.emplace(kOperationKey, kHistogramValue);
-    value.emplace("dpf_key", std::move(serialized_key));
-
-    std::optional<std::vector<uint8_t>> unencrypted_payload =
-        cbor::Writer::Write(cbor::Value(std::move(value)));
-
-    if (!unencrypted_payload.has_value()) {
-      return {};
-    }
-
-    unencrypted_payloads.push_back(std::move(unencrypted_payload.value()));
-  }
-
-  return unencrypted_payloads;
-}
-#endif  // BUILDFLAG(USE_DISTRIBUTED_POINT_FUNCTIONS)
 
 // TODO(crbug.com/40215445): Replace with `base::numerics` if available.
 std::array<uint8_t, 16u> U128ToBigEndian(absl::uint128 integer) {
@@ -936,16 +846,10 @@ AggregatableReport::Provider::CreateFromRequestAndPublicKeys(
       break;
     }
     case blink::mojom::AggregationServiceMode::kExperimentalPoplar: {
-#if BUILDFLAG(USE_DISTRIBUTED_POINT_FUNCTIONS)
-      unencrypted_payloads = ConstructUnencryptedExperimentalPoplarPayloads(
-          report_request.payload_contents());
-      break;
-#else
       LOG(WARNING)
           << "Cannot create AggregatableReport for kExperimentalPoplar because "
              "Chrome was compiled with use_distributed_point_functions=false";
       return std::nullopt;
-#endif  // BUILDFLAG(USE_DISTRIBUTED_POINT_FUNCTIONS)
     }
   }
 

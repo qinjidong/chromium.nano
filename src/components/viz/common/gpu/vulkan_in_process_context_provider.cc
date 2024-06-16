@@ -223,11 +223,6 @@ VulkanInProcessContextProvider::GetGrSecondaryCBDrawContext() {
   return nullptr;
 }
 
-void VulkanInProcessContextProvider::EnqueueSecondaryCBSemaphores(
-    std::vector<VkSemaphore> semaphores) {
-  NOTREACHED_IN_MIGRATION();
-}
-
 void VulkanInProcessContextProvider::EnqueueSecondaryCBPostSubmitTask(
     base::OnceClosure closure) {
   NOTREACHED_IN_MIGRATION();

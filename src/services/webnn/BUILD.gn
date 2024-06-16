@@ -25,7 +25,6 @@ if (is_posix) {
       ":webnn_utils",
       "//base",
       "//services/webnn/public/mojom",
-      "//third_party/coremltools:modelformat_proto",
     ]
   }
 }
@@ -41,7 +40,6 @@ source_set("tflite_graph_builder") {
     "//components/ml/webnn",
     "//services/webnn/public/mojom",
     "//third_party/flatbuffers",
-    "//third_party/tflite:tflite_public_headers",
   ]
 }
 
@@ -256,8 +254,4 @@ mojolpm_fuzzer_test("webnn_graph_mojolpm_fuzzer") {
     "//services/webnn/public/mojom",
     "//third_party/libprotobuf-mutator",
   ]
-
-  if (is_posix) {
-    deps += [ ":coreml_graph_builder" ]
-  }
 }

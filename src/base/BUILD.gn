@@ -2837,7 +2837,6 @@ test("base_perftests") {
     "//base/test:test_support_perf",
     "//testing/gtest",
     "//testing/perf",
-    "//third_party/google_benchmark",
   ]
 
   if (use_partition_alloc) {

@@ -238,10 +238,6 @@ static_library("test_support") {
       "win/test/virtual_display_util_win.cc",
       "win/test/virtual_display_util_win.h",
     ]
-    deps += [
-      "//third_party/win_virtual_display/controller",
-      "//third_party/win_virtual_display/driver/public",
-    ]
   }
 
   if (is_mac) {
@@ -250,17 +246,6 @@ static_library("test_support") {
       "mac/test/test_screen_mac.mm",
       "mac/test/virtual_display_util_mac.h",
       "mac/test/virtual_display_util_mac.mm",
-    ]
-  }
-
-  if (is_linux && ozone_platform_x11) {
-    sources += [
-      "linux/test/virtual_display_util_linux.cc",
-      "linux/test/virtual_display_util_linux.h",
-    ]
-    deps += [
-      "//remoting/host:display_layout",
-      "//remoting/host:x11_display_utils",
     ]
   }
 

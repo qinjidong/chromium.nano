@@ -35,16 +35,11 @@ source_set("in_process_unzipper") {
 }
 
 source_set("in_process_patcher") {
-  sources = [
-    "patch/in_process_patcher.cc",
-    "patch/in_process_patcher.h",
-  ]
+  sources = []
   deps = [
     ":update_client",
     "//base",
-    "//third_party/puffin:libpuffpatch",
   ]
-  include_dirs = [ "//third_party/puffin/src/include" ]
 }
 
 source_set("unzip_impl") {
@@ -81,7 +76,6 @@ group("common_impl") {
 }
 
 static_library("update_client") {
-  include_dirs = [ "//third_party/puffin/src/include" ]
   sources = [
     "action_runner.cc",
     "action_runner.h",
@@ -119,8 +113,6 @@ static_library("update_client") {
     "protocol_serializer.h",
     "protocol_serializer_json.cc",
     "protocol_serializer_json.h",
-    "puffin_patcher.cc",
-    "puffin_patcher.h",
     "request_sender.cc",
     "request_sender.h",
     "task.h",
@@ -309,7 +301,6 @@ source_set("unit_tests") {
     "//services/network/public/cpp:cpp_base",
     "//testing/gmock",
     "//testing/gtest",
-    "//third_party/puffin:libpuffpatch",
     "//third_party/re2",
   ]
 

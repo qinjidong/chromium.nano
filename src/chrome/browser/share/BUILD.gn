@@ -29,7 +29,6 @@ source_set("share") {
     "//chrome/browser/profiles",
     "//chrome/browser/share/proto:proto",
     "//components/leveldb_proto:leveldb_proto",
-    "//components/qr_code_generator:bitmap_generator",
     "//components/shared_highlighting/core/common",
     "//content/public/browser",
     "//skia",

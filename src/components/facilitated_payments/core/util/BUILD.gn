@@ -52,6 +52,5 @@ test("pix_code_validator_fuzzer") {
   deps = [
     ":fuzzer_util",
     ":util",
-    "//third_party/fuzztest:fuzztest_gtest_main",
   ]
 }

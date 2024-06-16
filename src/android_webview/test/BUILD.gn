@@ -105,7 +105,6 @@ script_test("system_webview_wpt") {
   data_deps = [
     "//android_webview:system_webview_apk",
     "//android_webview/tools/system_webview_shell:system_webview_shell_layout_test_apk",
-    "//chrome/test/chromedriver:chromedriver_server($host_toolchain)",
     "//third_party/blink/tools:wpt_tests_android_isolate",
   ]
 }
@@ -131,7 +130,6 @@ script_test("trichrome_webview_wpt") {
   data_deps = [
     "//android_webview:trichrome_webview_apk",
     "//android_webview/tools/system_webview_shell:system_webview_shell_layout_test_apk",
-    "//chrome/test/chromedriver:chromedriver_server($host_toolchain)",
     "//third_party/blink/tools:wpt_tests_android_isolate",
   ]
 }
@@ -158,7 +156,6 @@ if (android_64bit_target_cpu) {
     data_deps = [
       "//android_webview:trichrome_webview_64_apk",
       "//android_webview/tools/system_webview_shell:system_webview_shell_layout_test_apk",
-      "//chrome/test/chromedriver:chromedriver_server($host_toolchain)",
       "//third_party/blink/tools:wpt_tests_android_isolate",
     ]
   }
@@ -254,9 +251,6 @@ shared_library_with_jni("libstandalonelibwebviewchromium") {
     "//components/content_capture/android/test_support",
     "//components/heap_profiling/multi_process:test_support",
     "//content/public/test/android:content_native_test_support",
-    "//gpu/vulkan",
-    "//gpu/vulkan/init",
-    "//gpu/vulkan/init:skia",
     "//ui/gl",
   ]
   libs = [ "android" ]

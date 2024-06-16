@@ -9,7 +9,6 @@
 #include "base/files/file.h"
 #include "base/functional/callback.h"
 #include "base/memory/scoped_refptr.h"
-#include "third_party/puffin/src/include/puffin/puffpatch.h"
 
 namespace update_client {
 
@@ -22,10 +21,7 @@ class InProcessPatcher : public Patcher {
   void PatchPuffPatch(base::File input_file,
                       base::File patch_file,
                       base::File output_file,
-                      PatchCompleteCallback callback) const override {
-    std::move(callback).Run(puffin::ApplyPuffPatch(
-        std::move(input_file), std::move(patch_file), std::move(output_file)));
-  }
+                      PatchCompleteCallback callback) const override {}
 
  protected:
   ~InProcessPatcher() override = default;

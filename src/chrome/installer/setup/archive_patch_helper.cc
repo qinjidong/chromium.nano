@@ -14,7 +14,6 @@
 #include "components/zucchini/zucchini.h"
 #include "components/zucchini/zucchini_integration.h"
 #include "courgette/courgette.h"
-#include "third_party/bspatch/mbspatch.h"
 
 namespace installer {
 
@@ -121,15 +120,9 @@ bool ArchivePatchHelper::BinaryPatch() {
     return false;
   }
 
-  int result = ApplyBinaryPatch(patch_source_.value().c_str(),
-                                last_uncompressed_file_.value().c_str(),
-                                target_.value().c_str());
-  if (result == OK)
-    return true;
-
   LOG(ERROR) << "Failed to apply patch " << last_uncompressed_file_.value()
              << " to file " << patch_source_.value() << " and generating file "
-             << target_.value() << " using bsdiff. err=" << result;
+             << target_.value() << " using bsdiff.";
 
   // Ensure a partial output is not left behind.
   base::DeleteFile(target_);

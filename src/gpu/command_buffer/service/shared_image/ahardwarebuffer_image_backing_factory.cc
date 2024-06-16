@@ -39,7 +39,6 @@
 #include "gpu/command_buffer/service/shared_image/shared_image_representation.h"
 #include "gpu/command_buffer/service/shared_image/skia_gl_image_representation.h"
 #include "gpu/command_buffer/service/shared_image/skia_graphite_dawn_image_representation.h"
-#include "gpu/command_buffer/service/shared_image/skia_vk_android_image_representation.h"
 #include "gpu/command_buffer/service/skia_utils.h"
 #include "gpu/command_buffer/service/texture_manager.h"
 #include "gpu/vulkan/vulkan_image.h"
@@ -264,30 +263,6 @@ class AHardwareBufferImageBacking : public AndroidImageBacking {
   const GLFormatCaps gl_format_caps_;
 };
 
-// Vk backed Skia representation of AHardwareBufferImageBacking.
-class SkiaVkAHBImageRepresentation : public SkiaVkAndroidImageRepresentation {
- public:
-  SkiaVkAHBImageRepresentation(SharedImageManager* manager,
-                               AndroidImageBacking* backing,
-                               scoped_refptr<SharedContextState> context_state,
-                               std::unique_ptr<VulkanImage> vulkan_image,
-                               MemoryTypeTracker* tracker)
-      : SkiaVkAndroidImageRepresentation(manager,
-                                         backing,
-                                         std::move(context_state),
-                                         tracker) {
-    DCHECK(vulkan_image);
-
-    vulkan_image_ = std::move(vulkan_image);
-    // TODO(bsalomon): Determine whether it makes sense to attempt to reuse this
-    // if the vk_info stays the same on subsequent calls.
-    promise_texture_ = GrPromiseImageTexture::Make(GrBackendTextures::MakeVk(
-        size().width(), size().height(),
-        CreateGrVkImageInfo(vulkan_image_.get(), format(), color_space())));
-    DCHECK(promise_texture_);
-  }
-};
-
 class OverlayAHBImageRepresentation : public OverlayImageRepresentation {
  public:
   OverlayAHBImageRepresentation(SharedImageManager* manager,
@@ -498,21 +473,7 @@ AHardwareBufferImageBacking::ProduceSkiaGanesh(
   // Check whether we are in Vulkan mode OR GL mode and accordingly create
   // Skia representation.
   if (context_state->GrContextIsVulkan()) {
-    uint32_t queue_family = VK_QUEUE_FAMILY_EXTERNAL;
-    if (usage() & SHARED_IMAGE_USAGE_SCANOUT) {
-      // Any Android API that consume or produce buffers (e.g SurfaceControl)
-      // requires a foreign queue.
-      queue_family = VK_QUEUE_FAMILY_FOREIGN_EXT;
-    }
-    auto vulkan_image = CreateVkImageFromAhbHandle(
-        GetAhbHandle(), context_state.get(), size(), format(), queue_family);
-
-    if (!vulkan_image)
-      return nullptr;
-
-    return std::make_unique<SkiaVkAHBImageRepresentation>(
-        manager, this, std::move(context_state), std::move(vulkan_image),
-        tracker);
+    return nullptr;
   }
   DCHECK(context_state->GrContextIsGL());
   DCHECK(hardware_buffer_handle_.is_valid());

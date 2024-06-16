@@ -97,8 +97,6 @@ static_library("test_support") {
     "null_task_runner.h",
     "perf_log.cc",
     "perf_log.h",
-    "perf_test_suite.cc",
-    "perf_test_suite.h",
     "perf_time_logger.cc",
     "perf_time_logger.h",
     "power_monitor_test.cc",
@@ -156,8 +154,6 @@ static_library("test_support") {
     "test_shared_memory_util.h",
     "test_simple_task_runner.cc",
     "test_simple_task_runner.h",
-    "test_suite.cc",
-    "test_suite.h",
     "test_waitable_event.cc",
     "test_waitable_event.h",
     "thread_test_helper.cc",
@@ -183,7 +179,6 @@ static_library("test_support") {
   deps = [
     ":proto_test_support",
     "//build:chromeos_buildflags",
-    "//third_party/google_benchmark",
     "//third_party/icu:icuuc",
     "//third_party/libxml:libxml_utils",
     "//third_party/libxml:xml_reader",
@@ -235,7 +230,6 @@ static_library("test_support") {
 
   if (is_linux || is_chromeos) {
     sources += [ "test_file_util_linux.cc" ]
-    public_deps += [ "//third_party/test_fonts/fontconfig:test_support" ]
   }
 
   if (is_mac) {
@@ -683,6 +677,5 @@ source_set("fuzztest_support") {
   sources = [ "fuzztest_support.h" ]
   deps = [
     "//base",
-    "//third_party/fuzztest:fuzztest_internal",
   ]
 }

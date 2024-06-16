@@ -359,24 +359,10 @@ SharedImageFactory::SharedImageFactory(
 
 #if BUILDFLAG(IS_ANDROID)
   bool is_ahb_supported = true;
-  if (gr_context_type_ == GrContextType::kVulkan) {
-    const auto& enabled_extensions = context_state_->vk_context_provider()
-                                         ->GetDeviceQueue()
-                                         ->enabled_extensions();
-    is_ahb_supported = gfx::HasExtension(
-        enabled_extensions,
-        VK_ANDROID_EXTERNAL_MEMORY_ANDROID_HARDWARE_BUFFER_EXTENSION_NAME);
-  }
   if (is_ahb_supported) {
     auto ahb_factory = std::make_unique<AHardwareBufferImageBackingFactory>(
         feature_info.get(), gpu_preferences_);
     factories_.push_back(std::move(ahb_factory));
-  }
-  if (gr_context_type_ == GrContextType::kVulkan &&
-      !base::FeatureList::IsEnabled(features::kVulkanFromANGLE)) {
-    auto external_vk_image_factory =
-        std::make_unique<ExternalVkImageBackingFactory>(context_state_);
-    factories_.push_back(std::move(external_vk_image_factory));
   }
 #elif BUILDFLAG(IS_OZONE)
   // For all Ozone platforms - Desktop Linux, ChromeOS, Fuchsia, CastOS.

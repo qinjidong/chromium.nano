@@ -1948,7 +1948,6 @@ if (!is_android) {
       "//components/privacy_sandbox/privacy_sandbox_attestations:test_support",
       "//components/privacy_sandbox/privacy_sandbox_attestations/proto:proto",
       "//components/proxy_config",
-      "//components/qr_code_generator:bitmap_generator",
       "//components/reading_list/core",
       "//components/reading_list/features:flags",
       "//components/resources",
@@ -7047,7 +7046,6 @@ test("unit_tests") {
     "//components/privacy_sandbox/privacy_sandbox_attestations:test_support",
     "//components/privacy_sandbox/privacy_sandbox_attestations/proto:proto",
     "//components/proxy_config",
-    "//components/qr_code_generator:bitmap_generator",
     "//components/query_parser",
     "//components/query_tiles:unit_tests",
     "//components/reading_list/core",
@@ -7212,7 +7210,6 @@ test("unit_tests") {
     "//third_party/metrics_proto",
     "//third_party/microsoft_webauthn",
     "//third_party/re2",
-    "//third_party/rust/fend_core/v1/wrapper:unit_tests",
     "//third_party/webrtc_overrides:webrtc_component",
     "//third_party/widevine/cdm:headers",
     "//third_party/zlib/google:compression_utils",
@@ -7462,7 +7459,6 @@ test("unit_tests") {
     # !is_mac
     deps += [
       "//chrome/tools/convert_dict:lib",
-      "//third_party/hunspell",
     ]
   }
 
@@ -10973,7 +10969,6 @@ if (!is_android) {
         "//skia",
         "//testing/gmock",
         "//testing/gtest",
-        "//third_party/hunspell",
         "//third_party/icu",
         "//third_party/libpng",
         "//ui/base:test_support",
@@ -11271,7 +11266,6 @@ if (!is_android && !is_chromeos_device) {
       "//skia",
       "//testing/gmock",
       "//testing/gtest",
-      "//third_party/hunspell",
       "//third_party/icu",
       "//third_party/libpng",
       "//ui/base:base_interactive_ui_tests",
@@ -12453,7 +12447,6 @@ if (!is_android) {
       "//skia",
       "//testing/gmock",
       "//testing/gtest",
-      "//third_party/hunspell",
       "//third_party/icu",
       "//third_party/libpng",
       "//ui/base:test_support",
@@ -12914,7 +12907,6 @@ if (is_linux || is_mac || is_win) {
 
     data_deps = [
       "//chrome",
-      "//chrome/test/chromedriver:chromedriver_server",
       "//testing:test_scripts_shared",
       "//ui/base:goldctl",
     ]

@@ -301,7 +301,7 @@ bool IsDefaultANGLEVulkan() {
 #endif  // BUILDFLAG(IS_ANDROID)
 #if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS)
   angle::SystemInfo system_info;
-  if (!angle::GetSystemInfoVulkan(&system_info))
+  if (!angle::GetSystemInfo(&system_info))
     return false;
 
   if (static_cast<size_t>(system_info.activeGPUIndex) >=

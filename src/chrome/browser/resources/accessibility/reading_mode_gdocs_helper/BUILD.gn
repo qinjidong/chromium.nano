@@ -26,7 +26,6 @@ ts_library("build_ts") {
 copy("reading_mode_gdocs_helper_copied_files") {
   sources = [
     "$tsc_output_dir/content.js",
-    "../../chromeos/accessibility/common/gdocs_script.js",
   ]
   outputs = [ "$out_dir/{{source_file_part}}" ]
   deps = [ ":build_ts" ]

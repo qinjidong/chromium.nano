@@ -16,8 +16,6 @@
 #include "chrome/browser/extensions/api/image_writer_private/error_constants.h"
 #include "chrome/browser/extensions/api/image_writer_private/extraction_properties.h"
 #include "chrome/browser/extensions/api/image_writer_private/operation_manager.h"
-#include "chrome/browser/extensions/api/image_writer_private/tar_extractor.h"
-#include "chrome/browser/extensions/api/image_writer_private/xz_extractor.h"
 #include "chrome/browser/extensions/api/image_writer_private/zip_extractor.h"
 #include "content/public/browser/browser_task_traits.h"
 #include "content/public/browser/browser_thread.h"
@@ -31,9 +29,7 @@ const int kMD5BufferSize = 1024;
 
 // Returns true if the file at |image_path| is an archived image.
 bool IsArchive(const base::FilePath& image_path) {
-  return ZipExtractor::IsZipFile(image_path) ||
-         TarExtractor::IsTarFile(image_path) ||
-         XzExtractor::IsXzFile(image_path);
+  return ZipExtractor::IsZipFile(image_path);
 }
 
 // Extracts the archive at |image_path| using to |temp_dir_path| using a proper
@@ -41,10 +37,6 @@ bool IsArchive(const base::FilePath& image_path) {
 void ExtractArchive(ExtractionProperties properties) {
   if (ZipExtractor::IsZipFile(properties.image_path)) {
     ZipExtractor::Extract(std::move(properties));
-  } else if (TarExtractor::IsTarFile(properties.image_path)) {
-    TarExtractor::Extract(std::move(properties));
-  } else if (XzExtractor::IsXzFile(properties.image_path)) {
-    XzExtractor::Extract(std::move(properties));
   } else {
     NOTREACHED_IN_MIGRATION();
   }

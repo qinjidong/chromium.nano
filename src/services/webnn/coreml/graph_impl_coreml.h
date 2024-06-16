@@ -14,7 +14,6 @@
 #include "base/sequence_checker.h"
 #include "base/task/single_thread_task_runner.h"
 #include "base/timer/elapsed_timer.h"
-#include "services/webnn/coreml/graph_builder_coreml.h"
 #include "services/webnn/public/mojom/webnn_context_provider.mojom.h"
 #include "services/webnn/public/mojom/webnn_graph.mojom.h"
 #include "services/webnn/webnn_graph_impl.h"
@@ -60,8 +59,6 @@ class API_AVAILABLE(macos(14.0)) GraphImplCoreml final : public WebNNGraphImpl {
   static MLFeatureValue* CreateFeatureValue(
       GraphImplCoreml::CoreMLFeatureInfo* feature_info,
       mojo_base::BigBuffer data);
-  static std::optional<CoreMLFeatureInfo> GetCoreMLFeatureInfo(
-      const GraphBuilderCoreml::InputOperandInfo& operand_info);
   using CoreMLFeatureInfoMap = base::flat_map<std::string, CoreMLFeatureInfo>;
   GraphImplCoreml(
       ComputeResourceInfo compute_resource_info,

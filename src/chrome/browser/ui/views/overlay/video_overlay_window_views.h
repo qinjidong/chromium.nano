@@ -11,7 +11,6 @@
 #include "base/timer/timer.h"
 #include "build/chromeos_buildflags.h"
 #include "chrome/browser/picture_in_picture/auto_pip_setting_overlay_view.h"
-#include "chromeos/ui/frame/highlight_border_overlay.h"
 #include "content/public/browser/overlay_window.h"
 #include "content/public/browser/video_picture_in_picture_window_controller.h"
 #include "ui/display/display.h"

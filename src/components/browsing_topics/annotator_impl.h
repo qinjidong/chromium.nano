@@ -17,7 +17,6 @@
 #include "base/sequence_checker.h"
 #include "base/task/sequenced_task_runner.h"
 #include "components/browsing_topics/annotator.h"
-#include "components/optimization_guide/core/bert_model_handler.h"
 
 namespace optimization_guide {
 class OptimizationGuideModelProvider;

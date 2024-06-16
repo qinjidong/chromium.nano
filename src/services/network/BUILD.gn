@@ -536,7 +536,6 @@ source_set("tests") {
     data = [
       "//net/tools/testserver/",
       "//services/test/data",
-      "//third_party/pywebsocket3/src/mod_pywebsocket/",
     ]
   }
 

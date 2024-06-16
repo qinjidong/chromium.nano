@@ -10,7 +10,6 @@ import(
 import("//chrome/common/features.gni")
 import("//testing/test.gni")
 import("//third_party/closure_compiler/compile_js.gni")
-import("//third_party/liblouis/liblouis_library.gni")
 
 if (is_chromeos_ash) {
   import("//chrome/test/base/ash/js2gtest.gni")
@@ -28,7 +27,6 @@ chromevox_modules = [
   "braille/braille_table.js",
   "braille/braille_translator_manager.js",
   "braille/expanding_braille_translator.js",
-  "braille/liblouis.js",
   "braille/nav_braille.js",
   "braille/pan_strategy.js",
   "braille/spans.js",
@@ -232,7 +230,6 @@ group("chromevox") {
     ":chromevox_kbexplorer_script",
     ":chromevox_manifest",
     ":chromevox_options_script",
-    ":chromevoxclassic_liblouis",
   ]
 }
 
@@ -342,10 +339,6 @@ run_jsbundler("chromevox_copied_files") {
     rebase_path(".", root_build_dir) + ":",
     rebase_path(closure_library_dir, root_build_dir) + ":closure",
   ]
-}
-
-liblouis_library("chromevoxclassic_liblouis") {
-  dest_dir = chromevox_out_dir + "/braille"
 }
 
 # TODO(crbug/978200): refactor this into another file like generate_manifest.gni

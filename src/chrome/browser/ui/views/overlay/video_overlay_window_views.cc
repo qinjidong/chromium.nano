@@ -31,7 +31,6 @@
 #include "chrome/browser/ui/views/overlay/toggle_camera_button.h"
 #include "chrome/browser/ui/views/overlay/toggle_microphone_button.h"
 #include "chrome/grit/generated_resources.h"
-#include "chromeos/ui/base/chromeos_ui_constants.h"
 #include "components/vector_icons/vector_icons.h"
 #include "content/public/browser/picture_in_picture_window_controller.h"
 #include "content/public/browser/web_contents.h"

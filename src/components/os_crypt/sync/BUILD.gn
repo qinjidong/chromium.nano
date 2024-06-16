@@ -65,17 +65,6 @@ component("os_crypt") {
       "os_crypt_linux.cc",
     ]
 
-    if (use_glib) {
-      sources += [
-        "key_storage_libsecret.cc",
-        "key_storage_libsecret.h",
-        "libsecret_util_linux.cc",
-        "libsecret_util_linux.h",
-      ]
-      configs += [ "//build/config/linux:glib" ]
-      deps += [ "//third_party/libsecret" ]
-      defines += [ "USE_LIBSECRET" ]
-    }
     if (use_dbus) {
       sources += [
         "key_storage_kwallet.cc",
@@ -106,9 +95,6 @@ static_library("test_support") {
       "os_crypt_mocker_linux.h",
     ]
     defines = []
-    if (use_glib) {
-      defines += [ "USE_LIBSECRET" ]
-    }
     if (use_dbus) {
       defines += [ "USE_KWALLET" ]
     }
@@ -145,11 +131,6 @@ source_set("unit_tests") {
     ]
     defines = []
 
-    if (use_glib) {
-      sources += [ "key_storage_libsecret_unittest.cc" ]
-      deps += [ "//third_party/libsecret" ]
-      defines += [ "USE_LIBSECRET" ]
-    }
     if (use_dbus) {
       sources += [
         "key_storage_kwallet_unittest.cc",

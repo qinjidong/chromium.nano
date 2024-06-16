@@ -66,8 +66,6 @@ class VIZ_VULKAN_CONTEXT_PROVIDER_EXPORT VulkanInProcessContextProvider
   gpu::VulkanDeviceQueue* GetDeviceQueue() override;
   GrDirectContext* GetGrContext() override;
   GrVkSecondaryCBDrawContext* GetGrSecondaryCBDrawContext() override;
-  void EnqueueSecondaryCBSemaphores(
-      std::vector<VkSemaphore> semaphores) override;
   void EnqueueSecondaryCBPostSubmitTask(base::OnceClosure closure) override;
   std::optional<uint32_t> GetSyncCpuMemoryLimit() const override;
 

@@ -31,7 +31,7 @@ if (headless_enable_commands) {
       "'headless_enable_commands' is not compatible with 'headless_use_embedded_resources'.")
 }
 
-bundle_hyphen_data = (is_linux || is_win) && !headless_use_embedded_resources
+bundle_hyphen_data = false
 
 # Headless defines config applied to every target below.
 config("headless_defines_config") {
@@ -625,7 +625,6 @@ test("headless_browsertests") {
     "$root_out_dir/headless_lib_strings.pak",
     "//net/tools/testserver/",
     "//third_party/blink/web_tests/http/tests/inspector-protocol/",
-    "//third_party/pywebsocket3/",
   ]
 
   if (bundle_hyphen_data) {

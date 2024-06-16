@@ -70,20 +70,6 @@ class LanguageDetectionModel {
   Prediction DetectLanguage(const std::u16string& contents) const;
 
   std::string GetModelVersion() const;
-
- private:
-  // Execute the model on the provided |sampled_str| and return the top language
-  // and the models score/confidence in that prediction.
-  std::pair<std::string, float> DetectTopLanguage(
-      const std::u16string& sampled_str) const;
-
-  // The tflite classifier that can determine the language of text.
-  std::unique_ptr<tflite::task::text::nlclassifier::NLClassifier>
-      lang_detection_model_;
-
-  // The number of threads to use for model inference. -1 tells TFLite to use
-  // its internal default logic.
-  const int num_threads_ = -1;
 };
 
 }  // namespace translate

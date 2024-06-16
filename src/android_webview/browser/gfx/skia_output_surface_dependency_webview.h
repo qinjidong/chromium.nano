@@ -13,7 +13,6 @@
 
 namespace android_webview {
 
-class AwVulkanContextProvider;
 class TaskQueueWebView;
 class GpuServiceWebView;
 
@@ -27,8 +26,7 @@ class SkiaOutputSurfaceDependencyWebView
       TaskQueueWebView* task_queue,
       GpuServiceWebView* gpu_service,
       gpu::SharedContextState* shared_context_state,
-      gl::GLSurface* gl_surface,
-      AwVulkanContextProvider* vulkan_context_provider);
+      gl::GLSurface* gl_surface);
 
   SkiaOutputSurfaceDependencyWebView(
       const SkiaOutputSurfaceDependencyWebView&) = delete;
@@ -65,7 +63,6 @@ class SkiaOutputSurfaceDependencyWebView
 
  private:
   const raw_ptr<gl::GLSurface> gl_surface_;
-  raw_ptr<AwVulkanContextProvider> vulkan_context_provider_;
   raw_ptr<TaskQueueWebView> task_queue_;
   raw_ptr<GpuServiceWebView> gpu_service_;
   gpu::GpuDriverBugWorkarounds workarounds_;

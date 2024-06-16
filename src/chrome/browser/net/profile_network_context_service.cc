@@ -32,7 +32,6 @@
 #include "chrome/browser/domain_reliability/service_factory.h"
 #include "chrome/browser/first_party_sets/first_party_sets_policy_service.h"
 #include "chrome/browser/first_party_sets/first_party_sets_policy_service_factory.h"
-#include "chrome/browser/ip_protection/ip_protection_config_provider.h"
 #include "chrome/browser/net/system_network_context_manager.h"
 #include "chrome/browser/privacy_sandbox/privacy_sandbox_settings_factory.h"
 #include "chrome/browser/privacy_sandbox/tracking_protection_settings_factory.h"
@@ -1269,18 +1268,6 @@ void ProfileNetworkContextService::ConfigureNetworkContextParamsInternal(
   network_context_params->acam_preflight_spec_conformant =
       profile_->GetPrefs()->GetBoolean(
           prefs::kAccessControlAllowMethodsInCORSPreflightSpecConformant);
-
-  IpProtectionConfigProvider* ipp_config_provider =
-      IpProtectionConfigProvider::Get(profile_);
-  if (ipp_config_provider) {
-    ipp_config_provider->AddNetworkService(
-        network_context_params->ip_protection_config_getter
-            .InitWithNewPipeAndPassReceiver(),
-        network_context_params->ip_protection_proxy_delegate
-            .InitWithNewPipeAndPassRemote());
-    network_context_params->enable_ip_protection =
-        ipp_config_provider->IsIpProtectionEnabled();
-  }
 
   network_context_params->device_bound_sessions_enabled =
       base::FeatureList::IsEnabled(net::features::kDeviceBoundSessions);

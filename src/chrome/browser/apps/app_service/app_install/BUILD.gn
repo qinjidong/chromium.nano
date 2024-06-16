@@ -212,6 +212,5 @@ test("app_install_fuzztests") {
   deps = [
     ":navigation_throttle",
     "//chrome/test:test_support",
-    "//third_party/fuzztest:fuzztest_gtest_main",
   ]
 }

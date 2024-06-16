@@ -2395,7 +2395,6 @@ source_set("quic_test_tools") {
     "//testing/gtest",
     "//third_party/boringssl",
     "//third_party/protobuf:protobuf_lite",
-    "//third_party/quic_trace:quic_trace_proto",
   ]
   public_deps = [
     ":quic_test_flags_utils",
@@ -2493,7 +2492,6 @@ if (!is_cronet_build) {
 
     deps = [
       ":net",
-      "//third_party/fuzztest:fuzztest_gtest_main",
     ]
   }
 }
@@ -2911,7 +2909,6 @@ test("net_unittests") {
     "//testing/gmock",
     "//testing/gtest",
     "//third_party/abseil-cpp:absl",
-    "//third_party/anonymous_tokens:anonymous_tokens_tests",
     "//third_party/protobuf:protobuf_lite",
     "//third_party/zlib",
     "//url",
@@ -2984,15 +2981,6 @@ test("net_unittests") {
     "data/verify_certificate_chain_unittest/",
   ]
   data_deps = [ "//testing/buildbot/filters:net_unittests_filters" ]
-
-  if (is_linux || is_chromeos || is_mac || is_win || is_fuchsia) {
-    deps += [ "//third_party/pywebsocket3/" ]
-    data_deps += [ "//third_party/pywebsocket3/" ]
-    data += [
-      "tools/testserver/",
-      "//third_party/pywebsocket3/src/mod_pywebsocket/",
-    ]
-  }
 
   if (is_linux || is_chromeos) {
     sources += [ "tools/quic/quic_simple_server_test.cc" ]
@@ -3268,7 +3256,6 @@ if (!is_ios) {
       "//base/test:test_support_perf",
       "//testing/gtest",
       "//testing/perf",
-      "//third_party/google_benchmark:google_benchmark",
       "//url",
     ]
     data_deps = [

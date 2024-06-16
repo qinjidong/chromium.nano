@@ -147,11 +147,7 @@ AwComponentUpdaterConfigurator::GetUnzipperFactory() {
 
 scoped_refptr<update_client::PatcherFactory>
 AwComponentUpdaterConfigurator::GetPatcherFactory() {
-  if (!patch_factory_) {
-    patch_factory_ =
-        base::MakeRefCounted<update_client::InProcessPatcherFactory>();
-  }
-  return patch_factory_;
+  return nullptr;
 }
 
 bool AwComponentUpdaterConfigurator::EnabledDeltas() const {

@@ -54,10 +54,6 @@ source_set("renderer") {
     "//third_party/blink/public:blink",
     "//third_party/icu",
   ]
-
-  if (!is_android) {
-    deps += [ "//third_party/hunspell" ]
-  }
 }
 
 source_set("unit_tests") {
@@ -71,7 +67,6 @@ source_set("unit_tests") {
     "spellcheck_provider_unittest.cc",
     "spellcheck_worditerator_unittest.cc",
   ]
-  data = [ "//third_party/hunspell_dictionaries/" ]
 
   if (!is_android) {
     sources += [ "spellcheck_unittest.cc" ]
@@ -98,6 +93,5 @@ source_set("unit_tests") {
 
   if (is_mac) {
     sources += [ "spellcheck_provider_mac_unittest.cc" ]
-    deps += [ "//third_party/hunspell" ]
   }
 }

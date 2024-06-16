@@ -130,7 +130,6 @@ static sk_sp<SkTypeface> DeserializeTypeface(const void* data,
 static bool is_supported_codec(sk_sp<SkData> data) {
   CHECK(data);
   return SkBmpDecoder::IsBmp(data->data(), data->size()) ||
-         SkGifDecoder::IsGif(data->data(), data->size()) ||
          SkPngDecoder::IsPng(data->data(), data->size()) ||
          SkJpegDecoder::IsJpeg(data->data(), data->size()) ||
          SkWebpDecoder::IsWebp(data->data(), data->size());
@@ -202,9 +201,6 @@ sk_sp<SkImage> DeserializeImage(const void* bytes, size_t length, void*) {
   }
   if (SkBmpDecoder::IsBmp(bytes, length)) {
     return get_image(SkBmpDecoder::Decode(data, nullptr));
-  }
-  if (SkGifDecoder::IsGif(bytes, length)) {
-    return get_image(SkGifDecoder::Decode(data, nullptr));
   }
   if (SkJpegDecoder::IsJpeg(bytes, length)) {
     return get_image(SkJpegDecoder::Decode(data, nullptr));

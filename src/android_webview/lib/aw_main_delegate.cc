@@ -8,7 +8,6 @@
 
 #include "android_webview/browser/aw_content_browser_client.h"
 #include "android_webview/browser/aw_media_url_interceptor.h"
-#include "android_webview/browser/gfx/aw_draw_fn_impl.h"
 #include "android_webview/browser/gfx/browser_view_renderer.h"
 #include "android_webview/browser/gfx/gpu_service_webview.h"
 #include "android_webview/browser/gfx/viz_compositor_thread_runner_webview.h"
@@ -155,9 +154,6 @@ std::optional<int> AwMainDelegate::BasicStartupComplete() {
 
     content::RegisterMediaUrlInterceptor(new AwMediaUrlInterceptor());
     BrowserViewRenderer::CalculateTileMemoryPolicy();
-
-    if (AwDrawFnImpl::IsUsingVulkan())
-      cl->AppendSwitch(switches::kWebViewDrawFunctorUsesVulkan);
 
 #ifdef V8_USE_EXTERNAL_STARTUP_DATA
 #if !BUILDFLAG(USE_V8_CONTEXT_SNAPSHOT) || BUILDFLAG(INCLUDE_BOTH_V8_SNAPSHOTS)

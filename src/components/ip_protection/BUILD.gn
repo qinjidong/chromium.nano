@@ -19,7 +19,6 @@ source_set("ip_protection") {
     "//google_apis:google_apis",
     "//mojo/public/cpp/bindings:bindings",
     "//net:net",
-    "//net/third_party/quiche:blind_sign_auth",
     "//services/network/public/cpp:cpp",
     "//services/network/public/mojom:mojom",
   ]

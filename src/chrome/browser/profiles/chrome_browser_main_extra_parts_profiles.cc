@@ -76,7 +76,6 @@
 #include "chrome/browser/history/top_sites_factory.h"
 #include "chrome/browser/history_clusters/history_clusters_service_factory.h"
 #include "chrome/browser/history_embeddings/history_embeddings_service_factory.h"
-#include "chrome/browser/ip_protection/ip_protection_config_provider_factory.h"
 #include "chrome/browser/k_anonymity_service/k_anonymity_service_factory.h"
 #include "chrome/browser/language/accept_languages_service_factory.h"
 #include "chrome/browser/language/language_model_manager_factory.h"
@@ -329,10 +328,6 @@
 #include "chrome/browser/smart_card/smart_card_permission_context_factory.h"
 #include "chrome/browser/webauthn/chromeos/passkey_service_factory.h"
 #include "chromeos/constants/chromeos_features.h"
-#endif
-
-#if BUILDFLAG(IS_CHROMEOS) || BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_WIN)
-#include "chrome/browser/policy/messaging_layer/util/manual_test_heartbeat_event_factory.h"
 #endif
 
 #if BUILDFLAG(IS_WIN)
@@ -873,7 +868,6 @@ void ChromeBrowserMainExtraPartsProfiles::
 #if !BUILDFLAG(IS_ANDROID)
   InstantServiceFactory::GetInstance();
 #endif
-  IpProtectionConfigProviderFactory::GetInstance();
 #if BUILDFLAG(IS_WIN)
   JumpListFactory::GetInstance();
 #endif
@@ -1102,14 +1096,6 @@ void ChromeBrowserMainExtraPartsProfiles::
 #endif
   ReduceAcceptLanguageFactory::GetInstance();
   RendererUpdaterFactory::GetInstance();
-#if BUILDFLAG(IS_CHROMEOS) || BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_WIN)
-  reporting::ManualTestHeartbeatEventFactory::GetInstance();
-#endif
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-  reporting::metrics::MetricReportingManagerLacrosFactory::GetInstance();
-  reporting::metrics::MetricReportingManagerLacrosShutdownNotifierFactory::
-      GetInstance();
-#endif
 #if !BUILDFLAG(IS_ANDROID)
   ResetReportUploaderFactory::GetInstance();
 #endif

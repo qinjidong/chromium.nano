@@ -6,8 +6,6 @@ import("//build/buildflag_header.gni")
 
 source_set("visual_query") {
   sources = [
-    "visual_query_classification_and_eligibility.cc",
-    "visual_query_classification_and_eligibility.h",
     "visual_query_classifier_agent.cc",
     "visual_query_classifier_agent.h",
     "visual_query_eligibility.cc",
@@ -23,10 +21,6 @@ source_set("visual_query") {
     "//skia",
     "//third_party/blink/public:blink_headers",
     "//third_party/blink/public/common:headers",
-    "//third_party/tflite",
-    "//third_party/tflite:tflite_public_headers",
-    "//third_party/tflite_support",
-    "//third_party/tflite_support:tflite_support_proto",
     "//ui/base",
     "//ui/gfx/geometry:geometry",
     "//v8",
@@ -50,10 +44,6 @@ source_set("unit_tests") {
     "//testing/gtest",
     "//third_party/blink/public:blink_headers",
     "//third_party/blink/public/common:headers",
-    "//third_party/tflite",
-    "//third_party/tflite:tflite_public_headers",
-    "//third_party/tflite_support",
-    "//third_party/tflite_support:tflite_support_proto",
     "//ui/base",
     "//ui/gfx:test_support",
     "//v8",
@@ -77,10 +67,6 @@ source_set("browser_tests") {
     "//testing/gtest",
     "//third_party/blink/public:blink_headers",
     "//third_party/blink/public/common:headers",
-    "//third_party/tflite",
-    "//third_party/tflite:tflite_public_headers",
-    "//third_party/tflite_support",
-    "//third_party/tflite_support:tflite_support_proto",
     "//ui/base",
     "//v8",
   ]

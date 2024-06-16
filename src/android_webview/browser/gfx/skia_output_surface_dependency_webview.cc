@@ -4,7 +4,6 @@
 
 #include "android_webview/browser/gfx/skia_output_surface_dependency_webview.h"
 
-#include "android_webview/browser/gfx/aw_vulkan_context_provider.h"
 #include "android_webview/browser/gfx/gpu_service_webview.h"
 #include "android_webview/browser/gfx/task_forwarding_sequence.h"
 #include "android_webview/browser/gfx/task_queue_webview.h"
@@ -19,19 +18,13 @@ SkiaOutputSurfaceDependencyWebView::SkiaOutputSurfaceDependencyWebView(
     TaskQueueWebView* task_queue,
     GpuServiceWebView* gpu_service,
     gpu::SharedContextState* shared_context_state,
-    gl::GLSurface* gl_surface,
-    AwVulkanContextProvider* vulkan_context_provider)
+    gl::GLSurface* gl_surface)
     : gl_surface_(gl_surface),
-      vulkan_context_provider_(vulkan_context_provider),
       task_queue_(task_queue),
       gpu_service_(gpu_service),
       workarounds_(
           gpu_service_->gpu_feature_info().enabled_gpu_driver_bug_workarounds),
-      shared_context_state_(shared_context_state) {
-  DCHECK(!(shared_context_state_ && vulkan_context_provider_) ||
-         shared_context_state_->vk_context_provider() ==
-             vulkan_context_provider);
-}
+      shared_context_state_(shared_context_state) {}
 
 SkiaOutputSurfaceDependencyWebView::~SkiaOutputSurfaceDependencyWebView() =
     default;

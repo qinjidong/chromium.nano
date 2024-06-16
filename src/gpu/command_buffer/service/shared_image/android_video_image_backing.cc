@@ -12,7 +12,6 @@
 #include "gpu/command_buffer/service/abstract_texture_android.h"
 #include "gpu/command_buffer/service/ref_counted_lock.h"
 #include "gpu/command_buffer/service/shared_context_state.h"
-#include "gpu/command_buffer/service/shared_image/video_image_reader_image_backing.h"
 #include "gpu/command_buffer/service/shared_image/video_surface_texture_image_backing.h"
 #include "gpu/command_buffer/service/texture_owner.h"
 #include "gpu/config/gpu_finch_features.h"
@@ -57,17 +56,10 @@ std::unique_ptr<AndroidVideoImageBacking> AndroidVideoImageBacking::Create(
     scoped_refptr<StreamTextureSharedImageInterface> stream_texture_sii,
     scoped_refptr<SharedContextState> context_state,
     scoped_refptr<RefCountedLock> drdc_lock) {
-  if (features::IsAImageReaderEnabled()) {
-    return std::make_unique<VideoImageReaderImageBacking>(
-        mailbox, size, color_space, surface_origin, alpha_type,
-        std::move(stream_texture_sii), std::move(context_state),
-        std::move(drdc_lock));
-  } else {
-    DCHECK(!drdc_lock);
-    return std::make_unique<VideoSurfaceTextureImageBacking>(
-        mailbox, size, color_space, surface_origin, alpha_type,
-        std::move(stream_texture_sii), std::move(context_state));
-  }
+  DCHECK(!drdc_lock);
+  return std::make_unique<VideoSurfaceTextureImageBacking>(
+      mailbox, size, color_space, surface_origin, alpha_type,
+      std::move(stream_texture_sii), std::move(context_state));
 }
 
 // Static.

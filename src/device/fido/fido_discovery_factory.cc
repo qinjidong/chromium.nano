@@ -16,7 +16,6 @@
 #include "device/fido/features.h"
 #include "device/fido/fido_discovery_base.h"
 #include "device/fido/hid/fido_hid_discovery.h"
-#include "device/fido/mac/icloud_keychain.h"
 
 #if BUILDFLAG(IS_WIN)
 // clang-format off

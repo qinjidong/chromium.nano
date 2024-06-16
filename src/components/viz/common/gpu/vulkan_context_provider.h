@@ -17,11 +17,6 @@
 #include <vulkan/vulkan_core.h>
 #endif
 
-#if !defined(VK_VERSION_1_1)
-// Workaround compiling issue when vulkan is disabled.
-typedef void* VkSemaphore;
-#endif
-
 struct GrContextOptions;
 class GrDirectContext;
 class GrVkSecondaryCBDrawContext;
@@ -44,11 +39,6 @@ class VIZ_VULKAN_CONTEXT_PROVIDER_EXPORT VulkanContextProvider
 
   // Get the current SecondaryCBDrawContext for the default render target.
   virtual GrVkSecondaryCBDrawContext* GetGrSecondaryCBDrawContext() = 0;
-
-  // Enqueue semaphores which will be submitted with GrSecondaryCB to device
-  // queue for signalling.
-  virtual void EnqueueSecondaryCBSemaphores(
-      std::vector<VkSemaphore> semaphores) = 0;
 
   // Enqueue task which will be executed after the GrSecondaryCB and post submit
   // semphores are submitted.

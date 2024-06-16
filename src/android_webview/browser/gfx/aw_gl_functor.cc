@@ -107,18 +107,6 @@ void AwGLFunctor::DrawGL(AwDrawGLInfo* draw_info) {
           save_restore, false /* abandon_context */);
       break;
     case AwDrawGLInfo::kModeDraw: {
-      HardwareRendererDrawParams params{
-          draw_info->clip_left,   draw_info->clip_top, draw_info->clip_right,
-          draw_info->clip_bottom, draw_info->width,    draw_info->height,
-      };
-      static_assert(std::size(decltype(draw_info->transform){}) ==
-                        std::size(params.transform),
-                    "transform size mismatch");
-      for (unsigned int i = 0; i < std::size(params.transform); ++i) {
-        params.transform[i] = draw_info->transform[i];
-      }
-      render_thread_manager_.DrawOnRT(save_restore, params, OverlaysParams(),
-                                      ReportRenderingThreadsCallback());
       break;
     }
   }

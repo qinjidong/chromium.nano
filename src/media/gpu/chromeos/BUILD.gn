@@ -107,7 +107,6 @@ source_set("common") {
     "//build:chromeos_buildflags",
     "//build/config/linux/libdrm",
     "//gpu/ipc/common:common",
-    "//gpu/vulkan/init:init",
     "//media",
     "//media/gpu:buffer_validation",
     "//media/gpu:buildflags",

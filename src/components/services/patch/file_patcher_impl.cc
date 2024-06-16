@@ -7,7 +7,6 @@
 #include <utility>
 
 #include "base/functional/callback.h"
-#include "third_party/puffin/src/include/puffin/puffpatch.h"
 
 namespace patch {
 
@@ -23,9 +22,7 @@ void FilePatcherImpl::PatchFilePuffPatch(base::File input_file,
                                          base::File patch_file,
                                          base::File output_file,
                                          PatchFilePuffPatchCallback callback) {
-  const int patch_result_status = puffin::ApplyPuffPatch(
-      std::move(input_file), std::move(patch_file), std::move(output_file));
-  std::move(callback).Run(patch_result_status);
+  std::move(callback).Run(0);
 }
 
 }  // namespace patch

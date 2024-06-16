@@ -58,8 +58,7 @@ SkiaVkOzoneImageRepresentation::SkiaVkOzoneImageRepresentation(
     CHECK(vulkan_image);
     auto promise_texture =
         GrPromiseImageTexture::Make(GrBackendTextures::MakeVk(
-            vulkan_image->size().width(), vulkan_image->size().height(),
-            CreateGrVkImageInfo(vulkan_image.get(), format(), color_space())));
+            vulkan_image->size().width(), vulkan_image->size().height(), {}));
     if (!promise_texture) {
       LOG(ERROR) << "Unable to create GrPromiseImageTexture";
       promise_textures_.clear();

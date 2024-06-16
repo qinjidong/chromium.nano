@@ -45,9 +45,6 @@ class HunspellEngine : public SpellingEngine {
   // We memory-map the BDict file.
   std::unique_ptr<base::MemoryMappedFile> bdict_file_;
 
-  // The hunspell dictionary in use.
-  std::unique_ptr<Hunspell> hunspell_;
-
   base::File file_;
 
   // This flag is true if hunspell is enabled.

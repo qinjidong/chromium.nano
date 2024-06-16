@@ -540,16 +540,12 @@ class TFLiteModelExecutor : public ModelExecutor<OutputType, InputType> {
   }
 
   base::OnceClosure MakeCancelClosure() {
-#if BUILDFLAG(BUILD_WITH_MEDIAPIPE_LIB)
-    return base::DoNothing();
-#else
     DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
     // |base::Unretained| is safe here since the watchdog itself guarantees the
     // lifetime of the stored pointer will not extend beyond when it is
     // disarmed.
     return base::BindOnce(&ModelExecutionTask::Cancel,
                           base::Unretained(loaded_model_.get()));
-#endif
   }
 
   proto::OptimizationTarget optimization_target_ =

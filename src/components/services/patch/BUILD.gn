@@ -12,10 +12,7 @@ source_set("lib") {
     "//base",
     "//components/services/filesystem/public/mojom",
     "//mojo/public/cpp/bindings",
-    "//third_party/puffin:libpuffpatch",
   ]
-
-  include_dirs = [ "//third_party/puffin/src/include" ]
 
   public_deps = [ "//components/services/patch/public/mojom" ]
 }

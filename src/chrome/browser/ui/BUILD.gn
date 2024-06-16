@@ -615,7 +615,6 @@ static_library("ui") {
     "//components/privacy_sandbox:tracking_protection_settings",
     "//components/profile_metrics",
     "//components/proxy_config",
-    "//components/qr_code_generator:bitmap_generator",
     "//components/query_parser",
     "//components/reading_list/core",
     "//components/reading_list/features:flags",
@@ -2284,7 +2283,6 @@ static_library("ui") {
     ]
     deps += [
       "//build:chromeos_buildflags",
-      "//chromeos/ui/vector_icons",
     ]
   }
 

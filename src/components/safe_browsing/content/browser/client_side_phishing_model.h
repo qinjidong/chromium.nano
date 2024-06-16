@@ -19,7 +19,6 @@
 #include "base/synchronization/lock.h"
 #include "base/thread_annotations.h"
 #include "components/optimization_guide/core/optimization_target_model_observer.h"
-#include "components/safe_browsing/core/common/fbs/client_model_generated.h"
 #include "components/safe_browsing/core/common/proto/client_model.pb.h"
 #include "components/safe_browsing/core/common/proto/csd.pb.h"
 
@@ -68,9 +67,6 @@ class ClientSidePhishingModel
 
   // Returns whether we currently have a model.
   bool IsEnabled() const;
-
-  static bool VerifyCSDFlatBufferIndicesAndFields(
-      const flat::ClientSideModel* model);
 
   // Returns model type (flatbuffer or none).
   CSDModelType GetModelType() const;

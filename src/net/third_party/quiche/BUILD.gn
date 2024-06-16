@@ -284,7 +284,7 @@ static_library("quiche_test_support") {
               "overrides/quiche_platform_impl/quiche_test_output_impl.h",
               "src/quiche/common/platform/default/quiche_platform_impl/quiche_test_loopback_impl.cc",
               "src/quiche/common/platform/default/quiche_platform_impl/quiche_test_loopback_impl.h",
-            ] + quiche_test_support_srcs + quiche_test_support_hdrs
+            ]
 
   configs += [ ":quiche_internal_config" ]
   public_configs = [ ":quiche_config" ]
@@ -313,7 +313,7 @@ static_library("quiche_tool_support") {
               "overrides/quiche_platform_impl/quiche_system_event_loop_impl.h",
               "src/quiche/common/platform/default/quiche_platform_impl/quiche_file_utils_impl.cc",
               "src/quiche/common/platform/default/quiche_platform_impl/quiche_file_utils_impl.h",
-            ] + quiche_tool_support_srcs + quiche_tool_support_hdrs
+            ]
 
   configs += [ ":quiche_internal_config" ]
   public_configs = [ ":quiche_config" ]
@@ -322,7 +322,6 @@ static_library("quiche_tool_support") {
     "//base",
     "//net",
     "//third_party/protobuf:protobuf_lite",
-    "//third_party/quic_trace:quic_trace_proto",
     "//url",
   ]
 }
@@ -737,8 +736,6 @@ source_set("quiche_tests") {
   public_configs = [ ":quiche_config" ]
 
   deps = [
-    ":blind_sign_auth",
-    ":blind_sign_auth_test_support",
     "//net",
     "//net:quic_test_tools",
     "//net:simple_quic_tools",
@@ -844,88 +841,6 @@ fuzzer_test("net_qpack_round_trip_fuzzer") {
     "//net:quic_test_tools",
     "//net:test_support",
   ]
-}
-
-component("blind_sign_auth") {
-  sources = [
-    "src/quiche/blind_sign_auth/blind_sign_auth.cc",
-    "src/quiche/blind_sign_auth/blind_sign_auth.h",
-    "src/quiche/blind_sign_auth/blind_sign_auth_interface.h",
-    "src/quiche/blind_sign_auth/blind_sign_message_interface.h",
-    "src/quiche/blind_sign_auth/blind_sign_message_response.cc",
-    "src/quiche/blind_sign_auth/blind_sign_message_response.h",
-    "src/quiche/blind_sign_auth/cached_blind_sign_auth.cc",
-    "src/quiche/blind_sign_auth/cached_blind_sign_auth.h",
-  ]
-  configs += [ ":quiche_internal_config" ]
-  public_configs = [ ":quiche_config" ]
-
-  deps = [
-    ":quiche",
-    "//base",
-    "//third_party/abseil-cpp:absl",
-    "//third_party/anonymous_tokens:rsa_bssa_public_metadata_client",
-    "//third_party/boringssl",
-    "//url",
-  ]
-
-  public_deps = [
-    ":blind_sign_auth_proto",
-    "//third_party/anonymous_tokens:anonymous_tokens_rsa_bssa_client",
-    "//third_party/anonymous_tokens:crypto_utils",
-    "//third_party/anonymous_tokens:proto_utils",
-    "//third_party/anonymous_tokens:tokens_encodings",
-  ]
-
-  defines = [ "IS_QUICHE_IMPL" ]
-}
-
-proto_library("blind_sign_auth_proto") {
-  visibility = [
-    ":blind_sign_auth",
-    ":blind_sign_auth_test_support",
-    ":quiche",
-    ":quiche_tests",
-  ]
-
-  sources = protobuf_blind_sign_auth
-  cc_generator_options = "lite=true,dllexport_decl=COMPONENT_EXPORT(QUICHE):"
-  cc_include = "base/component_export.h"
-  component_build_force_source_set = true
-
-  proto_in_dir = "src"
-
-  deps = [ "//base" ]
-
-  proto_deps = [ "//third_party/anonymous_tokens:anonymous_tokens_cc_proto" ]
-
-  proto_data_sources = [ "//third_party/anonymous_tokens/src/anonymous_tokens/proto/anonymous_tokens.proto" ]
-
-  import_dirs = [ "//third_party/anonymous_tokens/src/" ]
-
-  defines = [ "IS_QUICHE_IMPL" ]
-
-  extra_configs = [ "//build/config/compiler:wexit_time_destructors" ]
-}
-
-source_set("blind_sign_auth_test_support") {
-  visibility = [ ":quiche_tests" ]
-  testonly = true
-  sources = [
-    "src/quiche/blind_sign_auth/test_tools/mock_blind_sign_auth_interface.h",
-    "src/quiche/blind_sign_auth/test_tools/mock_blind_sign_message_interface.h",
-  ]
-  configs += [ ":quiche_internal_config" ]
-  public_configs = [ ":quiche_config" ]
-
-  deps = [
-    ":blind_sign_auth",
-    ":quiche",
-    ":quiche_test_support",
-    ":quiche_tool_support",
-  ]
-  public_deps =
-      [ "//third_party/anonymous_tokens:anonymous_tokens_test_support" ]
 }
 
 if (is_android) {

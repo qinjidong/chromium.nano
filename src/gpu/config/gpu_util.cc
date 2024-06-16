@@ -14,8 +14,6 @@
 #include <psapi.h>
 #endif  // BUILDFLAG(IS_WIN)
 
-#include <vulkan/vulkan.h>
-
 #include <memory>
 #include <optional>
 #include <set>

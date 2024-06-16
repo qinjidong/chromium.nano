@@ -8,7 +8,6 @@
 #include "chrome/browser/ui/extensions/extensions_dialogs.h"
 #include "chrome/grit/branded_strings.h"
 #include "chrome/grit/generated_resources.h"
-#include "chromeos/ui/vector_icons/vector_icons.h"
 #include "components/constrained_window/constrained_window_views.h"
 #include "components/strings/grit/components_strings.h"
 #include "content/public/browser/browser_thread.h"
@@ -54,8 +53,6 @@ void ShowExtensionInstallBlockedByParentDialog(
   auto dialog_model =
       ui::DialogModel::Builder()
           .SetTitle(GetTitle(action, extension_type))
-          .SetIcon(ui::ImageModel::FromVectorIcon(
-              chromeos::kNotificationSupervisedUserIcon, ui::kColorIcon))
           .AddParagraph(
               ui::DialogModelLabel(l10n_util::GetStringUTF16(
                   IDS_EXTENSION_PERMISSIONS_BLOCKED_BY_PARENT_PROMPT_MESSAGE)),

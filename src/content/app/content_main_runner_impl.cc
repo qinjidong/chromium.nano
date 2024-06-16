@@ -113,7 +113,6 @@
 #include "services/tracing/public/cpp/trace_startup.h"
 #include "services/tracing/public/cpp/tracing_features.h"
 #include "third_party/blink/public/common/origin_trials/trial_token_validator.h"
-#include "third_party/tflite/buildflags.h"
 #include "tools/v8_context_snapshot/buildflags.h"
 #include "ui/base/ui_base_paths.h"
 #include "ui/base/ui_base_switches.h"
@@ -198,10 +197,6 @@
 
 #if BUILDFLAG(IS_FUCHSIA)
 #include "base/fuchsia/system_info.h"
-#endif
-
-#if BUILDFLAG(BUILD_TFLITE_WITH_XNNPACK)
-#include "third_party/cpuinfo/src/include/cpuinfo.h"
 #endif
 
 #if defined(ADDRESS_SANITIZER)
@@ -447,13 +442,6 @@ void PreSandboxInit() {
   PreloadLibraryCdms();
 #endif
   InitializeWebRtcModuleBeforeSandbox();
-
-#if BUILDFLAG(BUILD_TFLITE_WITH_XNNPACK)
-  // cpuinfo needs to parse /proc/cpuinfo, or its equivalent.
-  if (!cpuinfo_initialize()) {
-    LOG(ERROR) << "Failed to initialize cpuinfo";
-  }
-#endif
 
   // Preload and cache the results since the methods may use the prlimit64
   // system call that is not allowed by all sandbox types.

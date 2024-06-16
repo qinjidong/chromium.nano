@@ -4,14 +4,6 @@
 #include "components/optimization_guide/core/tflite_op_resolver.h"
 
 #include "components/optimization_guide/core/optimization_guide_features.h"
-#include "third_party/tflite/buildflags.h"
-#include "third_party/tflite/src/tensorflow/lite/c/common.h"
-#include "third_party/tflite/src/tensorflow/lite/kernels/builtin_op_kernels.h"
-#include "third_party/tflite/src/tensorflow/lite/schema/schema_generated.h"
-
-#if BUILDFLAG(BUILD_TFLITE_WITH_XNNPACK)
-#include "third_party/tflite/src/tensorflow/lite/tflite_with_xnnpack_optional.h"
-#endif
 
 namespace optimization_guide {
 
@@ -385,15 +377,6 @@ TFLiteOpResolver::TFLiteOpResolver() {
              tflite::ops::builtin::Register_RANDOM_STANDARD_NORMAL());
   AddBuiltin(tflite::BuiltinOperator_RANDOM_UNIFORM,
              tflite::ops::builtin::Register_RANDOM_UNIFORM());
-
-#if BUILDFLAG(BUILD_TFLITE_WITH_XNNPACK)
-  if (features::TFLiteXNNPACKDelegateEnabled()) {
-    delegate_creators_.push_back([](TfLiteContext* context) {
-      return tflite::MaybeCreateXNNPACKDelegate(
-          context, tflite::XNNPackQS8Options::default_value);
-    });
-  }
-#endif
 }
 
 }  // namespace optimization_guide

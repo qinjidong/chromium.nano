@@ -14,7 +14,6 @@
 #include "chrome/browser/profiles/profile.h"
 #include "components/browsing_topics/annotator.h"
 #include "components/browsing_topics/browsing_topics_service.h"
-#include "components/browsing_topics/browsing_topics_service_impl.h"
 #include "components/content_settings/browser/page_specific_content_settings.h"
 #include "components/history/core/browser/history_service.h"
 #include "components/keyed_service/core/service_access_type.h"
@@ -25,12 +24,6 @@
 #include "content/public/browser/browsing_topics_site_data_manager.h"
 #include "content/public/browser/storage_partition.h"
 #include "third_party/blink/public/common/features.h"
-
-#if BUILDFLAG(BUILD_WITH_TFLITE_LIB)
-#include "components/browsing_topics/annotator_impl.h"
-#else
-#include "components/browsing_topics/annotator_noop.h"
-#endif
 
 namespace browsing_topics {
 
@@ -65,61 +58,7 @@ BrowsingTopicsServiceFactory::~BrowsingTopicsServiceFactory() = default;
 
 KeyedService* BrowsingTopicsServiceFactory::BuildServiceInstanceFor(
     content::BrowserContext* context) const {
-  if (!base::FeatureList::IsEnabled(blink::features::kBrowsingTopics))
-    return nullptr;
-
-  Profile* profile = Profile::FromBrowserContext(context);
-
-  privacy_sandbox::PrivacySandboxSettings* privacy_sandbox_settings =
-      PrivacySandboxSettingsFactory::GetForProfile(profile);
-  if (!privacy_sandbox_settings)
-    return nullptr;
-
-  history::HistoryService* history_service =
-      HistoryServiceFactory::GetForProfile(profile,
-                                           ServiceAccessType::IMPLICIT_ACCESS);
-  if (!history_service)
-    return nullptr;
-
-  content::BrowsingTopicsSiteDataManager* site_data_manager =
-      context->GetDefaultStoragePartition()->GetBrowsingTopicsSiteDataManager();
-  if (!site_data_manager)
-    return nullptr;
-
-  OptimizationGuideKeyedService* opt_guide_service =
-      OptimizationGuideKeyedServiceFactory::GetForProfile(profile);
-  if (!opt_guide_service) {
-    return nullptr;
-  }
-
-  optimization_guide::proto::Any any_metadata;
-  any_metadata.set_type_url(
-      "type.googleapis.com/"
-      "google.internal.chrome.optimizationguide.v1.PageTopicsModelMetadata");
-  optimization_guide::proto::PageTopicsModelMetadata model_metadata;
-  // The current version the client supports for the topics model. This
-  // should be incremented any time there is a client code change to how the
-  // topics model works that needs to be side-channeled to the server.
-  model_metadata.set_version(2);
-  model_metadata.set_taxonomy_version(
-      blink::features::kBrowsingTopicsTaxonomyVersion.Get());
-  model_metadata.SerializeToString(any_metadata.mutable_value());
-
-#if BUILDFLAG(BUILD_WITH_TFLITE_LIB)
-  std::unique_ptr<Annotator> annotator = std::make_unique<AnnotatorImpl>(
-      /*model_provider=*/opt_guide_service,
-      base::ThreadPool::CreateSequencedTaskRunner(
-          {base::MayBlock(), base::TaskPriority::BEST_EFFORT}),
-      any_metadata);
-#else
-  std::unique_ptr<Annotator> annotator = std::make_unique<AnnotatorNoOp>();
-#endif
-
-  return new BrowsingTopicsServiceImpl(
-      profile->GetPath(), privacy_sandbox_settings, history_service,
-      site_data_manager, std::move(annotator),
-      base::BindRepeating(
-          content_settings::PageSpecificContentSettings::TopicAccessed));
+  return nullptr;
 }
 
 bool BrowsingTopicsServiceFactory::ServiceIsCreatedWithBrowserContext() const {

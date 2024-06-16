@@ -1158,39 +1158,6 @@ static_library("browser") {
     "policy/homepage_location_policy_handler.h",
     "policy/javascript_policy_handler.cc",
     "policy/javascript_policy_handler.h",
-    "policy/messaging_layer/public/report_client.cc",
-    "policy/messaging_layer/public/report_client.h",
-    "policy/messaging_layer/upload/configuration_file_controller.cc",
-    "policy/messaging_layer/upload/configuration_file_controller.h",
-    "policy/messaging_layer/upload/encrypted_reporting_client.cc",
-    "policy/messaging_layer/upload/encrypted_reporting_client.h",
-    "policy/messaging_layer/upload/event_upload_size_controller.cc",
-    "policy/messaging_layer/upload/event_upload_size_controller.h",
-    "policy/messaging_layer/upload/file_upload_job.cc",
-    "policy/messaging_layer/upload/file_upload_job.h",
-    "policy/messaging_layer/upload/network_condition_service.cc",
-    "policy/messaging_layer/upload/network_condition_service.h",
-    "policy/messaging_layer/upload/record_handler_impl.cc",
-    "policy/messaging_layer/upload/record_handler_impl.h",
-    "policy/messaging_layer/upload/record_upload_request_builder.cc",
-    "policy/messaging_layer/upload/record_upload_request_builder.h",
-    "policy/messaging_layer/upload/server_uploader.cc",
-    "policy/messaging_layer/upload/server_uploader.h",
-    "policy/messaging_layer/upload/upload_client.cc",
-    "policy/messaging_layer/upload/upload_client.h",
-    "policy/messaging_layer/upload/upload_provider.cc",
-    "policy/messaging_layer/upload/upload_provider.h",
-    "policy/messaging_layer/util/dm_token_retriever_provider.cc",
-    "policy/messaging_layer/util/dm_token_retriever_provider.h",
-    "policy/messaging_layer/util/report_queue_manual_test_context.cc",
-    "policy/messaging_layer/util/report_queue_manual_test_context.h",
-    "policy/messaging_layer/util/reporting_server_connector.cc",
-    "policy/messaging_layer/util/reporting_server_connector.h",
-    "policy/messaging_layer/util/upload_declarations.h",
-    "policy/messaging_layer/util/upload_response_parser.cc",
-    "policy/messaging_layer/util/upload_response_parser.h",
-    "policy/messaging_layer/util/user_dm_token_retriever.cc",
-    "policy/messaging_layer/util/user_dm_token_retriever.h",
     "policy/policy_ui_utils.cc",
     "policy/policy_ui_utils.h",
     "policy/policy_util.cc",
@@ -2024,13 +1991,11 @@ static_library("browser") {
     "//chrome/browser/safe_browsing:verdict_cache_manager_factory",
     "//chrome/browser/safe_browsing:advanced_protection",
     "//chrome/browser/safe_browsing:metrics_collector",
-    "//chrome/browser/ip_protection",
 
     # TODO(crbug.com/40110173): Eliminate usages of browser.h from Media Router.
     "//chrome/browser/media/router",
 
     "//chrome/browser/permissions",
-    "//chrome/browser/policy/messaging_layer/storage_selector",
   ]
 
   if (!is_chromeos_lacros) {
@@ -2120,7 +2085,6 @@ static_library("browser") {
     "//chrome/browser/first_party_sets",
     "//chrome/browser/image_decoder",
     "//chrome/browser/image_fetcher",
-    "//chrome/browser/ip_protection",
     "//chrome/browser/lens/core/mojom:mojo_bindings",
     "//chrome/browser/media:media_engagement_preload_proto",
     "//chrome/browser/media:mojo_bindings",
@@ -2140,8 +2104,6 @@ static_library("browser") {
     "//chrome/browser/permissions",
     "//chrome/browser/persisted_state_db:persisted_state_db",
     "//chrome/browser/policy:path_parser",
-    "//chrome/browser/policy/messaging_layer/proto:log_upload_event_proto",
-    "//chrome/browser/policy/messaging_layer/storage_selector",
     "//chrome/browser/privacy_budget",
     "//chrome/browser/profiles:profile",
     "//chrome/browser/profiles:profiles",
@@ -2414,7 +2376,6 @@ static_library("browser") {
     "//components/privacy_sandbox/privacy_sandbox_attestations",
     "//components/profile_metrics",
     "//components/proxy_config",
-    "//components/qr_code_generator:bitmap_generator",
     "//components/query_parser",
     "//components/query_tiles",
     "//components/reading_list/core",
@@ -5234,8 +5195,6 @@ static_library("browser") {
       "policy/device_login_screen_geolocation_access_level_policy_handler.h",
       "policy/drive_file_sync_available_policy_handler.cc",
       "policy/drive_file_sync_available_policy_handler.h",
-      "policy/messaging_layer/upload/file_upload_impl.cc",
-      "policy/messaging_layer/upload/file_upload_impl.h",
       "policy/os_color_mode_policy_handler.cc",
       "policy/os_color_mode_policy_handler.h",
       "policy/status_provider/device_cloud_policy_status_provider_chromeos.cc",
@@ -7041,15 +7000,6 @@ static_library("browser") {
     deps += [ "//ui/linux:display_server_utils" ]
   }
 
-  if (is_win || is_linux || is_chromeos) {
-    sources += [
-      "policy/messaging_layer/util/manual_test_heartbeat_event.cc",
-      "policy/messaging_layer/util/manual_test_heartbeat_event.h",
-      "policy/messaging_layer/util/manual_test_heartbeat_event_factory.cc",
-      "policy/messaging_layer/util/manual_test_heartbeat_event_factory.h",
-    ]
-  }
-
   if (is_win || is_mac || is_linux || is_chromeos) {
     deps += [
       "//components/power_metrics",
@@ -8018,10 +7968,6 @@ static_library("browser") {
       "//components/spellcheck/browser",
       "//components/spellcheck/common",
     ]
-
-    if (!is_android) {
-      deps += [ "//third_party/hunspell" ]
-    }
   }
 
   if (enable_extensions) {
@@ -8511,8 +8457,6 @@ static_library("test_support") {
     "notifications/stub_notification_display_service.h",
     "plugins/plugin_test_utils.cc",
     "plugins/plugin_test_utils.h",
-    "policy/messaging_layer/upload/fake_upload_client.cc",
-    "policy/messaging_layer/upload/fake_upload_client.h",
     "predictors/loading_test_util.cc",
     "predictors/loading_test_util.h",
     "resource_coordinator/tab_load_tracker_test_support.cc",
@@ -8544,7 +8488,6 @@ static_library("test_support") {
     ":browser_process",
     "//build:chromeos_buildflags",
     "//chrome/app/theme:theme_resources",
-    "//chrome/browser/policy/messaging_layer/proto:crd_event_proto",
     "//chrome/browser/share:share",
     "//chrome/common",
     "//chrome/common/notifications",

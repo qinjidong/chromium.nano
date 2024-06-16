@@ -82,7 +82,6 @@ config("skia_config") {
       "SK_ENCODE_PNG",
       "SK_ENCODE_WEBP",
     ]
-    include_dirs += [ "//third_party/wuffs/src/release/c" ]
   }
 
   if (is_component_build) {
@@ -367,10 +366,8 @@ component("skia") {
       "//third_party/skia/src/codec/SkJpegUtility.cpp",
       "//third_party/skia/src/codec/SkParseEncodedOrigin.cpp",
       "//third_party/skia/src/codec/SkWebpCodec.cpp",
-      "//third_party/skia/src/codec/SkWuffsCodec.cpp",
       "//third_party/skia/src/ports/SkImageGenerator_skia.cpp",
     ]
-    deps += [ "//third_party/wuffs" ]
   } else {
     sources += skia_no_encode_jpeg_srcs
   }
@@ -914,14 +911,6 @@ group("test_fonts_resources") {
   testonly = true
   deps = []
   data_deps = []
-
-  if (is_apple) {
-    deps += [ ":test_fonts_bundle_data" ]
-    data_deps += [ ":test_fonts_bundle_data" ]
-  } else {
-    deps += [ "//third_party/test_fonts" ]
-    data_deps += [ "//third_party/test_fonts" ]
-  }
 
   if (is_fuchsia) {
     deps += [ ":copy_fuchsia_fonts_manifest" ]

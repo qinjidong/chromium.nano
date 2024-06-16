@@ -10,7 +10,6 @@
 
 #include "android_webview/browser/gfx/compositor_frame_producer.h"
 #include "android_webview/browser/gfx/gpu_service_webview.h"
-#include "android_webview/browser/gfx/hardware_renderer.h"
 #include "android_webview/browser/gfx/scoped_app_gl_state_restore.h"
 #include "android_webview/browser/gfx/task_queue_webview.h"
 #include "android_webview/common/aw_features.h"
@@ -35,7 +34,6 @@ RenderThreadManager::RenderThreadManager(
 }
 
 RenderThreadManager::~RenderThreadManager() {
-  DCHECK(!hardware_renderer_.get());
   DCHECK(child_frames_.empty());
 }
 
@@ -80,15 +78,7 @@ std::unique_ptr<ChildFrame> RenderThreadManager::SetFrameOnUI(
     child_frames_.emplace_back(std::move(new_frame));
     return nullptr;
   }
-  std::unique_ptr<ChildFrame> uncommitted_frame;
-  DCHECK_LE(child_frames_.size(), 2u);
-  ChildFrameQueue pruned_frames =
-      HardwareRenderer::WaitAndPruneFrameQueue(&child_frames_);
-  DCHECK_LE(pruned_frames.size(), 1u);
-  if (pruned_frames.size())
-    uncommitted_frame = std::move(pruned_frames.front());
-  child_frames_.emplace_back(std::move(new_frame));
-  return uncommitted_frame;
+  return nullptr;
 }
 
 ChildFrameQueue RenderThreadManager::PassFramesOnRT() {
@@ -166,16 +156,7 @@ void RenderThreadManager::InsertReturnedResourcesOnRT(
                                 frame_sink_id, layer_tree_frame_sink_id));
 }
 
-void RenderThreadManager::CommitFrameOnRT() {
-  if (hardware_renderer_)
-    hardware_renderer_->CommitFrame();
-}
-
-void RenderThreadManager::SetVulkanContextProviderOnRT(
-    AwVulkanContextProvider* context_provider) {
-  DCHECK(!hardware_renderer_);
-  vulkan_context_provider_ = context_provider;
-}
+void RenderThreadManager::CommitFrameOnRT() {}
 
 void RenderThreadManager::UpdateViewTreeForceDarkStateOnRT(
     bool view_tree_force_dark_state) {
@@ -188,59 +169,9 @@ void RenderThreadManager::UpdateViewTreeForceDarkStateOnRT(
                      ui_thread_weak_ptr_, view_tree_force_dark_state_));
 }
 
-void RenderThreadManager::DrawOnRT(
-    bool save_restore,
-    const HardwareRendererDrawParams& params,
-    const OverlaysParams& overlays_params,
-    ReportRenderingThreadsCallback report_rendering_threads) {
-  // Force GL binding init if it's not yet initialized.
-  GpuServiceWebView::GetInstance();
-
-  std::optional<ScopedAppGLStateRestore> state_restore;
-  if (!vulkan_context_provider_) {
-    state_restore.emplace(ScopedAppGLStateRestore::MODE_DRAW, save_restore);
-    if (state_restore->skip_draw()) {
-      return;
-    }
-  }
-
-  if (!hardware_renderer_ && !IsInsideHardwareRelease() &&
-      HasFrameForHardwareRendererOnRT()) {
-    RootFrameSinkGetter getter;
-    {
-      base::AutoLock lock(lock_);
-      getter = root_frame_sink_getter_;
-    }
-    DCHECK(getter);
-    hardware_renderer_ = std::make_unique<HardwareRenderer>(
-        this, std::move(getter), vulkan_context_provider_);
-    hardware_renderer_->CommitFrame();
-  }
-
-  if (hardware_renderer_)
-    hardware_renderer_->Draw(params, overlays_params,
-                             std::move(report_rendering_threads));
-}
-
-void RenderThreadManager::RemoveOverlaysOnRT(
-    OverlaysParams::MergeTransactionFn merge_transaction) {
-  if (hardware_renderer_)
-    hardware_renderer_->RemoveOverlays(merge_transaction);
-}
-
 void RenderThreadManager::DestroyHardwareRendererOnRT(bool save_restore,
                                                       bool abandon_context) {
   GpuServiceWebView::GetInstance();
-
-  std::optional<ScopedAppGLStateRestore> state_restore;
-  if (!vulkan_context_provider_ && !abandon_context) {
-    state_restore.emplace(ScopedAppGLStateRestore::MODE_RESOURCE_MANAGEMENT,
-                          save_restore);
-  }
-  if (abandon_context && hardware_renderer_)
-    hardware_renderer_->AbandonContext();
-
-  hardware_renderer_.reset();
 
   ui_loop_->PostTask(
       FROM_HERE,

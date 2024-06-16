@@ -10,7 +10,6 @@
 #include "mojo/public/cpp/bindings/receiver.h"
 #include "services/passage_embeddings/passage_embedder_execution_task.h"
 #include "services/passage_embeddings/public/mojom/passage_embeddings.mojom.h"
-#include "third_party/sentencepiece/src/src/sentencepiece_processor.h"
 #include "third_party/tflite_support/src/tensorflow_lite_support/cc/task/core/base_task_api.h"
 
 namespace passage_embeddings {
@@ -59,8 +58,6 @@ class PassageEmbedder : public mojom::PassageEmbedder {
   std::optional<OutputType> Execute(InputType input);
 
   mojo::Receiver<mojom::PassageEmbedder> receiver_;
-
-  std::unique_ptr<sentencepiece::SentencePieceProcessor> sp_processor_;
 
   std::unique_ptr<PassageEmbedderExecutionTask> loaded_model_;
 

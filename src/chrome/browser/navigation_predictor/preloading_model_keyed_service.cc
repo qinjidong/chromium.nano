@@ -20,11 +20,6 @@ constexpr float ToInput(T val) {
   return static_cast<float>(val);
 }
 
-template <>
-constexpr float ToInput(base::TimeDelta val) {
-  return static_cast<float>(val.InMillisecondsF());
-}
-
 static_assert(1.0f == ToInput(true));
 
 }  // namespace

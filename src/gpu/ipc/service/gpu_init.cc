@@ -899,7 +899,6 @@ bool GpuInit::InitializeAndStartSandbox(base::CommandLine* command_line,
       std::move(supported_buffer_formats_for_texturing);
   [[maybe_unused]] auto* factory =
       ui::OzonePlatform::GetInstance()->GetSurfaceFactoryOzone();
-  bool filter_set = false;
 #if BUILDFLAG(ENABLE_VULKAN)
   if (gpu_feature_info_.status_values[GPU_FEATURE_TYPE_VULKAN] ==
           kGpuFeatureStatusEnabled &&

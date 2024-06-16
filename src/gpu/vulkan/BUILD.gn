@@ -248,7 +248,6 @@ if (enable_vulkan) {
         "//base/test:test_support",
         "//components/viz/common:vulkan_context_provider",
         "//gpu/ipc/service",
-        "//gpu/vulkan/init",
         "//testing/gmock",
         "//testing/gtest",
         "//ui/events/platform",

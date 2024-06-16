@@ -58,8 +58,7 @@ Configurator::Configurator(scoped_refptr<UpdaterPrefs> prefs,
           std::make_unique<ActivityDataService>(GetUpdaterScope()))),
       unzip_factory_(
           base::MakeRefCounted<update_client::InProcessUnzipperFactory>()),
-      patch_factory_(
-          base::MakeRefCounted<update_client::InProcessPatcherFactory>()),
+      patch_factory_(nullptr),
       is_managed_device_([] {
 #if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC)
         return base::IsManagedOrEnterpriseDevice();

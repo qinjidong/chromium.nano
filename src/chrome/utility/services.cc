@@ -65,7 +65,6 @@
 #include "chrome/common/importer/profile_import.mojom.h"
 #include "chrome/utility/importer/profile_import_impl.h"
 #include "components/mirroring/service/mirroring_service.h"
-#include "services/passage_embeddings/passage_embeddings_service.h"
 #include "services/proxy_resolver/proxy_resolver_factory_impl.h"  // nogncheck
 #include "services/proxy_resolver/public/mojom/proxy_resolver.mojom.h"
 #endif  // !BUILDFLAG(IS_ANDROID)
@@ -248,13 +247,6 @@ auto RunMirroringService(
     mojo::PendingReceiver<mirroring::mojom::MirroringService> receiver) {
   return std::make_unique<mirroring::MirroringService>(
       std::move(receiver), content::UtilityThread::Get()->GetIOTaskRunner());
-}
-
-auto RunPassageEmbeddingsService(
-    mojo::PendingReceiver<passage_embeddings::mojom::PassageEmbeddingsService>
-        receiver) {
-  return std::make_unique<passage_embeddings::PassageEmbeddingsService>(
-      std::move(receiver));
 }
 
 #endif  // !BUILDFLAG(IS_ANDROID)
@@ -463,7 +455,6 @@ void RegisterMainThreadServices(mojo::ServiceFactory& services) {
 #if !BUILDFLAG(IS_ANDROID)
   services.Add(RunProfileImporter);
   services.Add(RunMirroringService);
-  services.Add(RunPassageEmbeddingsService);
 #endif  // !BUILDFLAG(IS_ANDROID)
 
 #if BUILDFLAG(ENABLE_BROWSER_SPEECH_SERVICE)

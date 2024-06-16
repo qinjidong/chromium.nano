@@ -290,7 +290,6 @@ test("components_unittests") {
     "//components/profile_metrics:unit_tests",
     "//components/proxy_config:unit_tests",
     "//components/push_notification:unit_tests",
-    "//components/qr_code_generator:unit_tests",
     "//components/query_parser:unit_tests",
     "//components/reading_list/core:unit_tests",
     "//components/reporting/client:unit_tests",
@@ -1187,7 +1186,6 @@ if (use_blink) {
       "//components/test:test_support",
       "//components/visitedlink/browser",
       "//testing/perf",
-      "//third_party/google_benchmark:google_benchmark",
       "//url",
     ]
 

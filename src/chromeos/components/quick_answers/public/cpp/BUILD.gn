@@ -22,7 +22,6 @@ source_set("cpp") {
     "//components/language/core/browser:browser",
     "//components/pref_registry",
     "//components/prefs",
-    "//third_party/hunspell",
     "//ui/base",
     "//ui/gfx",
   ]

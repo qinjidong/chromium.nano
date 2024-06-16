@@ -141,7 +141,6 @@ class TestConfigurator : public Configurator {
   std::vector<GURL> update_check_urls_;
   GURL ping_url_;
   scoped_refptr<update_client::UnzipChromiumFactory> unzip_factory_;
-  scoped_refptr<update_client::PatchChromiumFactory> patch_factory_;
   scoped_refptr<network::SharedURLLoaderFactory> test_shared_loader_factory_;
   network::TestURLLoaderFactory test_url_loader_factory_;
   scoped_refptr<NetworkFetcherFactory> network_fetcher_factory_;

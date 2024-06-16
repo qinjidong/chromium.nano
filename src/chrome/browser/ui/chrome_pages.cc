@@ -9,8 +9,6 @@
 #include <memory>
 #include <string_view>
 
-#include "ash/constants/ash_features.h"
-#include "ash/webui/shortcut_customization_ui/url_constants.h"
 #include "base/containers/fixed_flat_map.h"
 #include "base/containers/map_util.h"
 #include "base/feature_list.h"

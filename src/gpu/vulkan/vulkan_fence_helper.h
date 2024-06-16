@@ -155,17 +155,6 @@ class COMPONENT_EXPORT(VULKAN) VulkanFenceHelper {
   base::WeakPtrFactory<VulkanFenceHelper> weak_factory_{this};
 };
 
-template <typename T>
-void VulkanFenceHelper::EnqueueVulkanObjectCleanupForSubmittedWork(
-    std::unique_ptr<T> obj) {
-  if (!obj)
-    return;
-  EnqueueCleanupTaskForSubmittedWork(
-      base::BindOnce([](std::unique_ptr<T> obj, VulkanDeviceQueue* device_queue,
-                        bool device_lost) { obj->Destroy(); },
-                     std::move(obj)));
-}
-
 }  // namespace gpu
 
 #endif  // GPU_VULKAN_VULKAN_FENCE_HELPER_H_

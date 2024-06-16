@@ -451,6 +451,5 @@ test("ac3_util_fuzzer") {
   deps = [
     "//base",
     "//media",
-    "//third_party/fuzztest:fuzztest_gtest_main",
   ]
 }

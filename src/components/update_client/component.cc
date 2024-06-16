@@ -36,7 +36,6 @@
 #include "components/update_client/persisted_data.h"
 #include "components/update_client/protocol_definition.h"
 #include "components/update_client/protocol_serializer.h"
-#include "components/update_client/puffin_patcher.h"
 #include "components/update_client/task_traits.h"
 #include "components/update_client/unpacker.h"
 #include "components/update_client/unzipper.h"
@@ -322,44 +321,6 @@ void StartPuffinInstallOnBlockingTaskRunner(
                      progress_callback, std::move(callback)));
 }
 
-void OnPuffPatchCompleteOnBlockingTaskRunner(
-    scoped_refptr<base::SequencedTaskRunner> main_task_runner,
-    const std::vector<uint8_t>& pk_hash,
-    const base::FilePath& patch_path,
-    const base::FilePath& dest_crx_path,
-    const std::string& id,
-    const std::string& fingerprint,
-    std::unique_ptr<CrxInstaller::InstallParams> install_params,
-    scoped_refptr<CrxInstaller> installer,
-    std::unique_ptr<Unzipper> unzipper_,
-    scoped_refptr<update_client::CrxCache> crx_cache,
-    crx_file::VerifierFormat crx_format,
-    CrxInstaller::ProgressCallback progress_callback,
-    InstallOnBlockingTaskRunnerCompleteCallback callback,
-    UnpackerError error,
-    int extra_code) {
-  update_client::DeleteFileAndEmptyParentDirectory(patch_path);
-  if (error != UnpackerError::kNone) {
-    update_client::DeleteFileAndEmptyParentDirectory(dest_crx_path);
-    main_task_runner->PostTask(
-        FROM_HERE,
-        base::BindOnce(std::move(callback), ErrorCategory::kUnpack,
-                       static_cast<int>(error), extra_code, std::nullopt));
-    DVLOG(2) << "PuffPatch failed: " << static_cast<int>(error);
-    return;
-  }
-
-  base::ThreadPool::CreateSequencedTaskRunner(kTaskTraits)
-      ->PostTask(
-          FROM_HERE,
-          base::BindOnce(
-              &update_client::StartPuffinInstallOnBlockingTaskRunner,
-              main_task_runner, pk_hash, dest_crx_path, id, fingerprint,
-              std::move(install_params), installer, std::move(unzipper_),
-              std::optional<scoped_refptr<update_client::CrxCache>>(crx_cache),
-              crx_format, progress_callback, std::move(callback)));
-}
-
 void StartPuffPatchOnBlockingTaskRunner(
     scoped_refptr<base::SequencedTaskRunner> main_task_runner,
     const std::vector<uint8_t>& pk_hash,
@@ -383,23 +344,6 @@ void StartPuffPatchOnBlockingTaskRunner(
     DVLOG(2) << "crx_cache->Get failed: " << static_cast<int>(result.error);
     return;
   }
-  base::FilePath crx_path = result.crx_cache_path;
-  base::FilePath dest_path = crx_path.DirName().AppendASCII(
-      base::JoinString({"temp", fingerprint}, "_"));
-  base::File crx_file(crx_path, base::File::FLAG_OPEN | base::File::FLAG_READ);
-  base::File puff_patch_file(puff_patch_path,
-                             base::File::FLAG_OPEN | base::File::FLAG_READ);
-  base::File dest_file(dest_path, base::File::FLAG_CREATE_ALWAYS |
-                                      base::File::FLAG_WRITE |
-                                      base::File::FLAG_WIN_EXCLUSIVE_WRITE);
-  PuffinPatcher::Patch(
-      std::move(crx_file), std::move(puff_patch_file), std::move(dest_file),
-      patcher_,
-      base::BindOnce(&OnPuffPatchCompleteOnBlockingTaskRunner, main_task_runner,
-                     pk_hash, puff_patch_path, dest_path, id, fingerprint,
-                     std::move(install_params), installer, std::move(unzipper_),
-                     crx_cache, crx_format, progress_callback,
-                     std::move(callback)));
 }
 
 void StartGetPreviousCrxOnBlockingTaskRunner(

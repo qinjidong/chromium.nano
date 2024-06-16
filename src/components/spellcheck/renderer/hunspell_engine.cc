@@ -17,7 +17,6 @@
 #include "content/public/renderer/render_thread.h"
 #include "mojo/public/cpp/bindings/remote.h"
 #include "services/service_manager/public/cpp/local_interface_provider.h"
-#include "third_party/hunspell/src/hunspell/hunspell.hxx"
 
 using content::RenderThread;
 
@@ -30,8 +29,6 @@ namespace {
   // 24 is the observed limits for OSX system checker.
   const size_t kMaxSuggestLen = 24;
 
-  static_assert(kMaxCheckedLen <= size_t(MAXWORDLEN),
-                "MaxCheckedLen too long");
   static_assert(kMaxSuggestLen <= kMaxCheckedLen,
                 "MaxSuggestLen too long");
 }  // namespace
@@ -50,70 +47,22 @@ HunspellEngine::~HunspellEngine() {
 
 void HunspellEngine::Init(base::File file) {
   initialized_ = true;
-  hunspell_.reset();
   bdict_file_.reset();
   file_ = std::move(file);
-  hunspell_enabled_ = file_.IsValid();
   // Delay the actual initialization of hunspell until it is needed.
 }
 
-void HunspellEngine::InitializeHunspell() {
-  if (hunspell_)
-    return;
-
-  bdict_file_ = std::make_unique<base::MemoryMappedFile>();
-
-  if (bdict_file_->Initialize(std::move(file_))) {
-    hunspell_ = std::make_unique<Hunspell>(bdict_file_->bytes());
-  } else {
-    NOTREACHED_IN_MIGRATION() << "Could not mmap spellchecker dictionary.";
-  }
-}
+void HunspellEngine::InitializeHunspell() {}
 
 bool HunspellEngine::CheckSpelling(const std::u16string& word_to_check,
                                    spellcheck::mojom::SpellCheckHost& host) {
-  // Assume all words that cannot be checked are valid. Since Chrome can't
-  // offer suggestions on them, either, there's no point in flagging them to
-  // the user.
-  bool word_correct = true;
-  std::string word_to_check_utf8(base::UTF16ToUTF8(word_to_check));
-
-  // Limit the size of checked words.
-  if (word_to_check_utf8.length() <= kMaxCheckedLen) {
-    // If |hunspell_| is NULL here, an error has occurred, but it's better
-    // to check rather than crash.
-    if (hunspell_) {
-      // |hunspell_->spell| returns 0 if the word is misspelled.
-      word_correct = (hunspell_->spell(word_to_check_utf8) != 0);
-    }
-  }
-
-  return word_correct;
+  return true;
 }
 
 void HunspellEngine::FillSuggestionList(
     const std::u16string& wrong_word,
     spellcheck::mojom::SpellCheckHost& host,
-    std::vector<std::u16string>* optional_suggestions) {
-  std::string wrong_word_utf8(base::UTF16ToUTF8(wrong_word));
-  if (wrong_word_utf8.length() > kMaxSuggestLen)
-    return;
-
-  // If |hunspell_| is NULL here, an error has occurred, but it's better
-  // to check rather than crash.
-  // TODO(groby): Technically, it's not. We should track down the issue.
-  if (!hunspell_)
-    return;
-
-  std::vector<std::string> suggestions =
-      hunspell_->suggest(wrong_word_utf8);
-
-  // Populate the vector of WideStrings.
-  for (size_t i = 0; i < suggestions.size(); ++i) {
-    if (i < spellcheck::kMaxSuggestions)
-      optional_suggestions->push_back(base::UTF8ToUTF16(suggestions[i]));
-  }
-}
+    std::vector<std::u16string>* optional_suggestions) {}
 
 bool HunspellEngine::InitializeIfNeeded() {
   if (!initialized_ && !dictionary_requested_) {

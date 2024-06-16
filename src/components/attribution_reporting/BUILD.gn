@@ -474,7 +474,6 @@ source_set("fuzzer_support") {
 
   public_deps = [
     ":attribution_reporting",
-    "//third_party/fuzztest",
   ]
 }
 
@@ -487,7 +486,6 @@ test("privacy_math_fuzztest") {
     ":attribution_reporting",
     ":fuzzer_support",
     ":test_support",
-    "//third_party/fuzztest:fuzztest_gtest_main",
   ]
 }
 
@@ -500,6 +498,5 @@ test("filters_fuzztest") {
     ":attribution_reporting",
     ":fuzzer_support",
     ":test_support",
-    "//third_party/fuzztest:fuzztest_gtest_main",
   ]
 }

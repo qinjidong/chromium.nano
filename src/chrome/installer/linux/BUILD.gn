@@ -189,16 +189,6 @@ strip_binary("strip_libGLESv2_shlib") {
   deps = [ "//third_party/angle:libGLESv2" ]
 }
 
-strip_binary("strip_libvulkan_shlib") {
-  binary_input = "$root_out_dir/libvulkan.so.1"
-  deps = [ "//third_party/vulkan-deps/vulkan-loader/src:libvulkan" ]
-}
-
-strip_binary("strip_libvk_swiftshader.shlib") {
-  binary_input = "$root_out_dir/libvk_swiftshader.so"
-  deps = [ "//third_party/swiftshader/src/Vulkan:swiftshader_libvulkan" ]
-}
-
 if (build_with_internal_optimization_guide) {
   strip_binary("strip_optimization_guide") {
     binary_input = "$root_out_dir/liboptimization_guide_internal.so"
@@ -388,7 +378,6 @@ group("installer_deps") {
     ]
     if (angle_shared_libvulkan && !is_chromeos) {
       public_deps += [
-        ":strip_libvulkan_shlib",
         "//third_party/vulkan-deps/vulkan-loader/src:libvulkan",
       ]
     }

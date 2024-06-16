@@ -8,7 +8,6 @@
 #include <map>
 
 #include "android_webview/browser/gfx/compositor_frame_consumer.h"
-#include "android_webview/browser/gfx/hardware_renderer.h"
 #include "android_webview/browser/gfx/parent_compositor_draw_constraints.h"
 #include "android_webview/browser/gfx/root_frame_sink.h"
 #include "base/check.h"
@@ -21,7 +20,6 @@
 
 namespace android_webview {
 
-class AwVulkanContextProvider;
 class ChildFrame;
 class CompositorFrameProducer;
 
@@ -68,14 +66,8 @@ class RenderThreadManager : public CompositorFrameConsumer {
                                    uint32_t layer_tree_frame_sink_id);
 
   void CommitFrameOnRT();
-  void SetVulkanContextProviderOnRT(AwVulkanContextProvider* context_provider);
   void UpdateViewTreeForceDarkStateOnRT(bool view_tree_force_dark_state);
-  void DrawOnRT(bool save_restore,
-                const HardwareRendererDrawParams& params,
-                const OverlaysParams& overlays_params,
-                ReportRenderingThreadsCallback report_rendering_threads);
   void DestroyHardwareRendererOnRT(bool save_restore, bool abandon_context);
-  void RemoveOverlaysOnRT(OverlaysParams::MergeTransactionFn merge_transaction);
 
   // May be created on either thread.
   class InsideHardwareReleaseReset {
@@ -119,9 +111,7 @@ class RenderThreadManager : public CompositorFrameConsumer {
 #endif  // DCHECK_IS_ON()
 
   // Accessed by RT thread.
-  std::unique_ptr<HardwareRenderer> hardware_renderer_;
   bool view_tree_force_dark_state_ = false;
-  raw_ptr<AwVulkanContextProvider> vulkan_context_provider_ = nullptr;
 
   // Accessed by both UI and RT thread.
   mutable base::Lock lock_;
