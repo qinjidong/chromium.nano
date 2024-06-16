@@ -14,8 +14,6 @@ source_set("service") {
 
   sources = [
     "video_effects_processor_impl.cc",
-    "video_effects_processor_webgpu.cc",
-    "video_effects_processor_webgpu.h",
     "video_effects_service_impl.cc",
     "viz_gpu_channel_host_provider.cc",
   ]
@@ -33,9 +31,6 @@ source_set("service") {
   deps = [
     "//gpu/command_buffer/client:webgpu_interface",
     "//gpu/webgpu:common",
-    "//third_party/dawn/include/dawn:cpp_headers",
-    "//third_party/dawn/src/dawn:proc",
-    "//third_party/dawn/src/dawn/wire",
   ]
 }
 

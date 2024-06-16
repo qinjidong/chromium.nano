@@ -13,7 +13,6 @@
 #include "base/task/single_thread_task_runner.h"
 #include "cc/paint/record_paint_canvas.h"
 #include "third_party/blink/public/mojom/frame/color_scheme.mojom-blink.h"
-#include "third_party/blink/renderer/bindings/modules/v8/v8_gpu_texture_format.h"
 #include "third_party/blink/renderer/bindings/modules/v8/v8_typedefs.h"
 #include "third_party/blink/renderer/core/geometry/dom_matrix.h"
 #include "third_party/blink/renderer/core/html/canvas/canvas_rendering_context.h"
@@ -54,7 +53,6 @@ class Path2D;
 class TextMetrics;
 struct V8CanvasStyle;
 enum class V8CanvasStyleType;
-class GPUTexture;
 class V8UnionCanvasFilterOrString;
 
 class MODULES_EXPORT BaseRenderingContext2D : public CanvasPath {
@@ -276,26 +274,6 @@ class MODULES_EXPORT BaseRenderingContext2D : public CanvasPath {
   void setImageSmoothingEnabled(bool);
   String imageSmoothingQuality() const;
   void setImageSmoothingQuality(const String&);
-
-  // Transfers a canvas' existing back-buffer to a GPUTexture for use in a
-  // WebGPU pipeline. The canvas' image can be used as a texture, or the texture
-  // can be bound as a color attachment and modified. After its texture is
-  // transferred, the canvas will be reset into an empty, freshly-initialized
-  // state.
-  GPUTexture* transferToWebGPU(const Canvas2dWebGPUTransferOption*,
-                               ExceptionState& exception_state);
-
-  // Replaces the canvas' back-buffer texture with the passed-in GPUTexture.
-  // The GPUTexture immediately becomes inaccessible to WebGPU.
-  // A GPUValidationError will occur if the GPUTexture is used after
-  // endWebGPUAccess is called.
-  void transferFromWebGPU(blink::GPUTexture* tex,
-                          ExceptionState& exception_state);
-
-  // Returns the format of the GPUTexture that beginWebGPUAccess will return.
-  // This is useful if you need to create the WebGPU render pipeline before
-  // beginWebGPUAccess is first called.
-  V8GPUTextureFormat getTextureFormat() const;
 
   virtual bool OriginClean() const = 0;
   virtual void SetOriginTainted() = 0;
@@ -776,17 +754,12 @@ class MODULES_EXPORT BaseRenderingContext2D : public CanvasPath {
 
   cc::PaintFlags GetClearFlags() const;
 
-  bool CopyGPUTextureToResourceProvider(
-      GPUTexture& src_texture,
-      CanvasResourceProvider& resource_provider);
-
   bool origin_tainted_by_content_ = false;
   cc::UsePaintCache path2d_use_paint_cache_;
   int num_readbacks_performed_ = 0;
   unsigned read_count_ = 0;
   base::HashingLRUCache<String, CachedColor> color_cache_{8};
   mojom::blink::ColorScheme color_scheme_ = mojom::blink::ColorScheme::kLight;
-  Member<GPUTexture> webgpu_access_texture_ = nullptr;
 };
 
 namespace {

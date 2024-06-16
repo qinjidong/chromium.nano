@@ -36,7 +36,6 @@ viz_component("shared_image_format") {
     "//cc/base",
     "//gpu/vulkan:buildflags",
     "//skia",
-    "//third_party/dawn/include/dawn:cpp_headers",
     "//ui/gfx:buffer_types",
     "//ui/gfx/geometry",
   ]

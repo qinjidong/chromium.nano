@@ -11,7 +11,6 @@ import("//build/config/ui.gni")
 import("//gpu/vulkan/features.gni")
 import("//testing/test.gni")
 import("//third_party/angle/gni/angle.gni")
-import("//third_party/dawn/scripts/dawn_features.gni")
 import("//ui/gl/features.gni")
 
 declare_args() {
@@ -29,7 +28,7 @@ if (is_android) {
 buildflag_header("buildflags") {
   header = "buildflags.h"
   flags = [
-    "DAWN_ENABLE_BACKEND_OPENGLES=$dawn_enable_opengles",
+    "DAWN_ENABLE_BACKEND_OPENGLES=false",
     "ENABLE_SWIFTSHADER=$enable_swiftshader",
     "USE_DAWN=$use_dawn",
     "USE_STATIC_ANGLE=$use_static_angle",

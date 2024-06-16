@@ -19,7 +19,6 @@
 #include "mojo/public/cpp/bindings/receiver.h"
 #include "mojo/public/cpp/bindings/remote.h"
 #include "services/video_effects/public/mojom/video_effects_processor.mojom.h"
-#include "services/video_effects/video_effects_processor_webgpu.h"
 #include "services/viz/public/cpp/gpu/context_provider_command_buffer.h"
 
 namespace video_effects {
@@ -104,8 +103,6 @@ class VideoEffectsProcessorImpl : public mojom::VideoEffectsProcessor,
   scoped_refptr<viz::ContextProviderCommandBuffer> webgpu_context_provider_;
   scoped_refptr<viz::RasterContextProvider> raster_interface_context_provider_;
   scoped_refptr<gpu::ClientSharedImageInterface> shared_image_interface_;
-
-  std::unique_ptr<VideoEffectsProcessorWebGpu> processor_webgpu_;
 
   // We'll keep track of how many context losses we've experienced. If this
   // number is too high, we'll make this processor defunct, assuming that

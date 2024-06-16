@@ -9,11 +9,10 @@
 #include "components/viz/common/resources/shared_image_format.h"
 #include "gpu/command_buffer/common/gl2_types.h"
 #include "gpu/config/gpu_preferences.h"
+#include "gpu/webgpu/webgpu.h"
 #include "gpu/gpu_gles2_export.h"
 #include "gpu/vulkan/buildflags.h"
 #include "skia/buildflags.h"
-#include "third_party/dawn/include/dawn/webgpu.h"
-#include "third_party/dawn/include/dawn/webgpu_cpp.h"
 #include "third_party/skia/include/core/SkYUVAInfo.h"
 #include "third_party/skia/include/gpu/graphite/TextureInfo.h"
 #include "ui/gfx/buffer_types.h"
@@ -129,38 +128,6 @@ GPU_GLES2_EXPORT VkFormat ToVkFormatSinglePlanar(viz::SharedImageFormat format);
 GPU_GLES2_EXPORT VkFormat ToVkFormat(viz::SharedImageFormat format,
                                      int plane_index);
 #endif
-
-// Following functions return the appropriate Dawn format for a
-// SharedImageFormat. Returns wgpu::TextureFormat format for given `format`.
-// Note that this will return a multi-planar Dawn format for multi-planar
-// SharedImageFormat.
-GPU_GLES2_EXPORT wgpu::TextureFormat ToDawnFormat(
-    viz::SharedImageFormat format);
-// Returns wgpu::TextureFormat format for given `format` and `plane_index`. Note
-// that this returns a single plane Dawn format i.e the TextureView format and
-// not a multi-planar format.
-// NOTE: This should not be used on Android when using YCbCr sampling, as in
-// that case wgpu::TextureFormat::EXTERNAL must be used.
-GPU_GLES2_EXPORT wgpu::TextureFormat ToDawnTextureViewFormat(
-    viz::SharedImageFormat format,
-    int plane_index);
-
-// Returns the supported Dawn texture usage. `is_yuv_plane` indicates if the
-// texture corresponds to a plane of a multi-planar image and `is_dcomp_surface`
-// indicates if the texture corresponds to a direct composition surface.
-// `supports_multiplanar_rendering` indicates if the dawn texture supports
-// drawing to multiplanar render targets.
-wgpu::TextureUsage SupportedDawnTextureUsage(
-    viz::SharedImageFormat format,
-    bool is_yuv_plane,
-    bool is_dcomp_surface,
-    bool supports_multiplanar_rendering,
-    bool supports_multiplanar_copy);
-
-// Returns wgpu::TextureAspect corresponding to `plane_index`. `is_yuv_plane`
-// indicates if the aspect corresponds to a plane of a multi-planar
-// wgpu::Texture.
-wgpu::TextureAspect ToDawnTextureAspect(bool is_yuv_plane, int plane_index);
 
 // Following function return the appropriate Metal format for a
 // SharedImageFormat.

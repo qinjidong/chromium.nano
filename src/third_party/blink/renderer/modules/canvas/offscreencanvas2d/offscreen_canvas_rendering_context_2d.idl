@@ -125,4 +125,3 @@
 };
 
 OffscreenCanvasRenderingContext2D includes CanvasPath;
-OffscreenCanvasRenderingContext2D includes Canvas2dWebGPUTransfer;

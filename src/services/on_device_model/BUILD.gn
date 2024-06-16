@@ -3,7 +3,6 @@
 # found in the LICENSE file.
 
 import("//services/on_device_model/on_device_model.gni")
-import("//third_party/dawn/scripts/dawn_features.gni")
 
 template("model_service") {
   component(target_name) {
@@ -29,9 +28,6 @@ template("model_service") {
       "//services/on_device_model/public/mojom",
     ]
     defines = [ "IS_ON_DEVICE_MODEL_IMPL" ]
-    if (dawn_use_built_dxc) {
-      defines += [ "DAWN_USE_BUILT_DXC" ]
-    }
     if (invoker.enable_internal) {
       sources += [ "on_device_model_internal.cc" ]
       deps += [ "//services/on_device_model/ml" ]
@@ -42,26 +38,8 @@ template("model_service") {
       sources += [ "on_device_model.cc" ]
     }
 
-    if (is_chromeos_ash) {
-      sources += [
-        "platform_model_loader_chromeos.cc",
-        "platform_model_loader_chromeos.h",
-      ]
-      deps += [
-        "//chromeos/ash/components/dbus:dbus",
-        "//chromeos/ash/components/dbus/dlcservice",
-        "//chromeos/ash/components/dbus/dlcservice:dlcservice_proto",
-        "//chromeos/dbus/init:init",
-      ]
-    }
-
     if (is_linux || is_chromeos) {
-      deps += [
-        "//gpu/config",
-        "//third_party/dawn/include/dawn:cpp_headers",
-        "//third_party/dawn/src/dawn:proc",
-        "//third_party/dawn/src/dawn/native",
-      ]
+      deps += [ "//gpu/config" ]
     }
   }
 }

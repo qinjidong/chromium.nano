@@ -5,7 +5,6 @@
 import("//build/config/ui.gni")
 import("//gpu/vulkan/features.gni")
 import("//skia/features.gni")
-import("//third_party/dawn/scripts/dawn_features.gni")
 import("//third_party/protobuf/proto_library.gni")
 import("//ui/gl/features.gni")
 
@@ -362,7 +361,6 @@ target(link_target_type, "gles2_sources") {
     "//gpu/command_buffer/common:webgpu_sources",
     "//skia",
     "//third_party/blink/public/common/tokens:tokens_headers",
-    "//third_party/dawn/include/dawn:cpp_headers",
   ]
   deps += [
     ":disk_cache_proto",
@@ -380,8 +378,6 @@ target(link_target_type, "gles2_sources") {
     "//skia:buildflags",
     "//third_party/angle:angle_image_util",
     "//third_party/angle:angle_version_info",
-    "//third_party/dawn/include/dawn:cpp_headers",
-    "//third_party/dawn/src/dawn:proc",
     "//third_party/libyuv",
     "//third_party/protobuf:protobuf_lite",
     "//third_party/re2",

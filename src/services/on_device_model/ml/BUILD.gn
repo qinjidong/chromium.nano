@@ -4,7 +4,6 @@
 
 source_set("api") {
   public = [ "chrome_ml_api.h" ]
-  deps = [ "//third_party/dawn/src/dawn/native:headers" ]
 }
 
 source_set("ml") {
@@ -27,8 +26,6 @@ source_set("ml") {
     "//components/translate/core/language_detection",
     "//gpu/config",
     "//third_party/angle:includes",
-    "//third_party/dawn/src/dawn:proc",
-    "//third_party/dawn/src/dawn/native",
   ]
   public_deps = [
     ":api",

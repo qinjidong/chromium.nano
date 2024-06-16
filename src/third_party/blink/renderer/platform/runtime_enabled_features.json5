@@ -559,10 +559,6 @@
       status: "experimental",
     },
     {
-      name: "Canvas2dWebGPUTransfer",
-      status: "experimental",
-    },
-    {
       name: "CanvasFloatingPoint",
       status: "experimental",
     },

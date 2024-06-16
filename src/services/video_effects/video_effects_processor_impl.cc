@@ -14,7 +14,6 @@
 #include "gpu/ipc/client/gpu_channel_host.h"
 #include "mojo/public/cpp/bindings/pending_receiver.h"
 #include "services/video_effects/public/mojom/video_effects_processor.mojom.h"
-#include "services/video_effects/video_effects_processor_webgpu.h"
 #include "services/video_effects/video_effects_service_impl.h"
 #include "services/viz/public/cpp/gpu/context_provider_command_buffer.h"
 
@@ -147,12 +146,7 @@ bool VideoEffectsProcessorImpl::InitializeGpuState() {
   raster_interface_context_provider_->AddObserver(this);
   shared_image_interface = std::move(shared_image_interface);
 
-  processor_webgpu_ = std::make_unique<VideoEffectsProcessorWebGpu>(
-      webgpu_context_provider_,
-      base::BindOnce(
-          base::BindOnce(&VideoEffectsProcessorImpl::OnWebGpuProcessorError,
-                         weak_ptr_factory_.GetWeakPtr())));
-  return processor_webgpu_->Initialize();
+  return false;
 }
 
 void VideoEffectsProcessorImpl::OnContextLost() {
@@ -177,7 +171,6 @@ void VideoEffectsProcessorImpl::OnContextLost() {
 
   raster_interface_context_provider_.reset();
   shared_image_interface_.reset();
-  processor_webgpu_.reset();
 
   ++num_context_losses_;
   if (ContextLossesExceedThreshold(num_context_losses_)) {
@@ -206,16 +199,7 @@ void VideoEffectsProcessorImpl::OnMojoDisconnected() {
 
 void VideoEffectsProcessorImpl::OnWebGpuProcessorError() {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-
-  processor_webgpu_.reset();
-
-  processor_webgpu_ = std::make_unique<VideoEffectsProcessorWebGpu>(
-      webgpu_context_provider_,
-      base::BindOnce(&VideoEffectsProcessorImpl::OnWebGpuProcessorError,
-                     weak_ptr_factory_.GetWeakPtr()));
-  if (!processor_webgpu_->Initialize()) {
-    MaybeCallOnUnrecoverableError();
-  }
+  MaybeCallOnUnrecoverableError();
 }
 
 void VideoEffectsProcessorImpl::PostProcess(

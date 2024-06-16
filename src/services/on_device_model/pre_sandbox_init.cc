@@ -16,9 +16,9 @@
 
 #if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS)
 #include "gpu/config/gpu_info_collector.h"                    // nogncheck
-#include "third_party/dawn/include/dawn/dawn_proc.h"          // nogncheck
-#include "third_party/dawn/include/dawn/native/DawnNative.h"  // nogncheck
-#include "third_party/dawn/include/dawn/webgpu_cpp.h"         // nogncheck
+#include "gpu/dawn/dawn_proc.h"          // nogncheck
+#include "gpu/dawn/native/DawnNative.h"  // nogncheck
+#include "gpu/dawn/webgpu_cpp.h"         // nogncheck
 #endif
 
 #if BUILDFLAG(IS_CHROMEOS_ASH)
@@ -80,7 +80,7 @@ bool OnDeviceModelService::PreSandboxInit() {
   }
 #endif
 
-#if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS)
+#if 0  // BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS)
   // Warm any relevant drivers before attempting to bring up the sandbox. For
   // good measure we initialize a device instance for any adapter with an
   // appropriate backend on top of any integrated or discrete GPU.

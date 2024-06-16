@@ -80,9 +80,9 @@ class ImageBitmap;
 class ScriptState;
 class StaticBitmapImage;
 class
-    V8UnionCanvasRenderingContext2DOrGPUCanvasContextOrImageBitmapRenderingContextOrWebGL2RenderingContextOrWebGLRenderingContext;
+    V8UnionCanvasRenderingContext2DOrImageBitmapRenderingContextOrWebGL2RenderingContextOrWebGLRenderingContext;
 class
-    V8UnionGPUCanvasContextOrImageBitmapRenderingContextOrOffscreenCanvasRenderingContext2DOrWebGL2RenderingContextOrWebGLRenderingContext;
+    V8UnionImageBitmapRenderingContextOrOffscreenCanvasRenderingContext2DOrWebGL2RenderingContextOrWebGLRenderingContext;
 class WebGraphicsContext3DVideoFramePool;
 
 class CORE_EXPORT CanvasRenderingContext
@@ -182,12 +182,12 @@ class CORE_EXPORT CanvasRenderingContext
   virtual void PageVisibilityChanged() = 0;
   virtual bool isContextLost() const { return true; }
   // TODO(fserb): remove AsV8RenderingContext and AsV8OffscreenRenderingContext.
-  virtual V8UnionCanvasRenderingContext2DOrGPUCanvasContextOrImageBitmapRenderingContextOrWebGL2RenderingContextOrWebGLRenderingContext*
+  virtual V8UnionCanvasRenderingContext2DOrImageBitmapRenderingContextOrWebGL2RenderingContextOrWebGLRenderingContext*
   AsV8RenderingContext() {
     NOTREACHED_IN_MIGRATION();
     return nullptr;
   }
-  virtual V8UnionGPUCanvasContextOrImageBitmapRenderingContextOrOffscreenCanvasRenderingContext2DOrWebGL2RenderingContextOrWebGLRenderingContext*
+  virtual V8UnionImageBitmapRenderingContextOrOffscreenCanvasRenderingContext2DOrWebGL2RenderingContextOrWebGLRenderingContext*
   AsV8OffscreenRenderingContext() {
     NOTREACHED_IN_MIGRATION();
     return nullptr;

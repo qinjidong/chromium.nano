@@ -209,8 +209,6 @@ static_library("test_support") {
     "//gpu/command_buffer/client:gles2_interface",
     "//gpu/command_buffer/client:webgpu_interface",
     "//gpu/ipc:gpu_thread_holder",
-    "//third_party/dawn/include/dawn:cpp_headers",
-    "//third_party/dawn/src/dawn:proc",
   ]
   deps = [
     "//base/test:test_support",
@@ -465,19 +463,6 @@ test("gl_tests") {
   # Simply loading the Vulkan driver leaks crbug.com/1134681
   if (is_linux && !is_lsan) {
     sources += [ "command_buffer/service/shared_image/angle_vulkan_image_backing_factory_unittest.cc" ]
-  }
-
-  if (use_dawn || skia_use_dawn) {
-    deps += [
-      "//third_party/dawn/src/dawn:cpp",
-      "//third_party/dawn/src/dawn:proc",
-      "//third_party/dawn/src/dawn/native",
-    ]
-
-    sources += [
-      "command_buffer/service/shared_image/dawn_image_representation_unittest_common.cc",
-      "command_buffer/service/shared_image/dawn_image_representation_unittest_common.h",
-    ]
   }
 
   data_deps = [ "//testing/buildbot/filters:gl_tests_filters" ]
@@ -765,16 +750,6 @@ test("gpu_unittests") {
     deps += [
       "//ui/android:ui_java",
       "//ui/gl:gl_jni_headers",
-    ]
-  }
-
-  if (use_dawn) {
-    deps += [
-      "//gpu/config:webgpu_blocklist_impl",
-      "//net:test_support",
-      "//third_party/dawn/src/dawn:cpp",
-      "//third_party/dawn/src/dawn:proc",
-      "//third_party/dawn/src/dawn/native",
     ]
   }
 

@@ -1720,7 +1720,6 @@ component("platform") {
     "//third_party/blink/renderer/platform/loader",
     "//third_party/blink/renderer/platform/network",
     "//third_party/blink/renderer/platform/scheduler",
-    "//third_party/dawn/include/dawn:cpp_headers",
     "//third_party/fdlibm",
     "//third_party/pffft:pffft",
     "//ui/base/cursor",
@@ -1791,14 +1790,6 @@ component("platform") {
       "//third_party/zstd:compress",
       "//third_party/zstd:decompress",
     ]
-  }
-
-  if (use_dawn) {
-    deps += [ "//third_party/dawn/src/dawn/wire" ]
-  } else {
-    # If Dawn is not used, use the proc table. This gives the WebGPU implementation
-    # something to link to, though WebGPU won't be supported.
-    deps += [ "//third_party/dawn/src/dawn:proc" ]
   }
 
   if (is_android) {
@@ -2385,8 +2376,6 @@ source_set("blink_platform_unittests_sources") {
     "//third_party/blink/renderer/platform/network:unit_tests",
     "//third_party/blink/renderer/platform/scheduler:unit_tests",
     "//third_party/blink/renderer/platform/wtf",
-    "//third_party/dawn/src/dawn/native",
-    "//third_party/dawn/src/dawn/wire",
     "//third_party/libyuv",
     "//third_party/webrtc/api/task_queue:task_queue_test",
     "//third_party/webrtc_overrides:metronome_like_task_queue_test",
