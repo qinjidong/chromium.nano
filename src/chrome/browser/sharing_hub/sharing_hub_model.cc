@@ -23,7 +23,6 @@
 #include "chrome/browser/ui/browser_finder.h"
 #include "chrome/browser/ui/browser_navigator.h"
 #include "chrome/browser/ui/browser_navigator_params.h"
-#include "chrome/browser/ui/qrcode_generator/qrcode_generator_bubble_controller.h"
 #include "chrome/grit/generated_resources.h"
 #include "components/vector_icons/vector_icons.h"
 #include "content/public/browser/browser_context.h"
@@ -71,11 +70,6 @@ std::vector<SharingHubAction> SharingHubModel::GetFirstPartyActionList(
   for (const auto& action : first_party_action_list_) {
     if (action.command_id == IDC_SEND_TAB_TO_SELF) {
       if (send_tab_to_self::ShouldDisplayEntryPoint(web_contents)) {
-        results.push_back(action);
-      }
-    } else if (action.command_id == IDC_QRCODE_GENERATOR) {
-      if (qrcode_generator::QRCodeGeneratorBubbleController::
-              IsGeneratorAvailable(web_contents->GetLastCommittedURL())) {
         results.push_back(action);
       }
     } else if (action.command_id == IDC_SAVE_PAGE) {

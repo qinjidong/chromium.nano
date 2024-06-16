@@ -99,7 +99,6 @@
 #include "chrome/browser/ui/lens/lens_overlay_image_helper.h"
 #include "chrome/browser/ui/lens/lens_overlay_invocation_source.h"
 #include "chrome/browser/ui/passwords/ui_utils.h"
-#include "chrome/browser/ui/qrcode_generator/qrcode_generator_bubble_controller.h"
 #include "chrome/browser/ui/send_tab_to_self/send_tab_to_self_bubble.h"
 #include "chrome/browser/ui/side_panel/companion/companion_tab_helper.h"
 #include "chrome/browser/ui/side_panel/companion/companion_utils.h"
@@ -3367,24 +3366,6 @@ void RenderViewContextMenu::ExecuteCommand(int id, int event_flags) {
       send_tab_to_self::ShowBubble(embedder_web_contents_);
       break;
 
-    case IDC_CONTENT_CONTEXT_GENERATE_QR_CODE: {
-      auto* bubble_controller =
-          qrcode_generator::QRCodeGeneratorBubbleController::Get(
-              embedder_web_contents_);
-      if (params_.media_type == ContextMenuDataMediaType::kImage) {
-        base::RecordAction(
-            UserMetricsAction("SharingQRCode.DialogLaunched.ContextMenuImage"));
-        bubble_controller->ShowBubble(params_.src_url);
-      } else {
-        base::RecordAction(
-            UserMetricsAction("SharingQRCode.DialogLaunched.ContextMenuPage"));
-        NavigationEntry* entry =
-            embedder_web_contents_->GetController().GetLastCommittedEntry();
-        bubble_controller->ShowBubble(entry->GetURL());
-      }
-      break;
-    }
-
     case IDC_RELOAD:
       chrome::Reload(GetBrowser(), WindowOpenDisposition::CURRENT_TAB);
       break;
@@ -3873,28 +3854,7 @@ bool RenderViewContextMenu::IsPrintPreviewEnabled() const {
 }
 
 bool RenderViewContextMenu::IsQRCodeGeneratorEnabled() const {
-  if (!GetBrowser() || !GetProfile()) {
-    return false;
-  }
-
-  if (sharing_hub::SharingIsDisabledByPolicy(GetProfile())) {
-    // If the sharing hub is disabled, clicking the QR code item (which tries to
-    // show the sharing hub) won't work.
-    return false;
-  }
-
-  if (params_.media_type == ContextMenuDataMediaType::kImage) {
-    return qrcode_generator::QRCodeGeneratorBubbleController::
-        IsGeneratorAvailable(params_.src_url);
-  }
-
-  NavigationEntry* entry =
-      embedder_web_contents_->GetController().GetLastCommittedEntry();
-  if (!entry) {
-    return false;
-  }
-  return qrcode_generator::QRCodeGeneratorBubbleController::
-      IsGeneratorAvailable(entry->GetURL());
+  return false;
 }
 
 bool RenderViewContextMenu::IsRegionSearchEnabled() const {

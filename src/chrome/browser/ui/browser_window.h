@@ -71,10 +71,6 @@ namespace gfx {
 class Size;
 }
 
-namespace qrcode_generator {
-class QRCodeGeneratorBubbleView;
-}  // namespace qrcode_generator
-
 namespace send_tab_to_self {
 class SendTabToSelfBubbleView;
 }  // namespace send_tab_to_self
@@ -428,12 +424,6 @@ class BrowserWindow : public ui::BaseWindow {
   virtual sharing_hub::ScreenshotCapturedBubble* ShowScreenshotCapturedBubble(
       content::WebContents* contents,
       const gfx::Image& image) = 0;
-
-  // Shows the QR Code generator bubble. |url| is the URL for the initial code.
-  virtual qrcode_generator::QRCodeGeneratorBubbleView*
-  ShowQRCodeGeneratorBubble(content::WebContents* contents,
-                            const GURL& url,
-                            bool show_back_button) = 0;
 
   // Shows the "send tab to self" device picker bubble. This must only be called
   // as a direct result of user action.

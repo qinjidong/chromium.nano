@@ -18,7 +18,6 @@
 #include "chrome/browser/ui/browser_finder.h"
 #include "chrome/browser/ui/browser_window.h"
 #include "chrome/browser/ui/color/chrome_color_id.h"
-#include "chrome/browser/ui/qrcode_generator/qrcode_generator_bubble_controller.h"
 #include "chrome/browser/ui/send_tab_to_self/send_tab_to_self_bubble.h"
 #include "chrome/browser/ui/sharing_hub/sharing_hub_bubble_view.h"
 #include "chrome/grit/generated_resources.h"
@@ -117,12 +116,7 @@ void SharingHubBubbleControllerDesktopImpl::OnActionSelected(
   base::RecordComputedAction(action.feature_name_for_metrics);
 
   // Show a back button for 1P dialogs anchored to the sharing hub icon.
-  if (action.command_id == IDC_QRCODE_GENERATOR) {
-    qrcode_generator::QRCodeGeneratorBubbleController* qrcode_controller =
-        qrcode_generator::QRCodeGeneratorBubbleController::Get(
-            &GetWebContents());
-    qrcode_controller->ShowBubble(GetWebContents().GetLastCommittedURL(), true);
-  } else if (action.command_id == IDC_SEND_TAB_TO_SELF) {
+  if (action.command_id == IDC_SEND_TAB_TO_SELF) {
     send_tab_to_self::ShowBubble(&GetWebContents(),
                                  /*show_back_button=*/true);
   } else if (action.command_id == IDC_ROUTE_MEDIA) {

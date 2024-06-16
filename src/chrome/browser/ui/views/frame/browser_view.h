@@ -568,10 +568,6 @@ class BrowserView : public BrowserWindow,
 #if BUILDFLAG(GOOGLE_CHROME_BRANDING)
   void VerifyUserEligibilityIOSPasswordPromoBubble() override;
 #endif  // BUILDFLAG(GOOGLE_CHROME_BRANDING)
-  qrcode_generator::QRCodeGeneratorBubbleView* ShowQRCodeGeneratorBubble(
-      content::WebContents* contents,
-      const GURL& url,
-      bool show_back_button) override;
   send_tab_to_self::SendTabToSelfBubbleView*
   ShowSendTabToSelfDevicePickerBubble(content::WebContents* contents) override;
   send_tab_to_self::SendTabToSelfBubbleView* ShowSendTabToSelfPromoBubble(

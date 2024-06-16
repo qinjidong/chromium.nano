@@ -78,7 +78,6 @@
 #include "chrome/browser/ui/find_bar/find_bar_controller.h"
 #include "chrome/browser/ui/layout_constants.h"
 #include "chrome/browser/ui/performance_controls/memory_saver_opt_in_iph_controller.h"
-#include "chrome/browser/ui/qrcode_generator/qrcode_generator_bubble_controller.h"
 #include "chrome/browser/ui/recently_audible_helper.h"
 #include "chrome/browser/ui/sad_tab_helper.h"
 #include "chrome/browser/ui/sharing_hub/sharing_hub_bubble_controller.h"
@@ -135,7 +134,6 @@
 #include "chrome/browser/ui/views/profiles/avatar_toolbar_button.h"
 #include "chrome/browser/ui/views/profiles/profile_indicator_icon.h"
 #include "chrome/browser/ui/views/profiles/profile_menu_coordinator.h"
-#include "chrome/browser/ui/views/qrcode_generator/qrcode_generator_bubble.h"
 #include "chrome/browser/ui/views/send_tab_to_self/send_tab_to_self_bubble_view.h"
 #include "chrome/browser/ui/views/send_tab_to_self/send_tab_to_self_device_picker_bubble_view.h"
 #include "chrome/browser/ui/views/send_tab_to_self/send_tab_to_self_promo_bubble_view.h"
@@ -2948,28 +2946,6 @@ void BrowserView::ShowIOSPasswordPromoBubble() {
   }
 }
 #endif  // BUILDFLAG(GOOGLE_CHROME_BRANDING)
-
-qrcode_generator::QRCodeGeneratorBubbleView*
-BrowserView::ShowQRCodeGeneratorBubble(content::WebContents* contents,
-                                       const GURL& url,
-                                       bool show_back_button) {
-  auto* controller =
-      qrcode_generator::QRCodeGeneratorBubbleController::Get(contents);
-  base::OnceClosure on_closing = controller->GetOnBubbleClosedCallback();
-  base::OnceClosure on_back_button_pressed;
-  if (show_back_button) {
-    on_back_button_pressed = controller->GetOnBackButtonPressedCallback();
-  }
-
-  auto* bubble = new qrcode_generator::QRCodeGeneratorBubble(
-      toolbar_button_provider()->GetAnchorView(std::nullopt),
-      contents->GetWeakPtr(), std::move(on_closing),
-      std::move(on_back_button_pressed), url);
-
-  views::BubbleDialogDelegateView::CreateBubble(bubble);
-  bubble->Show();
-  return bubble;
-}
 
 sharing_hub::ScreenshotCapturedBubble*
 BrowserView::ShowScreenshotCapturedBubble(content::WebContents* contents,

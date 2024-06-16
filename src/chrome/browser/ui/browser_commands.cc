@@ -81,7 +81,6 @@
 #include "chrome/browser/ui/lens/lens_overlay_invocation_source.h"
 #include "chrome/browser/ui/location_bar/location_bar.h"
 #include "chrome/browser/ui/passwords/manage_passwords_ui_controller.h"
-#include "chrome/browser/ui/qrcode_generator/qrcode_generator_bubble_controller.h"
 #include "chrome/browser/ui/scoped_tabbed_browser_displayer.h"
 #include "chrome/browser/ui/send_tab_to_self/send_tab_to_self_bubble.h"
 #include "chrome/browser/ui/sharing_hub/screenshot/screenshot_captured_bubble_controller.h"
@@ -1638,24 +1637,10 @@ void SendTabToSelf(Browser* browser) {
 }
 
 bool CanGenerateQrCode(const Browser* browser) {
-  return !sharing_hub::SharingIsDisabledByPolicy(browser->profile()) &&
-         qrcode_generator::QRCodeGeneratorBubbleController::
-             IsGeneratorAvailable(browser->tab_strip_model()
-                                      ->GetActiveWebContents()
-                                      ->GetController()
-                                      .GetLastCommittedEntry()
-                                      ->GetURL());
+  return false;
 }
 
-void GenerateQRCode(Browser* browser) {
-  WebContents* web_contents =
-      browser->tab_strip_model()->GetActiveWebContents();
-  qrcode_generator::QRCodeGeneratorBubbleController* controller =
-      qrcode_generator::QRCodeGeneratorBubbleController::Get(web_contents);
-  content::NavigationEntry* entry =
-      web_contents->GetController().GetLastCommittedEntry();
-  controller->ShowBubble(entry->GetURL());
-}
+void GenerateQRCode(Browser* browser) {}
 
 void SharingHub(Browser* browser) {
   WebContents* web_contents =
