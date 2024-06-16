@@ -1,0 +1,11 @@
+*.pyc
+.vscode
+.stamp
+
+args.gn
+args_android.gn
+
+/tools/android
+/tools/clang
+/tools/sysroots
+
