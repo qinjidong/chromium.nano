@@ -226,7 +226,6 @@ python_library("resource_sizes_py") {
   pydeps_file = "resource_sizes.pydeps"
   data_deps = [
     ":devil_chromium_py",
-    "//third_party/catapult/tracing:convert_chart_json",
   ]
 
   data = [

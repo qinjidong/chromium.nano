@@ -10,7 +10,6 @@ group("android_tools") {
   testonly = true
   deps = [
     "//build/android/pylib/device/commands",
-    "//third_party/catapult/telemetry:bitmaptools($host_toolchain)",
     "//tools/android/adb_reboot",
     "//tools/android/forwarder2",
     "//tools/android/md5sum",

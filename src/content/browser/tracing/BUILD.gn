@@ -19,7 +19,6 @@ generate_grd("build_grd") {
     "about_tracing.js",
   ]
   input_files_base_dir = rebase_path(target_gen_dir, root_build_dir)
-  deps = [ "//third_party/catapult/tracing:generate_about_tracing" ]
 }
 
 grit("resources") {
