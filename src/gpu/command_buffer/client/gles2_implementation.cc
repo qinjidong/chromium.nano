@@ -37,7 +37,6 @@
 #include "base/trace_event/process_memory_dump.h"
 #include "base/trace_event/trace_event.h"
 #include "build/build_config.h"
-#include "components/nacl/common/buildflags.h"
 #include "gpu/command_buffer/client/buffer_tracker.h"
 #include "gpu/command_buffer/client/gles2_cmd_helper.h"
 #include "gpu/command_buffer/client/gpu_control.h"
@@ -57,7 +56,7 @@
 #include "ui/gfx/geometry/rect_f.h"
 #include "ui/gl/gpu_preference.h"
 
-#if !defined(__native_client__) && !BUILDFLAG(IS_MINIMAL_TOOLCHAIN)
+#if !defined(__native_client__) && !defined(IS_MINIMAL_TOOLCHAIN_REMOVED)
 #include "ui/gfx/color_space.h"                 // nogncheck
 #include "ui/gfx/ipc/color/gfx_param_traits.h"  // nogncheck
 #endif
@@ -84,7 +83,7 @@
 // If it was up to us we'd just always write to the destination but the OpenGL
 // spec defines the behavior of OpenGL functions, not us. :-(
 #if defined(__native_client__) || defined(GLES2_CONFORMANCE_TESTS) || \
-    BUILDFLAG(IS_MINIMAL_TOOLCHAIN)
+    defined(IS_MINIMAL_TOOLCHAIN_REMOVED)
 #define GPU_CLIENT_VALIDATE_DESTINATION_INITALIZATION_ASSERT(v)
 #define GPU_CLIENT_DCHECK(v)
 #elif defined(GPU_DCHECK)
@@ -6198,7 +6197,7 @@ void GLES2Implementation::ResizeCHROMIUM(GLuint width,
                      << height << ", " << scale_factor << ", " << alpha << ")");
   // Including gfx::ColorSpace would bring Skia and a lot of other code into
   // NaCl's IRT, so just leave the color space unspecified.
-#if !defined(__native_client__) && !BUILDFLAG(IS_MINIMAL_TOOLCHAIN)
+#if !defined(__native_client__) && !defined(IS_MINIMAL_TOOLCHAIN_REMOVED)
   if (gl_color_space) {
     gfx::ColorSpace gfx_color_space =
         *reinterpret_cast<const gfx::ColorSpace*>(gl_color_space);

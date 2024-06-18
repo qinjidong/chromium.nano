@@ -144,7 +144,6 @@
 #include "components/metrics/metrics_shutdown.h"
 #include "components/metrics/persistent_histograms.h"
 #include "components/metrics_services_manager/metrics_services_manager.h"
-#include "components/nacl/common/buildflags.h"
 #include "components/offline_pages/buildflags/buildflags.h"
 #include "components/policy/core/common/management/management_service.h"
 #include "components/prefs/json_pref_store.h"
@@ -313,9 +312,9 @@
 #include "extensions/components/javascript_dialog_extensions_client/javascript_dialog_extension_client_impl.h"
 #endif  // BUILDFLAG(ENABLE_EXTENSIONS)
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
 #include "components/nacl/browser/nacl_process_host.h"
-#endif  // BUILDFLAG(ENABLE_NACL)
+#endif  // defined(ENABLE_NACL_REMOVED)
 
 #if BUILDFLAG(ENABLE_OFFLINE_PAGES)
 #include "chrome/browser/offline_pages/offline_page_info_handler.h"
@@ -1552,12 +1551,12 @@ int ChromeBrowserMainParts::PreMainMessageLoopRunImpl() {
   // Desktop construction occurs here, (required before profile creation).
   PreProfileInit();
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
   // NaClBrowserDelegateImpl is accessed inside CreateInitialProfile().
   // So make sure to create it before that.
   nacl::NaClBrowser::SetDelegate(std::make_unique<NaClBrowserDelegateImpl>(
       browser_process_->profile_manager()));
-#endif  // BUILDFLAG(ENABLE_NACL)
+#endif  // defined(ENABLE_NACL_REMOVED)
 
   // This step is costly and is already measured in Startup.CreateFirstProfile
   // and more directly Profile.CreateAndInitializeProfile.
@@ -1721,9 +1720,9 @@ int ChromeBrowserMainParts::PreMainMessageLoopRunImpl() {
   offline_pages::OfflinePageInfoHandler::Register();
 #endif
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
   nacl::NaClProcessHost::EarlyStartup();
-#endif  // BUILDFLAG(ENABLE_NACL)
+#endif  // defined(ENABLE_NACL_REMOVED)
 
   PreBrowserStart();
 

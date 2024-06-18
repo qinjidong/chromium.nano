@@ -42,7 +42,6 @@
 #include "components/content_settings/core/browser/host_content_settings_map.h"
 #include "components/history/core/common/pref_names.h"
 #include "components/metrics/content/subprocess_metrics_provider.h"
-#include "components/nacl/common/buildflags.h"
 #include "components/password_manager/core/browser/features/password_features.h"
 #include "components/password_manager/core/browser/features/password_manager_features_util.h"
 #include "components/prefs/pref_service.h"
@@ -1145,7 +1144,7 @@ const std::vector<std::string_view> kDoesNotSupportOriginFilteringDelegate{
 #if BUILDFLAG(IS_CHROMEOS_ASH)
     "TpmAttestationKeys",
 #endif
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
     "NaclCache",
     "PnaclCache",
 #endif

@@ -193,7 +193,7 @@
 #include "components/feed/feed_feature_list.h"
 #endif
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
 #include "components/nacl/common/nacl_constants.h"
 #include "components/nacl/renderer/nacl_helper.h"
 #endif
@@ -352,7 +352,7 @@ void MaybeEnableWebShare() {
 #endif
 }
 
-#if BUILDFLAG(ENABLE_NACL) && BUILDFLAG(ENABLE_EXTENSIONS) && \
+#if defined(ENABLE_NACL_REMOVED) && BUILDFLAG(ENABLE_EXTENSIONS) && \
     BUILDFLAG(IS_CHROMEOS_ASH)
 bool IsTerminalSystemWebAppNaClPage(GURL url) {
   GURL::Replacements replacements;
@@ -615,7 +615,7 @@ void ChromeContentRendererClient::RenderFrameCreated(
   new PepperHelper(render_frame);
 #endif
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
   new nacl::NaClHelper(render_frame);
 #endif
 
@@ -1012,7 +1012,7 @@ WebPlugin* ChromeContentRendererClient::CreatePlugin(
       }
       case chrome::mojom::PluginStatus::kAllowed:
       case chrome::mojom::PluginStatus::kPlayImportantContent: {
-#if BUILDFLAG(ENABLE_NACL) && BUILDFLAG(ENABLE_EXTENSIONS)
+#if defined(ENABLE_NACL_REMOVED) && BUILDFLAG(ENABLE_EXTENSIONS)
         WebLocalFrame* frame = render_frame->GetWebFrame();
         const bool is_nacl_plugin =
             info.name == ASCIIToUTF16(nacl::kNaClPluginName);
@@ -1087,7 +1087,7 @@ WebPlugin* ChromeContentRendererClient::CreatePlugin(
           }
           ReportNaClAppType(is_pnacl_mime_type, extension);
         }
-#endif  // BUILDFLAG(ENABLE_NACL) && BUILDFLAG(ENABLE_EXTENSIONS)
+#endif  // defined(ENABLE_NACL_REMOVED) && BUILDFLAG(ENABLE_EXTENSIONS)
 
         if (info.path.value() == ChromeContentClient::kPDFExtensionPluginPath) {
           // Report PDF load metrics. Since the PDF plugin is comprised of an
@@ -1213,7 +1213,7 @@ void ChromeContentRendererClient::GetInterface(
       mojo::GenericPendingReceiver(interface_name, std::move(interface_pipe)));
 }
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
 //  static
 bool ChromeContentRendererClient::IsNativeNaClAllowed(
     const GURL& app_url,
@@ -1323,7 +1323,7 @@ void ChromeContentRendererClient::ReportNaClAppType(
 
   base::UmaHistogramEnumeration("NaCl.EmbedderType", app_type);
 }
-#endif  // BUILDFLAG(ENABLE_NACL)
+#endif  // defined(ENABLE_NACL_REMOVED)
 
 void ChromeContentRendererClient::PrepareErrorPage(
     content::RenderFrame* render_frame,
@@ -1514,7 +1514,7 @@ bool ChromeContentRendererClient::IsOriginIsolatedPepperPlugin(
     return false;
   }
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
   // Don't isolate the NaCl plugin (preserving legacy behavior).
   if (plugin_path.value() == nacl::kInternalNaClPluginFileName)
     return false;

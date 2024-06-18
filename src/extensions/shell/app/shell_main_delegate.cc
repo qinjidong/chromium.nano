@@ -11,7 +11,6 @@
 #include "base/path_service.h"
 #include "build/build_config.h"
 #include "build/chromeos_buildflags.h"
-#include "components/nacl/common/buildflags.h"
 #include "content/public/browser/browser_main_runner.h"
 #include "content/public/common/content_switches.h"
 #include "content/shell/common/shell_switches.h"
@@ -30,7 +29,7 @@
 #include "ash/constants/ash_paths.h"
 #endif
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
 #include "components/nacl/common/nacl_switches.h"  // nogncheck
 #if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS)
 #include "components/nacl/common/nacl_paths.h"  // nogncheck
@@ -38,7 +37,7 @@
 #if BUILDFLAG(IS_POSIX) && !BUILDFLAG(IS_MAC) && !BUILDFLAG(IS_ANDROID)
 #include "components/nacl/zygote/nacl_fork_delegate_linux.h"
 #endif  // BUILDFLAG(IS_POSIX) && !BUILDFLAG(IS_MAC) && !BUILDFLAG(IS_ANDROID)
-#endif  // BUILDFLAG(ENABLE_NACL)
+#endif  // defined(ENABLE_NACL_REMOVED)
 
 #if BUILDFLAG(IS_WIN)
 #include "base/base_paths_win.h"
@@ -141,7 +140,7 @@ std::optional<int> ShellMainDelegate::BasicStartupComplete() {
 #if BUILDFLAG(IS_CHROMEOS_ASH) || BUILDFLAG(IS_CHROMEOS_ASH)
   chromeos::dbus_paths::RegisterPathProvider();
 #endif
-#if BUILDFLAG(ENABLE_NACL) && (BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS))
+#if defined(ENABLE_NACL_REMOVED) && (BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS))
   nacl::RegisterPathProvider();
 #endif
   extensions::RegisterPathProvider();
@@ -181,9 +180,9 @@ void ShellMainDelegate::ProcessExiting(const std::string& process_type) {
 #if BUILDFLAG(IS_POSIX) && !BUILDFLAG(IS_MAC) && !BUILDFLAG(IS_ANDROID)
 void ShellMainDelegate::ZygoteStarting(
     std::vector<std::unique_ptr<content::ZygoteForkDelegate>>* delegates) {
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
   nacl::AddNaClZygoteForkDelegates(delegates);
-#endif  // BUILDFLAG(ENABLE_NACL)
+#endif  // defined(ENABLE_NACL_REMOVED)
 }
 #endif  // BUILDFLAG(IS_POSIX) && !BUILDFLAG(IS_MAC) && !BUILDFLAG(IS_ANDROID)
 
@@ -194,7 +193,7 @@ bool ShellMainDelegate::ProcessNeedsResourceBundle(
   // On Linux the zygote process opens the resources for the renderers.
   return process_type.empty() || process_type == switches::kZygoteProcess ||
          process_type == switches::kRendererProcess ||
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
          process_type == switches::kNaClLoaderProcess ||
 #endif
 #if BUILDFLAG(IS_MAC)

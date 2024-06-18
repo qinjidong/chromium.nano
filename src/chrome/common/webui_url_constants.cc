@@ -11,7 +11,6 @@
 #include "components/commerce/core/commerce_constants.h"
 #include "components/history_clusters/history_clusters_internals/webui/url_constants.h"
 #include "components/lens/buildflags.h"
-#include "components/nacl/common/buildflags.h"
 #include "components/optimization_guide/optimization_guide_internals/webui/url_constants.h"
 #include "components/password_manager/content/common/web_ui_constants.h"
 #include "components/safe_browsing/core/common/web_ui_constants.h"
@@ -819,7 +818,7 @@ const char* const kChromeHostURLs[] = {
 #if BUILDFLAG(IS_WIN)
     kChromeUIConflictsHost,
 #endif
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
     kChromeUINaClHost,
 #endif
 #if BUILDFLAG(ENABLE_EXTENSIONS)

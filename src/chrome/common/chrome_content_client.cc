@@ -76,7 +76,7 @@
 #include "extensions/common/constants.h"
 #endif
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
 #include "components/nacl/common/nacl_constants.h"
 #include "components/nacl/common/nacl_process_type.h"
 #include "ppapi/shared_impl/ppapi_permissions.h"  // nogncheck
@@ -102,7 +102,7 @@
 
 namespace {
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
 content::ContentPluginInfo::GetInterfaceFunc g_nacl_get_interface;
 content::ContentPluginInfo::PPP_InitializeModuleFunc g_nacl_initialize_module;
 content::ContentPluginInfo::PPP_ShutdownModuleFunc g_nacl_shutdown_module;
@@ -114,7 +114,7 @@ ChromeContentClient::ChromeContentClient() = default;
 
 ChromeContentClient::~ChromeContentClient() = default;
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
 void ChromeContentClient::SetNaClEntryFunctions(
     content::ContentPluginInfo::GetInterfaceFunc get_interface,
     content::ContentPluginInfo::PPP_InitializeModuleFunc initialize_module,
@@ -162,7 +162,7 @@ void ChromeContentClient::AddPlugins(
   plugins->push_back(pdf_info);
 #endif  // BUILDFLAG(ENABLE_PDF)
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
   // By default NaCl plugin info is loaded in every process. There is now logic
   // in ChromeBrowserMainExtraPartsNaclDeprecation which checks some runtime
   // conditions to see if NaCl should be disabled. If so, it sets a command line
@@ -188,7 +188,7 @@ void ChromeContentClient::AddPlugins(
     nacl.permissions = ppapi::PERMISSION_PRIVATE | ppapi::PERMISSION_DEV;
     plugins->push_back(nacl);
   }
-#endif  // BUILDFLAG(ENABLE_NACL)
+#endif  // defined(ENABLE_NACL_REMOVED)
 }
 
 std::vector<url::Origin>
@@ -341,7 +341,7 @@ gfx::Image& ChromeContentClient::GetNativeImageNamed(int resource_id) {
 }
 
 std::string ChromeContentClient::GetProcessTypeNameInEnglish(int type) {
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
   switch (type) {
     case PROCESS_TYPE_NACL_LOADER:
       return "Native Client module";

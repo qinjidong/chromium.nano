@@ -2,12 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-import("//components/nacl/toolchain.gni")
+import("//skia/features.gni")
 import("//ui/gl/features.gni")
-
-if (!is_nacl && !is_minimal_toolchain) {
-  import("//skia/features.gni")
-}
 
 declare_args() {
   # Enable GPU client logging without DCHECK being on.
@@ -63,6 +59,8 @@ source_set("client_sources") {
     "client_discardable_manager.h",
     "client_discardable_texture_manager.cc",
     "client_discardable_texture_manager.h",
+    "client_shared_image.cc",
+    "client_shared_image.h",
     "cmd_buffer_helper.cc",
     "cmd_buffer_helper.h",
     "fenced_allocator.cc",
@@ -77,6 +75,8 @@ source_set("client_sources") {
     "mapped_memory.h",
     "ring_buffer.cc",
     "ring_buffer.h",
+    "shared_image_interface.cc",
+    "shared_image_interface.h",
     "transfer_buffer.cc",
     "transfer_buffer.h",
     "transfer_buffer_cmd_copy_helpers.h",
@@ -88,37 +88,18 @@ source_set("client_sources") {
   public_deps = [
     ":client_gmb_manager",
     "//base",
+    "//components/viz/common:shared_image_format",
+    "//skia",
   ]
   deps = [
     ":gles2_interface",
     "//gpu/command_buffer/common:common_sources",
+    "//gpu/ipc/common:ipc_common_sources",
+    "//gpu/ipc/common:surface_handle_type",
+    "//skia:buildflags",
     "//ui/gfx:memory_buffer",
     "//ui/gfx/geometry",
   ]
-
-  if (!is_nacl) {
-    deps += [ "//gpu/ipc/common:surface_handle_type" ]
-  }
-
-  # These files now rely on Skia which isn't allowed as a dependency in nacl builds.
-  if (!is_nacl && !is_minimal_toolchain) {
-    sources += [
-      "client_shared_image.cc",
-      "client_shared_image.h",
-      "shared_image_interface.cc",
-      "shared_image_interface.h",
-    ]
-
-    public_deps += [
-      "//components/viz/common:shared_image_format",
-      "//skia",
-    ]
-
-    deps += [
-      "//gpu/ipc/common:ipc_common_sources",
-      "//skia:buildflags",
-    ]
-  }
 }
 
 source_set("client_gmb_manager_sources") {
@@ -130,12 +111,10 @@ source_set("client_gmb_manager_sources") {
   all_dependent_configs = [ "//third_party/khronos:khronos_headers" ]
   deps = [
     "//base",
+    "//gpu/ipc/common:surface_handle_type",
     "//ui/gfx:memory_buffer",
     "//ui/gfx/geometry",
   ]
-  if (!is_nacl) {
-    deps += [ "//gpu/ipc/common:surface_handle_type" ]
-  }
 }
 
 source_set("gles2_cmd_helper_sources") {
@@ -267,20 +246,14 @@ component("gles2_implementation") {
     ":gles2_cmd_helper",
     ":gles2_interface",
     "//base",
-    "//components/nacl/common:buildflags",
+    "//components/viz/common:shared_image_format",
     "//gpu/command_buffer/common",
     "//gpu/command_buffer/common:gles2",
     "//gpu/command_buffer/common:gles2_utils",
+    "//ui/gfx:color_space",
     "//ui/gfx/geometry",
+    "//ui/gfx/ipc/color",
   ]
-
-  if (!is_nacl && !is_minimal_toolchain) {
-    deps += [
-      "//components/viz/common:shared_image_format",
-      "//ui/gfx:color_space",
-      "//ui/gfx/ipc/color",
-    ]
-  }
 }
 
 source_set("raster_sources") {
@@ -371,21 +344,15 @@ component("gles2_implementation_no_check") {
     ":gles2_cmd_helper",
     ":gles2_interface",
     "//base",
-    "//components/nacl/common:buildflags",
+    "//cc/paint",
     "//gpu/command_buffer/common",
     "//gpu/command_buffer/common:gles2",
     "//gpu/command_buffer/common:gles2_utils",
     "//ui/gfx",
+    "//ui/gfx:color_space",
     "//ui/gfx/geometry",
+    "//ui/gfx/ipc/color",
   ]
-
-  if (!is_nacl) {
-    deps += [
-      "//cc/paint",
-      "//ui/gfx:color_space",
-      "//ui/gfx/ipc/color",
-    ]
-  }
 }
 
 component("gles2_c_lib") {

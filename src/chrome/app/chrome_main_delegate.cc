@@ -71,7 +71,6 @@
 #include "components/memory_system/initializer.h"
 #include "components/memory_system/parameters.h"
 #include "components/metrics/persistent_histograms.h"
-#include "components/nacl/common/buildflags.h"
 #include "components/startup_metric_utils/common/startup_metric_utils.h"
 #include "components/version_info/channel.h"
 #include "components/version_info/version_info.h"
@@ -136,7 +135,7 @@
 #include "components/about_ui/credit_utils.h"
 #endif
 
-#if BUILDFLAG(ENABLE_NACL) && (BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS))
+#if defined(ENABLE_NACL_REMOVED) && (BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS))
 #include "components/nacl/common/nacl_paths.h"
 #include "components/nacl/zygote/nacl_fork_delegate_linux.h"
 #endif
@@ -203,7 +202,7 @@
 #include "extensions/common/constants.h"
 #endif
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
 #include "components/nacl/common/nacl_switches.h"
 #include "components/nacl/renderer/plugin/ppapi_entrypoints.h"
 #endif
@@ -310,7 +309,7 @@ void AdjustLinuxOOMScore(const std::string& process_type) {
   } else if (process_type == switches::kUtilityProcess ||
              process_type == switches::kGpuProcess) {
     score = content::kMiscOomScore;
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
   } else if (process_type == switches::kNaClLoaderProcess) {
     score = content::kPluginOomScore;
 #endif
@@ -347,7 +346,7 @@ bool SubprocessNeedsResourceBundle(const std::string& process_type) {
 #if BUILDFLAG(IS_MAC)
   // Mac needs them too for scrollbar related images and for sandbox
   // profiles.
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
       process_type == switches::kNaClLoaderProcess ||
 #endif
       process_type == switches::kGpuProcess ||
@@ -1334,7 +1333,7 @@ std::optional<int> ChromeMainDelegate::BasicStartupComplete() {
 #if BUILDFLAG(IS_CHROMEOS)
   chromeos::dbus_paths::RegisterPathProvider();
 #endif
-#if BUILDFLAG(ENABLE_NACL) && (BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS))
+#if defined(ENABLE_NACL_REMOVED) && (BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS))
   nacl::RegisterPathProvider();
 #endif
 
@@ -1620,7 +1619,7 @@ void ChromeMainDelegate::PreSandboxStartup() {
     // Initialize ResourceBundle which handles files loaded from external
     // sources.  The language should have been passed in to us from the
     // browser process as a command line flag.
-#if !BUILDFLAG(ENABLE_NACL)
+#if !defined(ENABLE_NACL_REMOVED)
     DUMP_WILL_BE_CHECK(command_line.HasSwitch(switches::kLang) ||
                        process_type == switches::kZygoteProcess ||
                        process_type == switches::kGpuProcess ||
@@ -1800,7 +1799,7 @@ void ChromeMainDelegate::SandboxInitialized(const std::string& process_type) {
     }
   }
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
   ChromeContentClient::SetNaClEntryFunctions(nacl_plugin::PPP_GetInterface,
                                              nacl_plugin::PPP_InitializeModule,
                                              nacl_plugin::PPP_ShutdownModule);
@@ -1821,7 +1820,7 @@ absl::variant<int, content::MainFunctionParams> ChromeMainDelegate::RunProcess(
 
   // This entry is not needed on Linux, where the NaCl loader
   // process is launched via nacl_helper instead.
-#if BUILDFLAG(ENABLE_NACL) && !BUILDFLAG(IS_LINUX) && !BUILDFLAG(IS_CHROMEOS)
+#if defined(ENABLE_NACL_REMOVED) && !BUILDFLAG(IS_LINUX) && !BUILDFLAG(IS_CHROMEOS)
     {switches::kNaClLoaderProcess, NaClMain},
 #else
     {"<invalid>", nullptr},  // To avoid constant array of size 0
@@ -1865,7 +1864,7 @@ void ChromeMainDelegate::ProcessExiting(const std::string& process_type) {
 #if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS)
 void ChromeMainDelegate::ZygoteStarting(
     std::vector<std::unique_ptr<content::ZygoteForkDelegate>>* delegates) {
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
   nacl::AddNaClZygoteForkDelegates(delegates);
 #endif
 }

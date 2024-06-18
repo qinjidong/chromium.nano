@@ -215,14 +215,14 @@ namespace {
 const base::TimeDelta kSlowTaskTimeout = base::Seconds(180);
 
 // Generic functions but currently only used when ENABLE_NACL.
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
 // Convenience method to create a callback that can be run on any thread and
 // will post the given |callback| back to the UI thread.
 base::OnceClosure UIThreadTrampoline(base::OnceClosure callback) {
   return base::BindPostTask(content::GetUIThreadTaskRunner({}),
                             std::move(callback));
 }
-#endif  // BUILDFLAG(ENABLE_NACL)
+#endif  // defined(ENABLE_NACL_REMOVED)
 
 // Returned by ChromeBrowsingDataRemoverDelegate::GetOriginTypeMatcher().
 bool DoesOriginMatchEmbedderMask(uint64_t origin_type_mask,
@@ -1080,7 +1080,7 @@ void ChromeBrowsingDataRemoverDelegate::RemoveEmbedderData(
       }
     }
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
     if (filter_builder->MatchesMostOriginsAndDomains()) {
       nacl::NaClBrowser::GetInstance()->ClearValidationCache(UIThreadTrampoline(
           CreateTaskCompletionClosure(TracingDataType::kNaclCache)));

@@ -71,19 +71,18 @@
 #include "chromeos/startup/browser_params_proxy.h"
 #include "chromeos/ui/clipboard_history/clipboard_history_util.h"
 #include "components/arc/common/intent_helper/arc_icon_cache_delegate.h"
-#include "components/nacl/common/buildflags.h"
 #include "components/policy/core/common/policy_pref_names.h"
 #include "extensions/common/features/feature_session_type.h"
 #include "services/device/public/cpp/geolocation/geolocation_system_permission_manager.h"
 #include "ui/views/controls/views_text_services_context_menu_chromeos.h"
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
 #include "base/base_paths.h"
 #include "base/files/file_util.h"
 #include "base/path_service.h"
 #include "chrome/common/chrome_paths.h"
 #include "chromeos/lacros/lacros_paths.h"
-#endif  // BUILDFLAG(ENABLE_NACL)
+#endif  // defined(ENABLE_NACL_REMOVED)
 
 namespace {
 
@@ -183,7 +182,7 @@ void ChromeBrowserMainExtraPartsLacros::PreProfileInit() {
       SystemGeolocationSourceLacros::
           CreateGeolocationSystemPermissionManagerOnLacros());
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
   // Ash ships PNaCl as part of rootfs, but Lacros doesn't ship it at all.
   // Since the required binaries are guaranteed to be the same, even on
   // different Chrome versions (since 2016), just use the PNaCl binaries shipped
@@ -198,7 +197,7 @@ void ChromeBrowserMainExtraPartsLacros::PreProfileInit() {
         ash_resources_dir.Append(FILE_PATH_LITERAL("pnacl"));
     base::PathService::Override(chrome::DIR_PNACL_COMPONENT, ash_pnacl);
   }
-#endif  // BUILDFLAG(ENABLE_NACL)
+#endif  // defined(ENABLE_NACL_REMOVED)
 }
 
 void ChromeBrowserMainExtraPartsLacros::PostBrowserStart() {

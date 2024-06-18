@@ -8,7 +8,6 @@
 #include "build/build_config.h"
 #include "build/chromeos_buildflags.h"
 #include "chrome/grit/generated_resources.h"
-#include "components/nacl/common/buildflags.h"
 
 namespace task_manager {
 
@@ -77,10 +76,10 @@ const TableColumnData kColumns[] = {
     {IDS_TASK_MANAGER_SQLITE_MEMORY_USED_COLUMN, ui::TableColumn::RIGHT, -1, 0,
      std::size("800 kB") * kCharWidth, -1, true, false, false},
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
     {IDS_TASK_MANAGER_NACL_DEBUG_STUB_PORT_COLUMN, ui::TableColumn::RIGHT, -1,
      0, std::size("32767") * kCharWidth, -1, true, true, false},
-#endif  // BUILDFLAG(ENABLE_NACL)
+#endif  // defined(ENABLE_NACL_REMOVED)
 
     {IDS_TASK_MANAGER_JAVASCRIPT_MEMORY_ALLOCATED_COLUMN,
      ui::TableColumn::RIGHT, -1, 0,

@@ -59,9 +59,9 @@ void CrosapiTaskProviderAsh::RefreshTaskGroup(TaskGroup* task_group) {
   task_group->set_gpu_memory_has_duplicates(
       cached_task_group->gpu_memory_has_duplicates);
   task_group->set_is_backgrounded(cached_task_group->is_backgrounded);
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
   task_group->set_nacl_debug_stub_port(cached_task_group->nacl_debug_stub_port);
-#endif  // BUILDFLAG(ENABLE_NACL)
+#endif  // defined(ENABLE_NACL_REMOVED)
   task_group->set_open_fd_count(cached_task_group->open_fd_count);
   task_group->set_idle_wakeups_per_second(
       cached_task_group->idle_wakeups_per_second);

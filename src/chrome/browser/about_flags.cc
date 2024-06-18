@@ -113,8 +113,6 @@
 #include "components/manta/features.h"
 #include "components/mirroring/service/mirroring_features.h"
 #include "components/ml/webnn/features.mojom-features.h"
-#include "components/nacl/common/buildflags.h"
-#include "components/nacl/common/nacl_switches.h"
 #include "components/network_session_configurator/common/network_features.h"
 #include "components/network_session_configurator/common/network_switches.h"
 #include "components/no_state_prefetch/browser/no_state_prefetch_field_trial.h"
@@ -1112,7 +1110,7 @@ const FeatureEntry::FeatureVariation kDynamicSearchUpdateAnimationVariations[] =
       std::size(kDynamicSearchUpdateAnimationDuration_150), nullptr}};
 #endif  // BUILDFLAG(IS_CHROMEOS_ASH)
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
 // Note: This needs to be kept in sync with parsing in
 // content/common/zygote/zygote_communication_linux.cc
 const FeatureEntry::Choice kVerboseLoggingInNaclChoices[] = {
@@ -3944,7 +3942,7 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kWebrtcUseMinMaxVEADimensionsName,
      flag_descriptions::kWebrtcUseMinMaxVEADimensionsDescription, kOsAll,
      FEATURE_VALUE_TYPE(blink::features::kWebRtcUseMinMaxVEADimensions)},
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
     {"enable-nacl", flag_descriptions::kNaclName,
      flag_descriptions::kNaclDescription, kOsAll,
      SINGLE_VALUE_TYPE(switches::kEnableNaCl)},

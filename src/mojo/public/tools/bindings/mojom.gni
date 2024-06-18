@@ -18,11 +18,9 @@ import("//build/config/cast.gni")
 import("//build/config/chrome_build.gni")
 import("//build/config/chromeos/ui_mode.gni")
 import("//build/config/features.gni")
-import("//build/config/nacl/config.gni")
 import("//build/config/rust.gni")
 import("//build/rust/rust_static_library.gni")
 import("//build/toolchain/kythe.gni")
-import("//components/nacl/features.gni")
 import("//third_party/jinja2/jinja2.gni")
 import("//third_party/ply/ply.gni")
 import("//tools/ipc_fuzzer/ipc_fuzzer.gni")
@@ -88,8 +86,7 @@ if (is_chromeos_ash) {
 enable_scrambled_message_ids =
     enable_mojom_message_id_scrambling &&
     (is_mac || is_win || (is_linux && !is_castos) ||
-     ((enable_nacl || is_nacl) &&
-      (target_os != "chromeos" && !chromeos_is_browser_only)))
+     (is_nacl && (target_os != "chromeos" && !chromeos_is_browser_only)))
 
 _mojom_tools_root = "//mojo/public/tools"
 _mojom_library_root = "$_mojom_tools_root/mojom/mojom"

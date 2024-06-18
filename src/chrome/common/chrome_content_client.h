@@ -17,12 +17,11 @@
 #include "build/branding_buildflags.h"
 #include "build/build_config.h"
 #include "chrome/common/buildflags.h"
-#include "components/nacl/common/buildflags.h"
 #include "content/public/common/content_client.h"
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
 #include "content/public/common/content_plugin_info.h"
-#endif  // BUILDFLAG(ENABLE_NACL)
+#endif  // defined(ENABLE_NACL_REMOVED)
 
 namespace embedder_support {
 class OriginTrialPolicyImpl;
@@ -47,7 +46,7 @@ class ChromeContentClient : public content::ContentClient {
   // pointers for built-in plugins. We avoid linking these plugins into
   // chrome_common because then on Windows we would ship them twice because of
   // the split DLL.
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
   static void SetNaClEntryFunctions(
       content::ContentPluginInfo::GetInterfaceFunc get_interface,
       content::ContentPluginInfo::PPP_InitializeModuleFunc initialize_module,

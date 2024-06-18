@@ -30,7 +30,6 @@
 #include "chrome/browser/component_updater/masked_domain_list_component_installer.h"
 #include "chrome/browser/component_updater/mei_preload_component_installer.h"
 #include "chrome/browser/component_updater/pki_metadata_component_installer.h"
-#include "chrome/browser/component_updater/pnacl_component_installer.h"
 #include "chrome/browser/component_updater/privacy_sandbox_attestations_component_installer.h"
 #include "chrome/browser/component_updater/ssl_error_assistant_component_installer.h"
 #include "chrome/browser/component_updater/subresource_filter_component_installer.h"
@@ -45,7 +44,6 @@
 #include "components/component_updater/installer_policies/optimization_hints_component_installer.h"
 #include "components/component_updater/installer_policies/safety_tips_component_installer.h"
 #include "components/component_updater/url_param_filter_remover.h"
-#include "components/nacl/common/buildflags.h"
 #include "components/safe_browsing/core/common/features.h"
 #include "device/vr/buildflags/buildflags.h"
 #include "services/screen_ai/buildflags/buildflags.h"
@@ -117,19 +115,6 @@ void RegisterComponentsForUpdate() {
   RegisterWidevineCdmComponent(cus);
 #endif  // BUILDFLAG(ENABLE_WIDEVINE_CDM_COMPONENT)
 
-#if BUILDFLAG(ENABLE_NACL) && !BUILDFLAG(IS_ANDROID)
-#if BUILDFLAG(IS_CHROMEOS)
-  // PNaCl on Chrome OS is on rootfs and there is no need to download it. But
-  // Chrome4ChromeOS on Linux doesn't contain PNaCl so enable component
-  // installer when running on Linux. See crbug.com/422121 for more details.
-  if (!base::SysInfo::IsRunningOnChromeOS()) {
-#endif  // BUILDFLAG(IS_CHROMEOS)
-    RegisterPnaclComponent(cus);
-#if BUILDFLAG(IS_CHROMEOS)
-  }
-#endif  // BUILDFLAG(IS_CHROMEOS)
-#endif  // BUILDFLAG(ENABLE_NACL) && !BUILDFLAG(IS_ANDROID)
-
   RegisterSubresourceFilterComponent(cus);
   RegisterOnDeviceHeadSuggestComponent(
       cus, g_browser_process->GetApplicationLocale());
@@ -146,20 +131,6 @@ void RegisterComponentsForUpdate() {
 
     // Clean up any remaining desktop sharing hub state.
     component_updater::DeleteDesktopSharingHub(path);
-
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-    if (base::SysInfo::IsRunningOnChromeOS()) {
-      // PNaCl on Lacros used to be a component, but on real devices this has
-      // been replaced by a link to the files also used by ash.
-      // Clean up the component if it is present.
-      DeletePnaclComponent(path);
-    }
-#endif  // BUILDFLAG(IS_CHROMEOS_LACROS)
-#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC)
-    // NaCl and PNaCl are no longer supported on Windows and Mac, clean up
-    // remaining component.
-    DeletePnaclComponent(path);
-#endif  // BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC)
   }
   RegisterSSLErrorAssistantComponent(cus);
 

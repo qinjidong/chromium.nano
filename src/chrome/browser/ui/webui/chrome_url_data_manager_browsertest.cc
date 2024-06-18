@@ -23,7 +23,6 @@
 #include "chrome/test/base/ui_test_utils.h"
 #include "components/enterprise/browser/controller/fake_browser_dm_token_storage.h"
 #include "components/history_clusters/core/features.h"
-#include "components/nacl/common/buildflags.h"
 #include "components/optimization_guide/core/optimization_guide_features.h"
 #include "components/password_manager/core/common/password_manager_features.h"
 #include "components/search/ntp_features.h"
@@ -491,7 +490,7 @@ static constexpr const char* const kChromeUrls[] = {
 #if !BUILDFLAG(IS_MAC)
     "chrome://sandbox",
 #endif  // !BUILDFLAG(IS_MAC)
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
     "chrome://nacl",
 #endif
 #if !BUILDFLAG(IS_MAC) && !BUILDFLAG(IS_CHROMEOS_LACROS)

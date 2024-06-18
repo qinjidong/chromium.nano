@@ -40,9 +40,9 @@ const int kBackgroundRefreshTypesMask =
 #if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS) || BUILDFLAG(IS_MAC)
     REFRESH_TYPE_FD_COUNT |
 #endif  // BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS) || BUILDFLAG(IS_MAC)
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
     REFRESH_TYPE_NACL |
-#endif  // BUILDFLAG(ENABLE_NACL)
+#endif  // defined(ENABLE_NACL_REMOVED)
     REFRESH_TYPE_PRIORITY;
 
 #if BUILDFLAG(IS_WIN)
@@ -75,12 +75,12 @@ void GetWindowsHandles(base::ProcessHandle handle,
 }
 #endif  // BUILDFLAG(IS_WIN)
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
 int GetNaClDebugStubPortOnProcessThread(int process_id) {
   return nacl::NaClBrowser::GetInstance()->GetProcessGdbDebugStubPort(
       process_id);
 }
-#endif  // BUILDFLAG(ENABLE_NACL)
+#endif  // defined(ENABLE_NACL_REMOVED)
 
 }  // namespace
 
@@ -119,9 +119,9 @@ TaskGroup::TaskGroup(
       user_peak_handles_(-1),
       hard_faults_per_second_(-1),
 #endif  // BUILDFLAG(IS_WIN)
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
       nacl_debug_stub_port_(nacl::kGdbDebugStubPortUnknown),
-#endif  // BUILDFLAG(ENABLE_NACL)
+#endif  // defined(ENABLE_NACL_REMOVED)
 #if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS) || BUILDFLAG(IS_MAC)
       open_fd_count_(-1),
 #endif  // BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS) || BUILDFLAG(IS_MAC)
@@ -226,12 +226,12 @@ void TaskGroup::Refresh(const gpu::VideoMemoryUsageStats& gpu_memory_stats,
 
 // 4- Refresh the NACL debug stub port (if enabled). This calls out to
 //    NaClBrowser on the browser's IO thread, completing asynchronously.
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
   if (TaskManagerObserver::IsResourceRefreshEnabled(REFRESH_TYPE_NACL,
                                                     refresh_flags)) {
     RefreshNaClDebugStubPort(tasks_[0]->GetChildProcessUniqueID());
   }
-#endif  // BUILDFLAG(ENABLE_NACL)
+#endif  // defined(ENABLE_NACL_REMOVED)
 
   int64_t shared_refresh_flags =
       refresh_flags & shared_sampler_->GetSupportedFlags();
@@ -302,7 +302,7 @@ void TaskGroup::RefreshWindowsHandles() {
 #endif  // BUILDFLAG(IS_WIN)
 }
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
 void TaskGroup::RefreshNaClDebugStubPort(int child_process_unique_id) {
   // Note this needs to be in a PostTask to avoid a use-after-free (see
   // https://crbug.com/1221406).
@@ -319,7 +319,7 @@ void TaskGroup::OnRefreshNaClDebugStubPortDone(int nacl_debug_stub_port) {
   nacl_debug_stub_port_ = nacl_debug_stub_port;
   OnBackgroundRefreshTypeFinished(REFRESH_TYPE_NACL);
 }
-#endif  // BUILDFLAG(ENABLE_NACL)
+#endif  // defined(ENABLE_NACL_REMOVED)
 
 #if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS) || BUILDFLAG(IS_MAC)
 void TaskGroup::OnOpenFdCountRefreshDone(int open_fd_count) {

@@ -48,7 +48,6 @@
 #include "components/crx_file/crx_verifier.h"
 #include "components/infobars/content/content_infobar_manager.h"
 #include "components/infobars/core/infobar.h"
-#include "components/nacl/common/buildflags.h"
 #include "content/public/test/browser_test.h"
 #include "extensions/browser/extension_dialog_auto_confirm.h"
 #include "extensions/browser/extension_registry.h"
@@ -79,7 +78,7 @@
 #include "components/translate/core/browser/translate_manager.h"
 #endif
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
 #include "chrome/browser/nacl_host/nacl_infobar_delegate.h"
 #endif
 
@@ -254,7 +253,7 @@ void InfoBarUiTest::ShowUi(const std::string& name) {
       break;
 
     case IBD::NACL_INFOBAR_DELEGATE:
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
       NaClInfoBarDelegate::Create(GetInfoBarManager());
 #else
       ADD_FAILURE() << "This infobar is not supported when NaCl is disabled.";
@@ -407,7 +406,7 @@ IN_PROC_BROWSER_TEST_F(InfoBarUiTest, InvokeUi_theme_installed) {
   ShowAndVerifyUi();
 }
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
 IN_PROC_BROWSER_TEST_F(InfoBarUiTest, InvokeUi_nacl) {
   ShowAndVerifyUi();
 }

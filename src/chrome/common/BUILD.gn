@@ -8,7 +8,6 @@ import("//build/config/chromeos/ui_mode.gni")
 import("//build/util/process_version.gni")
 import("//chrome/browser/downgrade/buildflags.gni")
 import("//chrome/common/features.gni")
-import("//components/nacl/features.gni")
 import("//components/offline_pages/buildflags/features.gni")
 import("//components/signin/features.gni")
 import("//device/vr/buildflags/buildflags.gni")
@@ -203,9 +202,6 @@ static_library("common_lib") {
     "//components/gcm_driver/common",
     "//components/metrics",
     "//components/metrics:net",
-    "//components/nacl/common:buildflags",
-    "//components/nacl/common:process_type",
-    "//components/nacl/common:switches",
     "//components/net_log",
     "//components/network_session_configurator/common",
     "//components/ntp_tiles",
@@ -372,10 +368,6 @@ static_library("common_lib") {
 
   if (is_chromeos) {
     deps += [ "//chrome/common/chromeos/extensions" ]
-  }
-
-  if (enable_nacl) {
-    public_deps += [ "//components/nacl/common" ]
   }
 
   # Printing.
@@ -570,7 +562,6 @@ static_library("url_constants") {
     "//components/commerce/core:commerce_constants",
     "//components/history_clusters/history_clusters_internals/webui:constants",
     "//components/lens:buildflags",
-    "//components/nacl/common:buildflags",
     "//components/optimization_guide/optimization_guide_internals/webui:url_constants",
     "//components/password_manager/content/common",
     "//components/safe_browsing/core/common",
@@ -606,7 +597,6 @@ static_library("constants") {
     "//build:branding_buildflags",
     "//build:chromeos_buildflags",
     "//components/bookmarks/common",
-    "//components/nacl/common:switches",
     "//components/offline_pages/buildflags",
     "//components/policy/core/common:policy_path_constants",
     "//extensions/buildflags",

@@ -2,10 +2,9 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-import("//components/nacl/features.gni")
 import("//tools/typescript/webui_ts_library.gni")
 
-assert(enable_nacl || is_mac)
+assert(is_mac)
 
 webui_ts_library("build_ts") {
   root_dir = "."

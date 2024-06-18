@@ -20,7 +20,7 @@
 #include "third_party/skia/include/core/SkColor.h"
 #include "url/gurl.h"
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
 #include "components/nacl/common/nacl_constants.h"
 #endif
 
@@ -48,7 +48,7 @@ PluginManager::GetFactoryInstance() {
 void PluginManager::OnExtensionLoaded(content::BrowserContext* browser_context,
                                       const Extension* extension) {
   bool plugins_or_nacl_changed = false;
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
   const NaClModuleInfo::List* nacl_modules =
       NaClModuleInfo::GetNaClModules(extension);
   if (nacl_modules) {
@@ -96,7 +96,7 @@ void PluginManager::OnExtensionUnloaded(
     const Extension* extension,
     UnloadedExtensionReason reason) {
   bool plugins_or_nacl_changed = false;
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
   const NaClModuleInfo::List* nacl_modules =
       NaClModuleInfo::GetNaClModules(extension);
   if (nacl_modules) {
@@ -121,7 +121,7 @@ void PluginManager::OnExtensionUnloaded(
     PluginService::GetInstance()->PurgePluginListCache(profile_, false);
 }
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
 
 void PluginManager::RegisterNaClModule(const NaClModuleInfo& info) {
   nacl_module_list_.push_front(info);
@@ -184,6 +184,6 @@ NaClModuleInfo::List::iterator PluginManager::FindNaClModule(const GURL& url) {
   return nacl_module_list_.end();
 }
 
-#endif  // BUILDFLAG(ENABLE_NACL)
+#endif  // defined(ENABLE_NACL_REMOVED)
 
 }  // namespace extensions

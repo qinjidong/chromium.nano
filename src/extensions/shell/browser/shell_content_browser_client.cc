@@ -13,7 +13,6 @@
 #include "base/memory/scoped_refptr.h"
 #include "base/task/sequenced_task_runner.h"
 #include "components/guest_view/common/guest_view.mojom.h"
-#include "components/nacl/common/buildflags.h"
 #include "content/public/browser/browser_main_runner.h"
 #include "content/public/browser/browser_task_traits.h"
 #include "content/public/browser/browser_thread.h"
@@ -59,7 +58,7 @@
 #include "third_party/blink/public/common/associated_interfaces/associated_interface_registry.h"
 #include "url/gurl.h"
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
 #include "components/nacl/browser/nacl_browser.h"
 #include "components/nacl/browser/nacl_host_message_filter.h"
 #include "components/nacl/browser/nacl_process_host.h"
@@ -111,7 +110,7 @@ ShellContentBrowserClient::CreateBrowserMainParts(bool is_integration_test) {
 
 void ShellContentBrowserClient::RenderProcessWillLaunch(
     content::RenderProcessHost* host) {
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
   int render_process_id = host->GetID();
   BrowserContext* browser_context = browser_main_parts_->browser_context();
 
@@ -182,7 +181,7 @@ ShellContentBrowserClient::CreateSpeechRecognitionManagerDelegate() {
 
 content::BrowserPpapiHost*
 ShellContentBrowserClient::GetExternalBrowserPpapiHost(int plugin_process_id) {
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
   content::BrowserChildProcessHostIterator iter(PROCESS_TYPE_NACL_LOADER);
   while (!iter.Done()) {
     nacl::NaClProcessHost* host = static_cast<nacl::NaClProcessHost*>(
@@ -399,13 +398,13 @@ void ShellContentBrowserClient::AppendRendererSwitches(
   command_line->CopySwitchesFrom(*base::CommandLine::ForCurrentProcess(),
                                  kSwitchNames);
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
   static const char* const kNaclSwitchNames[] = {
       ::switches::kEnableNaClDebug,
   };
   command_line->CopySwitchesFrom(*base::CommandLine::ForCurrentProcess(),
                                  kNaclSwitchNames);
-#endif  // BUILDFLAG(ENABLE_NACL)
+#endif  // defined(ENABLE_NACL_REMOVED)
 }
 
 const Extension* ShellContentBrowserClient::GetExtension(

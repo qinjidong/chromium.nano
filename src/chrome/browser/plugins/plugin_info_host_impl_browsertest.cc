@@ -25,7 +25,6 @@
 #include "chrome/common/chrome_content_client.h"
 #include "chrome/common/plugin.mojom.h"
 #include "chrome/test/base/in_process_browser_test.h"
-#include "components/nacl/common/buildflags.h"
 #include "content/public/browser/plugin_service.h"
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/render_process_host.h"
@@ -39,10 +38,10 @@
 #include "url/gurl.h"
 #include "url/origin.h"
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
 #include "components/nacl/common/nacl_constants.h"
 #include "ppapi/shared_impl/ppapi_permissions.h"
-#endif  // BUILDFLAG(ENABLE_NACL)
+#endif  // defined(ENABLE_NACL_REMOVED)
 
 #if BUILDFLAG(ENABLE_PDF)
 #include "components/pdf/common/constants.h"
@@ -139,7 +138,7 @@ IN_PROC_BROWSER_TEST_F(PluginInfoHostImplTest, CoverAllPlugins) {
 
   size_t expected_plugin_count = 0;
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
   EXPECT_THAT(plugins, Contains(Field(
                            "path", &WebPluginInfo::path,
                            base::FilePath(nacl::kInternalNaClPluginFileName))));
@@ -179,7 +178,7 @@ IN_PROC_BROWSER_TEST_F(PluginInfoHostImplTest, GetPluginInfoForFutureSplash) {
   EXPECT_EQ(PluginStatus::kNotFound, plugin_info->status);
 }
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
 IN_PROC_BROWSER_TEST_F(PluginInfoHostImplTest, GetPluginInfoForNaCl) {
   const std::u16string kPluginName = base::UTF8ToUTF16(nacl::kNaClPluginName);
   const base::FilePath kPluginPath =
@@ -282,7 +281,7 @@ IN_PROC_BROWSER_TEST_F(PluginInfoHostImplTest, GetPluginInfoForPnacl) {
 
   EXPECT_THAT(pnacl_mime_type.additional_params, IsEmpty());
 }
-#endif  // BUILDFLAG(ENABLE_NACL)
+#endif  // defined(ENABLE_NACL_REMOVED)
 
 #if BUILDFLAG(ENABLE_PDF)
 IN_PROC_BROWSER_TEST_P(PluginInfoHostImplBidiTest,

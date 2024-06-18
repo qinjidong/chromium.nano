@@ -7980,7 +7980,7 @@ const char kDcheckIsFatalDescription[] =
     "rather than crashing. If enabled, DCHECKs will crash the calling process.";
 #endif  // BUILDFLAG(DCHECK_IS_CONFIGURABLE)
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
 const char kNaclName[] = "Native Client";
 const char kNaclDescription[] =
     "Support Native Client for all web applications, even those that were not "

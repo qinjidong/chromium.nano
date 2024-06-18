@@ -41,7 +41,6 @@
 #include "components/favicon/content/content_favicon_driver.h"
 #include "components/favicon/core/favicon_driver_observer.h"
 #include "components/metrics/content/subprocess_metrics_provider.h"
-#include "components/nacl/common/buildflags.h"
 #include "components/ukm/test_ukm_recorder.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/browser_task_traits.h"
@@ -817,7 +816,7 @@ IN_PROC_BROWSER_TEST_F(ChromeServiceWorkerLinkFetchTest, FaviconOtherOrigin) {
   EXPECT_EQ("", ExecuteFaviconFetchTest(url));
 }
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
 // This test registers a service worker and then loads a controlled iframe that
 // creates a PNaCl plugin in an <embed> element. Once loaded, the PNaCl plugin
 // is ordered to do a resource request for "/echo". The service worker records
@@ -897,7 +896,7 @@ IN_PROC_BROWSER_TEST_F(ChromeServiceWorkerFetchPPAPITest,
   EXPECT_EQ(GetNavigationRequestString("#" + fragment),
             ExecutePNACLUrlLoaderTest(fragment));
 }
-#endif  // BUILDFLAG(ENABLE_NACL)
+#endif  // defined(ENABLE_NACL_REMOVED)
 
 class ChromeServiceWorkerNavigationHintTest : public ChromeServiceWorkerTest {
  protected:

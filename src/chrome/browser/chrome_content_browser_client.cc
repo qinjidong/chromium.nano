@@ -629,7 +629,7 @@
 #include "components/captive_portal/content/captive_portal_url_loader_throttle.h"
 #endif
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
 #include "components/nacl/browser/nacl_host_message_filter.h"
 #include "components/nacl/browser/nacl_process_host.h"
 #include "components/nacl/common/nacl_process_type.h"
@@ -1865,7 +1865,7 @@ void ChromeContentBrowserClient::RenderProcessWillLaunch(
       std::make_unique<base::UserDataAdapter<AudioDebugRecordingsHandler>>(
           audio_debug_recordings_handler));
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
   if (IsNaclAllowed() && !profile->IsSystemProfile()) {
     host->AddFilter(new nacl::NaClHostMessageFilter(
         host->GetID(), profile->IsOffTheRecord(), profile->GetPath()));
@@ -2795,7 +2795,7 @@ void ChromeContentBrowserClient::AppendExtraCommandLineSwitches(
     command_line->AppendSwitch(switches::kEnableDistillabilityService);
 #endif
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
     AppendDisableNaclSwitchIfNecessary(command_line);
 #endif
 
@@ -2821,7 +2821,7 @@ void ChromeContentBrowserClient::AppendExtraCommandLineSwitches(
       variations::switches::kEnableBenchmarking,
       switches::kEnableDistillabilityService,
       switches::kEnableNaCl,
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
       switches::kEnableNaClDebug,
 #endif
       switches::kEnableNetBenchmarking,
@@ -2830,7 +2830,7 @@ void ChromeContentBrowserClient::AppendExtraCommandLineSwitches(
           kTelemetryExtensionPwaOriginOverrideForTesting,  // For tests only.
       switches::kForceAppMode,
 #endif
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
       switches::kForcePNaClSubzero,
 #endif
       switches::kForceUIDirection,
@@ -2863,7 +2863,7 @@ void ChromeContentBrowserClient::AppendExtraCommandLineSwitches(
     // Instead we rely on renderers overriding the zygote state.
 
     // Load (in-process) Pepper plugins in-process in the zygote pre-sandbox.
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
     static const char* const kSwitchNames[] = {
         switches::kEnableNaClDebug,
         switches::kForcePNaClSubzero,

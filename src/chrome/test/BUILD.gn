@@ -17,7 +17,6 @@ import("//chrome/browser/page_load_metrics/integration_tests/jsdeps.gni")
 import("//chrome/browser/page_load_metrics/integration_tests/sources.gni")
 import("//chrome/browser/sync/test/integration/sync_integration_tests.gni")
 import("//chrome/common/features.gni")
-
 import("//chrome/services/speech/buildflags/buildflags.gni")
 import("//chrome/test/include_js_tests.gni")
 import("//chrome/version.gni")
@@ -28,7 +27,6 @@ import("//components/compose/features.gni")
 import("//components/enterprise/buildflags/buildflags.gni")
 import("//components/feed/features.gni")
 import("//components/lens/features.gni")
-import("//components/nacl/features.gni")
 import("//components/offline_pages/buildflags/features.gni")
 import("//components/optimization_guide/features.gni")
 import("//components/os_crypt/sync/features.gni")
@@ -1890,7 +1888,6 @@ if (!is_android) {
       "//components/metrics/structured:structured_events",
       "//components/metrics/structured:test_support",
       "//components/metrics_services_manager",
-      "//components/nacl/common:buildflags",
       "//components/navigation_metrics",
       "//components/no_state_prefetch/browser",
       "//components/no_state_prefetch/common",
@@ -3005,10 +3002,6 @@ if (!is_android) {
       sources += [ "../browser/ui/views/device_signals_consent/consent_dialog_browsertest.cc" ]
     }
 
-    if (enable_nacl) {
-      sources += [ "../browser/chrome_browser_main_extra_parts_nacl_deprecation_browsertest.cc" ]
-    }
-
     if (is_chrome_branded && !is_chromeos) {
       sources += [ "../browser/ui/views/side_panel/search_companion/companion_page_browsertest.cc" ]
     }
@@ -3599,53 +3592,6 @@ if (!is_android) {
 
     if (is_win || is_linux) {
       sources += [ "../browser/ui/webui/search_engine_choice/search_engine_choice_ui_browsertest.cc" ]
-    }
-
-    if (enable_nacl) {
-      sources += [
-        "../browser/extensions/extension_nacl_browsertest.cc",
-        "../browser/nacl_host/test/gdb_debug_stub_browsertest.cc",
-        "nacl/nacl_browsertest.cc",
-        "nacl/nacl_browsertest_uma.cc",
-        "nacl/nacl_browsertest_util.cc",
-        "nacl/nacl_browsertest_util.h",
-        "nacl/pnacl_header_test.cc",
-        "nacl/pnacl_header_test.h",
-      ]
-      deps += [
-        "//components/nacl/browser",
-        "//components/nacl/renderer",
-        "//components/nacl/renderer/plugin:nacl_trusted_plugin",
-      ]
-
-      data_deps += [
-        "//chrome/test/data/nacl",
-      ]
-      if (is_chromeos) {
-        sources += [
-          "../browser/ui/views/extensions/document_scanner_discovery_confirmation_dialog_browsertest.cc",
-          "../browser/ui/views/extensions/document_scanner_start_scan_confirmation_dialog_browsertest.cc",
-        ]
-      }
-      if (is_chromeos_ash) {
-        data += [ "//ash/webui/common/resources/cr.js" ]
-        sources += [
-          "../browser/ui/views/extensions/request_file_system_dialog_browsertest.cc",
-          "//third_party/liblouis/wasm/liblouis_wrapper_browsertest.cc",
-        ]
-        data_deps += [
-          "//components/nacl/loader:nacl_helper",
-          "//third_party/liblouis:liblouis_test_data",
-        ]
-      }
-
-      if (is_linux || is_chromeos) {
-        sources += [ "../browser/nacl_host/test/nacl_gdb_browsertest.cc" ]
-        data_deps += [ "//chrome/browser/nacl_host/test:mock_nacl_gdb" ]
-      }
-      if (is_linux || is_chromeos) {
-        data_deps += [ "//components/nacl/loader:nacl_helper" ]
-      }
     }
 
     if (enable_extensions) {
@@ -6968,7 +6914,6 @@ test("unit_tests") {
     "//components/metrics/structured",
     "//components/metrics/structured/lib",
     "//components/mirroring:mirroring_tests",
-    "//components/nacl/common:buildflags",
     "//components/no_state_prefetch/browser",
     "//components/no_state_prefetch/common",
     "//components/offline_items_collection/core/test_support",
@@ -10714,8 +10659,6 @@ if (!is_android) {
       "//components/javascript_dialogs",
       "//components/keyed_service/content",
       "//components/metrics:test_support",
-      "//components/nacl/common:buildflags",
-      "//components/nacl/common:switches",
       "//components/omnibox/browser",
       "//components/os_crypt/async/browser:key_provider_interface",
       "//components/os_crypt/sync:test_support",
@@ -12739,20 +12682,6 @@ if (is_chromeos) {
         "//components/exo/wayland:ui_controls_protocol",
         "//ui/base:test_support",
       ]
-
-      # crbug.com/1223310 There is an issue that for the second toolchain the built
-      # nacl_irt_x86_64.nexe is not in subfolder ash_clang_x64.
-      # This action will copy the related files to the correct folder.
-      if (enable_nacl && current_cpu == "x64" && also_build_ash_chrome) {
-        copy("copy_files_to_ash_clang_x64") {
-          sources = [
-            "${root_build_dir}/nacl_irt_x86_64.nexe",
-            "${root_build_dir}/nacl_irt_x86_64.nexe.debug",
-          ]
-          outputs = [ "${root_build_dir}/ash_clang_x64/{{source_file_part}}" ]
-        }
-        deps += [ ":copy_files_to_ash_clang_x64" ]
-      }
     }
 
     if (is_chromeos_lacros) {

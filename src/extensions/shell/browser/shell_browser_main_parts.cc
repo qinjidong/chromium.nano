@@ -14,7 +14,6 @@
 #include "build/build_config.h"
 #include "build/chromeos_buildflags.h"
 #include "components/keyed_service/content/browser_context_dependency_manager.h"
-#include "components/nacl/common/buildflags.h"
 #include "components/prefs/pref_service.h"
 #include "components/sessions/core/session_id_generator.h"
 #include "components/storage_monitor/storage_monitor.h"
@@ -79,7 +78,7 @@
 #include "device/bluetooth/dbus/bluez_dbus_thread_manager.h"
 #endif
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
 #include "components/nacl/browser/nacl_browser.h"
 #include "components/nacl/browser/nacl_process_host.h"
 #include "content/public/browser/browser_thread.h"
@@ -89,7 +88,7 @@
 using base::CommandLine;
 using content::BrowserContext;
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
 #endif
 
 namespace extensions {
@@ -237,7 +236,7 @@ int ShellBrowserMainParts::PreMainMessageLoopRun() {
 
   InitExtensionSystem();
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
   nacl::NaClBrowser::SetDelegate(
       std::make_unique<ShellNaClBrowserDelegate>(browser_context_.get()));
   nacl::NaClProcessHost::EarlyStartup();
@@ -266,7 +265,7 @@ void ShellBrowserMainParts::PostMainMessageLoopRun() {
   // Close apps before shutting down browser context and extensions system.
   desktop_controller_->CloseAppWindows();
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
   nacl::NaClBrowser::ClearAndDeleteDelegate();
 #endif
 

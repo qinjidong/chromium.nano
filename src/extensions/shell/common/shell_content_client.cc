@@ -7,13 +7,12 @@
 #include <string_view>
 
 #include "base/strings/utf_string_conversions.h"
-#include "components/nacl/common/buildflags.h"
 #include "extensions/common/constants.h"
 #include "extensions/shell/common/version.h"  // Generated file.
 #include "ui/base/l10n/l10n_util.h"
 #include "ui/base/resource/resource_bundle.h"
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
 #include "base/base_paths.h"
 #include "base/files/file_path.h"
 #include "base/path_service.h"
@@ -26,7 +25,7 @@
 namespace extensions {
 namespace {
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
 bool GetNaClPluginPath(base::FilePath* path) {
   // On Posix, plugins live in the module directory.
   base::FilePath module;
@@ -35,7 +34,7 @@ bool GetNaClPluginPath(base::FilePath* path) {
   *path = module.Append(nacl::kInternalNaClPluginFileName);
   return true;
 }
-#endif  // BUILDFLAG(ENABLE_NACL)
+#endif  // defined(ENABLE_NACL_REMOVED)
 
 }  // namespace
 
@@ -47,7 +46,7 @@ ShellContentClient::~ShellContentClient() {
 
 void ShellContentClient::AddPlugins(
     std::vector<content::ContentPluginInfo>* plugins) {
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
   base::FilePath path;
   if (!GetNaClPluginPath(&path))
     return;
@@ -72,7 +71,7 @@ void ShellContentClient::AddPlugins(
       nacl_plugin::PPP_ShutdownModule;
   nacl.permissions = ppapi::PERMISSION_PRIVATE | ppapi::PERMISSION_DEV;
   plugins->push_back(nacl);
-#endif  // BUILDFLAG(ENABLE_NACL)
+#endif  // defined(ENABLE_NACL_REMOVED)
 }
 
 void ShellContentClient::AddAdditionalSchemes(Schemes* schemes) {

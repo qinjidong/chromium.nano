@@ -20,7 +20,6 @@
 #include "build/build_config.h"
 #include "chrome/common/media/webrtc_logging.mojom.h"
 #include "chrome/services/speech/buildflags/buildflags.h"
-#include "components/nacl/common/buildflags.h"
 #include "components/safe_browsing/content/renderer/phishing_classifier/phishing_model_setter_impl.h"
 #include "components/spellcheck/spellcheck_buildflags.h"
 #include "content/public/renderer/content_renderer_client.h"
@@ -65,7 +64,7 @@ namespace content {
 struct WebPluginInfo;
 }  // namespace content
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
 namespace extensions {
 class Extension;
 }
@@ -249,7 +248,7 @@ class ChromeContentRendererClient
   void BindWebRTCLoggingAgent(
       mojo::PendingReceiver<chrome::mojom::WebRtcLoggingAgent> receiver);
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
   // Determines if a page/app/extension is allowed to run native (non-PNaCl)
   // NaCl modules.
   static bool IsNativeNaClAllowed(const GURL& app_url,

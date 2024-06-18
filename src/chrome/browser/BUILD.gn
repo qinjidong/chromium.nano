@@ -21,7 +21,6 @@ import("//components/compose/features.gni")
 import("//components/enterprise/buildflags/buildflags.gni")
 import("//components/feed/features.gni")
 import("//components/lens/features.gni")
-import("//components/nacl/features.gni")
 import("//components/offline_pages/buildflags/features.gni")
 import("//components/optimization_guide/features.gni")
 import("//components/os_crypt/sync/features.gni")
@@ -324,8 +323,6 @@ static_library("browser") {
     "component_updater/optimization_guide_on_device_model_installer.h",
     "component_updater/pki_metadata_component_installer.cc",
     "component_updater/pki_metadata_component_installer.h",
-    "component_updater/pnacl_component_installer.cc",
-    "component_updater/pnacl_component_installer.h",
     "component_updater/privacy_sandbox_attestations_component_installer.cc",
     "component_updater/privacy_sandbox_attestations_component_installer.h",
     "component_updater/recovery_component_installer.cc",
@@ -2019,7 +2016,6 @@ static_library("browser") {
     "//components/cross_device/logging",
     "//components/enterprise/buildflags",
     "//components/enterprise/common:files_scan_data",
-    "//components/nacl/common:buildflags",
     "//components/optimization_guide:machine_learning_tflite_buildflags",
     "//components/page_info",
     "//components/page_info/core",
@@ -7646,16 +7642,6 @@ static_library("browser") {
     ]
   }
 
-  if (enable_nacl) {
-    sources += [
-      "nacl_host/nacl_browser_delegate_impl.cc",
-      "nacl_host/nacl_browser_delegate_impl.h",
-      "nacl_host/nacl_infobar_delegate.cc",
-      "nacl_host/nacl_infobar_delegate.h",
-    ]
-    deps += [ "//components/nacl/browser" ]
-  }
-
   if (enable_offline_pages) {
     sources += [
       "offline_pages/background_loader_offliner.cc",
@@ -8311,7 +8297,7 @@ grit("resources") {
     deps += [ "//chrome/browser/resources/reset_password:build_ts" ]
   }
 
-  if (enable_nacl || is_mac) {
+  if (is_mac) {
     deps += [ "//chrome/browser/resources/about_nacl:build_ts" ]
   }
 }

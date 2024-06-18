@@ -7,7 +7,6 @@
 #include <memory>
 
 #include "build/chromeos_buildflags.h"
-#include "components/nacl/common/buildflags.h"
 #include "extensions/common/api/bluetooth/bluetooth_manifest_handler.h"
 #include "extensions/common/api/commands/commands_handler.h"
 #include "extensions/common/api/declarative/declarative_manifest_handler.h"
@@ -84,7 +83,7 @@ void RegisterCommonManifestHandlers() {
 #endif
   registry->RegisterHandler(std::make_unique<KioskModeHandler>());
   registry->RegisterHandler(std::make_unique<MimeTypesHandlerParser>());
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
   registry->RegisterHandler(std::make_unique<NaClModulesHandler>());
 #endif
   registry->RegisterHandler(std::make_unique<OAuth2ManifestHandler>());

@@ -25,7 +25,6 @@
 #include "chrome/browser/ui/task_manager/task_manager_columns.h"
 #include "chrome/common/pref_names.h"
 #include "chrome/grit/generated_resources.h"
-#include "components/nacl/common/buildflags.h"
 #include "components/prefs/scoped_user_pref_update.h"
 #include "content/public/common/result_codes.h"
 #include "ui/base/l10n/l10n_util.h"
@@ -303,13 +302,13 @@ TaskManagerTableModel::TaskManagerTableModel(TableViewDelegate* delegate)
       table_view_delegate_(delegate),
       table_model_observer_(nullptr),
       stringifier_(new TaskManagerValuesStringifier),
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
       is_nacl_debugging_flag_enabled_(
           base::CommandLine::ForCurrentProcess()->HasSwitch(
               switches::kEnableNaClDebug)) {
 #else
       is_nacl_debugging_flag_enabled_(false) {
-#endif  // BUILDFLAG(ENABLE_NACL)
+#endif  // defined(ENABLE_NACL_REMOVED)
   DCHECK(delegate);
   StartUpdating();
 }

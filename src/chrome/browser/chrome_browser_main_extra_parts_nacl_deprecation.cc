@@ -10,12 +10,11 @@
 #include "chrome/browser/browser_process.h"
 #include "chrome/common/chrome_switches.h"
 #include "chrome/common/pref_names.h"
-#include "components/nacl/common/buildflags.h"
 #include "components/prefs/pref_service.h"
 
 namespace {
 
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
 bool ShouldNaClBeAllowed() {
   // Enabled by policy.
 #if BUILDFLAG(IS_CHROMEOS)
@@ -40,7 +39,7 @@ BASE_FEATURE(kNaclAllow,
 );
 
 void ChromeBrowserMainExtraPartsNaclDeprecation::PostEarlyInitialization() {
-#if BUILDFLAG(ENABLE_NACL)
+#if defined(ENABLE_NACL_REMOVED)
   if (!ShouldNaClBeAllowed()) {
     DisallowNacl();
   }
