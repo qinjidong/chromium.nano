@@ -23,7 +23,6 @@
 #include "chrome/installer/util/initial_preferences_constants.h"
 #include "chrome/installer/util/util_constants.h"
 #include "components/variations/pref_names.h"
-#include "rlz/buildflags/buildflags.h"
 
 namespace {
 
