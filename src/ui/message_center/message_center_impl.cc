@@ -9,7 +9,6 @@
 #include <utility>
 #include <vector>
 
-#include "ash/constants/ash_features.h"
 #include "base/auto_reset.h"
 #include "base/command_line.h"
 #include "base/containers/contains.h"
