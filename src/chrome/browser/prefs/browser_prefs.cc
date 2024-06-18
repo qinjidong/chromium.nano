@@ -64,7 +64,6 @@
 #include "chrome/browser/profiles/profiles_state.h"
 #include "chrome/browser/push_messaging/push_messaging_app_identifier.h"
 #include "chrome/browser/push_messaging/push_messaging_service_impl.h"
-#include "chrome/browser/rlz/chrome_rlz_tracker_delegate.h"
 #include "chrome/browser/search/search.h"
 #include "chrome/browser/sharing/sharing_sync_preference.h"
 #include "chrome/browser/sharing_hub/sharing_hub_features.h"
@@ -186,7 +185,6 @@
 #include "net/http/http_server_properties_manager.h"
 #include "pdf/buildflags.h"
 #include "printing/buildflags/buildflags.h"
-#include "rlz/buildflags/buildflags.h"
 #include "services/screen_ai/buildflags/buildflags.h"
 
 #if BUILDFLAG(ENABLE_BACKGROUND_MODE)
@@ -2024,10 +2022,6 @@ void RegisterProfilePrefs(user_prefs::PrefRegistrySyncable* registry,
 #if BUILDFLAG(ENABLE_PRINT_PREVIEW)
   printing::PolicySettings::RegisterProfilePrefs(registry);
   printing::PrintPreviewStickySettings::RegisterProfilePrefs(registry);
-#endif
-
-#if BUILDFLAG(ENABLE_RLZ)
-  ChromeRLZTrackerDelegate::RegisterProfilePrefs(registry);
 #endif
 
 #if BUILDFLAG(ENABLE_FEED_V2)

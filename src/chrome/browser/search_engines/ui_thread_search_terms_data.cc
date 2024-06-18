@@ -15,13 +15,8 @@
 #include "components/google/core/common/google_util.h"
 #include "components/version_info/version_info.h"
 #include "content/public/browser/browser_thread.h"
-#include "rlz/buildflags/buildflags.h"
 #include "ui/base/device_form_factor.h"
 #include "url/gurl.h"
-
-#if BUILDFLAG(ENABLE_RLZ)
-#include "components/rlz/rlz_tracker.h"  // nogncheck crbug.com/1125897
-#endif
 
 using content::BrowserThread;
 
@@ -53,20 +48,6 @@ std::u16string UIThreadSearchTermsData::GetRlzParameterValue(
   DCHECK(!BrowserThread::IsThreadInitialized(BrowserThread::UI) ||
       BrowserThread::CurrentlyOn(BrowserThread::UI));
   std::u16string rlz_string;
-#if BUILDFLAG(ENABLE_RLZ)
-  // For organic brandcodes do not use rlz at all. Empty brandcode usually
-  // means a chromium install. This is ok.
-  std::string brand;
-  if (google_brand::GetBrand(&brand) && !google_brand::IsOrganic(brand)) {
-    // This call will return false the first time(s) it is called until the
-    // value has been cached. This normally would mean that at most one omnibox
-    // search might not send the RLZ data but this is not really a problem.
-    rlz_lib::AccessPoint access_point = rlz::RLZTracker::ChromeOmnibox();
-    if (from_app_list)
-      access_point = rlz::RLZTracker::ChromeAppList();
-    rlz::RLZTracker::GetAccessPointRlz(access_point, &rlz_string);
-  }
-#endif
   return rlz_string;
 }
 

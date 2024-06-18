@@ -41,7 +41,6 @@ import("//mojo/public/tools/bindings/mojom.gni")
 import("//net/features.gni")
 import("//pdf/features.gni")
 import("//printing/buildflags/buildflags.gni")
-import("//rlz/buildflags/buildflags.gni")
 import("//services/screen_ai/buildflags/features.gni")
 import("//testing/libfuzzer/fuzzer_test.gni")
 import("//testing/test.gni")
@@ -2073,7 +2072,6 @@ if (!is_android) {
       "//net:test_support",
       "//pdf:buildflags",
       "//printing/buildflags",
-      "//rlz/buildflags",
       "//services/audio/public/cpp:test_support",
       "//services/device/public/cpp:test_support",
       "//services/device/public/mojom",
@@ -10061,16 +10059,6 @@ test("unit_tests") {
     ]
 
     deps += [ "//chrome/common/notifications:unit_tests" ]
-  }
-  if (enable_rlz) {
-    sources += [
-      "../browser/rlz/chrome_rlz_tracker_delegate_unittest.cc",
-      "../browser/rlz/chrome_rlz_tracker_web_contents_observer_unittest.cc",
-    ]
-    deps += [
-      "//components/rlz:test_support",
-      "//rlz:test_support",
-    ]
   }
   if (!is_android && !is_chromeos) {
     sources += [

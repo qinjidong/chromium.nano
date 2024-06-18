@@ -33,7 +33,6 @@ import("//media/gpu/args.gni")
 import("//net/features.gni")
 import("//pdf/features.gni")
 import("//printing/buildflags/buildflags.gni")
-import("//rlz/buildflags/buildflags.gni")
 import("//sandbox/features.gni")
 import("//services/screen_ai/buildflags/features.gni")
 import("//testing/libfuzzer/fuzzer_test.gni")
@@ -2557,7 +2556,6 @@ static_library("browser") {
     "//net",
     "//net:extras",
     "//printing/buildflags",
-    "//rlz/buildflags",
     "//services/audio/public/cpp",
     "//services/cert_verifier:lib",
     "//services/data_decoder/public/cpp",
@@ -3026,9 +3024,6 @@ static_library("browser") {
       "android/resource_id.h",
       "android/resource_mapper.cc",
       "android/resource_mapper.h",
-      "android/rlz/revenue_stats.cc",
-      "android/rlz/rlz_ping_handler.cc",
-      "android/rlz/rlz_ping_handler.h",
       "android/search_permissions/search_permissions_service.cc",
       "android/search_permissions/search_permissions_service.h",
       "android/seccomp_support_detector.cc",
@@ -3681,7 +3676,6 @@ static_library("browser") {
       "//device/fido:cablev2_registration",
       "//ipc:param_traits",
       "//media/mojo/clients",
-      "//rlz:rlz_utils",
       "//sandbox",
       "//sandbox:sandbox_buildflags",
       "//services/device/public/cpp:device_feature_list",
@@ -7807,21 +7801,6 @@ static_library("browser") {
     sources += [
       "plugins/plugin_observer_common.cc",
       "plugins/plugin_observer_common.h",
-    ]
-  }
-
-  if (enable_rlz) {
-    sources += [
-      "rlz/chrome_rlz_tracker_delegate.cc",
-      "rlz/chrome_rlz_tracker_delegate.h",
-      "rlz/chrome_rlz_tracker_web_contents_observer.cc",
-      "rlz/chrome_rlz_tracker_web_contents_observer.h",
-    ]
-
-    public_deps += [
-      "//components/google/core/common",
-      "//components/rlz",
-      "//rlz:rlz_lib",
     ]
   }
 

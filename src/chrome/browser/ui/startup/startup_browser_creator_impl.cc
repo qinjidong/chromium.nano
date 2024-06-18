@@ -68,11 +68,6 @@
 #include "chrome/browser/win/conflicts/incompatible_applications_updater.h"
 #endif
 
-#if BUILDFLAG(ENABLE_RLZ)
-#include "components/google/core/common/google_util.h"
-#include "components/rlz/rlz_tracker.h"  // nogncheck
-#endif
-
 #if BUILDFLAG(IS_CHROMEOS_ASH)
 #include "chrome/browser/ash/crosapi/browser_util.h"
 #include "components/app_restore/full_restore_utils.h"
@@ -310,14 +305,6 @@ Browser* StartupBrowserCreatorImpl::OpenTabsInBrowser(
     params.disposition = first_tab ? WindowOpenDisposition::NEW_FOREGROUND_TAB
                                    : WindowOpenDisposition::NEW_BACKGROUND_TAB;
     params.tabstrip_add_types = add_types;
-
-#if BUILDFLAG(ENABLE_RLZ)
-    if (process_startup == chrome::startup::IsProcessStartup::kYes &&
-        google_util::IsGoogleHomePageUrl(tab.url)) {
-      params.extra_headers = rlz::RLZTracker::GetAccessPointHttpHeader(
-          rlz::RLZTracker::ChromeHomePage());
-    }
-#endif  // BUILDFLAG(ENABLE_RLZ)
 
     Navigate(&params);
     first_tab = false;

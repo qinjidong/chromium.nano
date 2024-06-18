@@ -25,7 +25,6 @@ import("//device/vr/buildflags/buildflags.gni")
 import("//extensions/buildflags/buildflags.gni")
 import("//pdf/features.gni")
 import("//printing/buildflags/buildflags.gni")
-import("//rlz/buildflags/buildflags.gni")
 import("//services/screen_ai/buildflags/features.gni")
 import("//third_party/protobuf/proto_library.gni")
 import("//ui/base/ui_features.gni")
@@ -689,7 +688,6 @@ static_library("ui") {
     "//media",
     "//net",
     "//printing/buildflags",
-    "//rlz/buildflags",
     "//services/device/public/cpp:device_features",
     "//services/device/public/cpp/bluetooth",
     "//services/device/public/cpp/geolocation",

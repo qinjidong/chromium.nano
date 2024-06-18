@@ -13,7 +13,6 @@
 #include "crypto/secure_hash.h"
 #include "crypto/sha2.h"
 #include "media/media_buildflags.h"
-#include "rlz/buildflags/buildflags.h"
 #include "url/origin.h"
 
 #if BUILDFLAG(IS_CHROMEOS)
@@ -29,14 +28,6 @@
 #include "chromeos/crosapi/mojom/content_protection.mojom.h"
 #include "chromeos/lacros/lacros_service.h"
 #endif
-
-#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC)
-#if BUILDFLAG(ENABLE_RLZ)
-#include "rlz/lib/machine_id.h"
-#else
-#error "RLZ must be enabled on Windows/Mac"
-#endif  // BUILDFLAG(ENABLE_RLZ)
-#endif  // BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC)
 
 namespace {
 
@@ -108,7 +99,7 @@ void ComputeStorageId(const std::vector<uint8_t>& profile_salt,
 #if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC)
   std::string machine_id;
   std::string storage_id_key = GetCdmStorageIdKey();
-  rlz_lib::GetMachineId(&machine_id);
+  LOG(ERROR) << "invalid machine id";
   std::move(callback).Run(
       CalculateStorageId(storage_id_key, profile_salt, origin, machine_id));
 

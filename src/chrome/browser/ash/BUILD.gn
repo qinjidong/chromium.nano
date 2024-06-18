@@ -10,7 +10,6 @@ import("//build/config/sanitizers/sanitizers.gni")
 import("//extensions/buildflags/buildflags.gni")
 import("//media/media_options.gni")
 import("//printing/buildflags/buildflags.gni")
-import("//rlz/buildflags/buildflags.gni")
 import("//testing/libfuzzer/fuzzer_test.gni")
 import("//third_party/libprotobuf-mutator/fuzzable_proto_library.gni")
 import("//third_party/protobuf/proto_library.gni")
@@ -4481,7 +4480,6 @@ source_set("ash") {
     "//printing/mojom",
     "//remoting/host/chromeos:features",
     "//remoting/host/chromeos:remoting_service",
-    "//rlz/buildflags",
     "//sandbox/policy",
     "//services/accessibility:buildflags",
     "//services/accessibility/android:android_lib",
@@ -4540,10 +4538,6 @@ source_set("ash") {
     ":dbus_service_files",
     ":mojo_service_manager_policy",
   ]
-
-  if (enable_rlz) {
-    deps += [ "//components/rlz" ]
-  }
 
   if (is_cfm) {
     sources += [

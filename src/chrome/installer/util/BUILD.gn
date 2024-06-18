@@ -180,7 +180,6 @@ static_library("with_no_strings") {
       "//components/metrics:client_info",
       "//components/version_info:channel",
       "//crypto",
-      "//rlz/buildflags",
       "//third_party/icu",
     ]
 
@@ -350,7 +349,6 @@ if (is_win) {
       "//chrome/installer/test:alternate_version_generator_lib",
       "//components/variations",
       "//components/version_info:channel",
-      "//rlz/buildflags",
       "//testing/gmock",
       "//testing/gtest",
     ]

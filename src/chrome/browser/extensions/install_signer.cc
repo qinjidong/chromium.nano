@@ -29,15 +29,10 @@
 #include "crypto/signature_verifier.h"
 #include "extensions/common/extension.h"
 #include "net/traffic_annotation/network_traffic_annotation.h"
-#include "rlz/buildflags/buildflags.h"
 #include "services/network/public/cpp/resource_request.h"
 #include "services/network/public/cpp/shared_url_loader_factory.h"
 #include "services/network/public/cpp/simple_url_loader.h"
 #include "url/gurl.h"
-
-#if BUILDFLAG(ENABLE_RLZ)
-#include "rlz/lib/machine_id.h"  // nogncheck crbug.com/1125897
-#endif
 
 namespace {
 
@@ -84,13 +79,7 @@ GURL GetBackendUrl() {
 // Hashes |salt| with the machine id, base64-encodes it and returns it in
 // |result|.
 bool HashWithMachineId(const std::string& salt, std::string* result) {
-  std::string machine_id;
-#if BUILDFLAG(ENABLE_RLZ)
-  if (!rlz_lib::GetMachineId(&machine_id))
-    return false;
-#else
-  machine_id = "unknown";
-#endif
+  std::string machine_id= "unknown";
 
   std::unique_ptr<crypto::SecureHash> hash(
       crypto::SecureHash::Create(crypto::SecureHash::SHA256));

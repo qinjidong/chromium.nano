@@ -39,7 +39,6 @@
 #include "content/public/browser/tracing_controller.h"
 #include "content/public/common/content_switches.h"
 #include "printing/buildflags/buildflags.h"
-#include "rlz/buildflags/buildflags.h"
 
 #if BUILDFLAG(IS_WIN)
 #include "chrome/browser/first_run/upgrade_util_win.h"
@@ -58,10 +57,6 @@
 
 #if BUILDFLAG(ENABLE_BACKGROUND_MODE)
 #include "chrome/browser/background/background_mode_manager.h"
-#endif
-
-#if BUILDFLAG(ENABLE_RLZ)
-#include "components/rlz/rlz_tracker.h"  // nogncheck crbug.com/1125897
 #endif
 
 #if BUILDFLAG(CLANG_PROFILING_INSIDE_SANDBOX) && BUILDFLAG(CLANG_PGO)
@@ -191,12 +186,6 @@ bool ShutdownPreThreadsStop() {
 
   bool restart_last_session = RecordShutdownInfoPrefs();
   g_browser_process->local_state()->CommitPendingWrite();
-
-#if BUILDFLAG(ENABLE_RLZ)
-  // Cleanup any statics created by RLZ. Must be done before NotificationService
-  // is destroyed.
-  rlz::RLZTracker::CleanupRlz();
-#endif
 
   return restart_last_session;
 }

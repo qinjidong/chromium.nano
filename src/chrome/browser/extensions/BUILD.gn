@@ -14,7 +14,6 @@ import("//extensions/buildflags/buildflags.gni")
 import("//mojo/public/tools/bindings/mojom.gni")
 import("//pdf/features.gni")
 import("//printing/buildflags/buildflags.gni")
-import("//rlz/buildflags/buildflags.gni")
 import("//services/screen_ai/buildflags/features.gni")
 import("//testing/libfuzzer/fuzzer_test.gni")
 import("//third_party/protobuf/proto_library.gni")
@@ -970,7 +969,6 @@ static_library("extensions") {
     "//net",
     "//pdf:buildflags",
     "//printing/buildflags",
-    "//rlz/buildflags",
     "//services/audio/public/cpp",
     "//services/data_decoder/public/cpp",
     "//services/device/public/mojom",
@@ -1411,10 +1409,6 @@ static_library("extensions") {
       deps +=
           [ "//chrome/browser/extensions/api/pdf_viewer_private:event_router" ]
     }
-  }
-
-  if (enable_rlz_support) {
-    deps += [ "//rlz:rlz_lib" ]
   }
 
   if (toolkit_views) {

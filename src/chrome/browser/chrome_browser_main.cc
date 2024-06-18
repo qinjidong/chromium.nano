@@ -190,7 +190,6 @@
 #include "net/http/http_stream_factory.h"
 #include "pdf/buildflags.h"
 #include "printing/buildflags/buildflags.h"
-#include "rlz/buildflags/buildflags.h"
 #include "services/tracing/public/cpp/stack_sampling/tracing_sampler_profiler.h"
 #include "third_party/blink/public/common/origin_trials/origin_trials_settings_provider.h"
 #include "third_party/blink/public/common/switches.h"
@@ -343,11 +342,6 @@
 #if BUILDFLAG(ENABLE_PRINT_PREVIEW) && !defined(OFFICIAL_BUILD)
 #include "printing/printed_document.h"
 #endif
-
-#if BUILDFLAG(ENABLE_RLZ)
-#include "chrome/browser/rlz/chrome_rlz_tracker_delegate.h"
-#include "components/rlz/rlz_tracker.h"  // nogncheck crbug.com/1125897
-#endif  // BUILDFLAG(ENABLE_RLZ)
 
 #if BUILDFLAG(IS_CHROMEOS_LACROS)
 #include "ui/shell_dialogs/select_file_dialog_lacros.h"
@@ -1346,26 +1340,6 @@ void ChromeBrowserMainParts::PostProfileInit(Profile* profile,
                                                browser_process_->local_state());
   }
 #endif  // !BUILDFLAG(IS_ANDROID)
-
-#if BUILDFLAG(ENABLE_RLZ) && !BUILDFLAG(IS_CHROMEOS_ASH)
-  if (is_initial_profile) {
-    // Init the RLZ library. This just binds the dll and schedules a task on the
-    // file thread to be run sometime later. If this is the first run we record
-    // the installation event.
-    int ping_delay =
-        profile->GetPrefs()->GetInteger(prefs::kRlzPingDelaySeconds);
-    // Negative ping delay means to send ping immediately after a first search
-    // is recorded.
-    rlz::RLZTracker::SetRlzDelegate(
-        std::make_unique<ChromeRLZTrackerDelegate>());
-    rlz::RLZTracker::InitRlzDelayed(
-        first_run::IsChromeFirstRun(), ping_delay < 0,
-        base::Seconds(abs(ping_delay)),
-        ChromeRLZTrackerDelegate::IsGoogleDefaultSearch(profile),
-        ChromeRLZTrackerDelegate::IsGoogleHomepage(profile),
-        ChromeRLZTrackerDelegate::IsGoogleInStartpages(profile));
-  }
-#endif  // BUILDFLAG(ENABLE_RLZ) && !BUILDFLAG(IS_CHROMEOS_ASH)
 
   language::LanguageUsageMetrics::RecordAcceptLanguages(
       profile->GetPrefs()->GetString(language::prefs::kAcceptLanguages));

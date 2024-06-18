@@ -167,7 +167,6 @@
 #include "extensions/buildflags/buildflags.h"
 #include "pdf/buildflags.h"
 #include "printing/buildflags/buildflags.h"
-#include "rlz/buildflags/buildflags.h"
 #include "services/metrics/public/cpp/ukm_builders.h"
 #include "services/metrics/public/cpp/ukm_recorder.h"
 #include "services/metrics/public/cpp/ukm_source_id.h"
@@ -203,10 +202,6 @@
 #include "chrome/browser/printing/print_preview_dialog_controller.h"
 #endif  // BUILDFLAG(ENABLE_PRINT_PREVIEW)
 #endif  // BUILDFLAG(ENABLE_PRINTING)
-
-#if BUILDFLAG(ENABLE_RLZ)
-#include "components/rlz/rlz_tracker.h"  // nogncheck
-#endif
 
 #if BUILDFLAG(ENABLE_SCREEN_AI_SERVICE)
 #include "chrome/browser/accessibility/ax_screen_ai_annotator.h"
@@ -786,17 +781,6 @@ void Home(Browser* browser, WindowOpenDisposition disposition) {
   base::RecordAction(UserMetricsAction("Home"));
 
   std::string extra_headers;
-#if BUILDFLAG(ENABLE_RLZ)
-  // If the home page is a Google home page, add the RLZ header to the request.
-  PrefService* pref_service = browser->profile()->GetPrefs();
-  if (pref_service) {
-    if (google_util::IsGoogleHomePageUrl(
-            GURL(pref_service->GetString(prefs::kHomePage)))) {
-      extra_headers = rlz::RLZTracker::GetAccessPointHttpHeader(
-          rlz::RLZTracker::ChromeHomePage());
-    }
-  }
-#endif  // BUILDFLAG(ENABLE_RLZ)
 
   GURL url = browser->profile()->GetHomePage();
 

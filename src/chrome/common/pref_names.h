@@ -17,7 +17,6 @@
 #include "components/signin/public/base/signin_buildflags.h"
 #include "extensions/buildflags/buildflags.h"
 #include "printing/buildflags/buildflags.h"
-#include "rlz/buildflags/buildflags.h"
 
 namespace prefs {
 
@@ -147,11 +146,6 @@ inline constexpr char kURLsToRestoreOnStartup[] = "session.startup_urls";
 
 // Boolean that is true when user feedback to Google is allowed.
 inline constexpr char kUserFeedbackAllowed[] = "feedback_allowed";
-
-#if BUILDFLAG(ENABLE_RLZ)
-// Integer. RLZ ping delay in seconds.
-inline constexpr char kRlzPingDelaySeconds[] = "rlz_ping_delay";
-#endif  // BUILDFLAG(ENABLE_RLZ)
 
 #if BUILDFLAG(IS_CHROMEOS_ASH)
 // Locale preference of device' owner.  ChromeOS device appears in this locale

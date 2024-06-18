@@ -259,15 +259,6 @@ void InitialPreferences::EnforceLegacyPreferences() {
     if (GetBool(mapping.old_distro_pref_path, &value))
       initial_dictionary_->Set(mapping.modern_pref_path, value);
   }
-
-#if BUILDFLAG(ENABLE_RLZ)
-  // Map the RLZ ping delay shipped in the distribution dictionary into real
-  // prefs.
-  static constexpr char kDistroPingDelay[] = "ping_delay";
-  int rlz_ping_delay = 0;
-  if (GetInt(kDistroPingDelay, &rlz_ping_delay))
-    initial_dictionary_->Set(prefs::kRlzPingDelaySeconds, rlz_ping_delay);
-#endif  // BUILDFLAG(ENABLE_RLZ)
 }
 
 bool InitialPreferences::GetBool(const std::string& name, bool* value) const {

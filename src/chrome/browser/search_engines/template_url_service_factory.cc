@@ -27,14 +27,9 @@
 #include "components/search_engines/enterprise_site_search_manager.h"
 #include "components/search_engines/search_engines_pref_names.h"
 #include "components/search_engines/template_url_service.h"
-#include "rlz/buildflags/buildflags.h"
 
 #if BUILDFLAG(IS_CHROMEOS_ASH)
 #include "chrome/browser/ash/profiles/profile_helper.h"
-#endif
-
-#if BUILDFLAG(ENABLE_RLZ)
-#include "components/rlz/rlz_tracker.h"  // nogncheck crbug.com/1125897
 #endif
 
 // static
@@ -55,11 +50,6 @@ TemplateURLServiceFactory* TemplateURLServiceFactory::GetInstance() {
 std::unique_ptr<KeyedService> TemplateURLServiceFactory::BuildInstanceFor(
     content::BrowserContext* context) {
   base::RepeatingClosure dsp_change_callback;
-#if BUILDFLAG(ENABLE_RLZ)
-  dsp_change_callback = base::BindRepeating(
-      base::IgnoreResult(&rlz::RLZTracker::RecordProductEvent), rlz_lib::CHROME,
-      rlz::RLZTracker::ChromeOmnibox(), rlz_lib::SET_TO_GOOGLE);
-#endif
   Profile* profile = Profile::FromBrowserContext(context);
   return std::make_unique<TemplateURLService>(
       profile->GetPrefs(),
