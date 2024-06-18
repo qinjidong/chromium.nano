@@ -88,7 +88,7 @@ declare_args() {
 
   # Path to an AFDO profile to use while building with clang, if any. Empty
   # implies none.
-  clang_sample_profile_path = "//../tools/android/profiles/afdo.prof"
+  clang_sample_profile_path = ""
 
   # Some configurations have default sample profiles. If this is true and
   # clang_sample_profile_path is empty, we'll fall back to the default.
@@ -2584,7 +2584,7 @@ if (is_clang && is_a_target_toolchain) {
     assert(is_android || is_chromeos || is_castos,
            "The current platform has no default profile")
     if (is_android || is_castos) {
-      _clang_sample_profile = "//chrome/android/profiles/afdo.prof"
+      _clang_sample_profile = "//../tools/android/profiles/afdo.prof"
     } else {
       assert(
           chromeos_afdo_platform == "atom" ||
