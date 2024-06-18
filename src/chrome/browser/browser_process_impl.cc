@@ -143,7 +143,6 @@
 #include "media/media_buildflags.h"
 #include "mojo/public/cpp/bindings/pending_receiver.h"
 #include "net/log/net_log.h"
-#include "ppapi/buildflags/buildflags.h"
 #include "printing/buildflags/buildflags.h"
 #include "services/network/public/cpp/features.h"
 #include "services/network/public/cpp/network_switches.h"
@@ -210,7 +209,7 @@
 #include "extensions/common/extension_l10n_util.h"
 #endif
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
 #include "chrome/browser/plugins/chrome_plugin_service_filter.h"
 #include "content/public/browser/plugin_service.h"
 #endif
@@ -1286,10 +1285,10 @@ void BrowserProcessImpl::PreMainMessageLoopRun() {
   ChromeJsErrorReportProcessor::Create();
 #endif
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
   content::PluginService::GetInstance()->SetFilter(
       ChromePluginServiceFilter::GetInstance());
-#endif  // BUILDFLAG(ENABLE_PLUGINS)
+#endif  // defined(ENABLE_PLUGINS)
 
 #if !BUILDFLAG(IS_ANDROID)
   storage_monitor::StorageMonitor::Create();

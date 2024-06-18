@@ -4,7 +4,6 @@
 
 import("//build/config/cast.gni")
 import("//build/config/features.gni")
-import("//ppapi/buildflags/buildflags.gni")
 
 declare_args() {
   # Whether or not to use external popup menu.
@@ -21,7 +20,7 @@ declare_args() {
 
   # We allow legacy IPC to be enabled for Android (GIN Java bridge), and
   # Pepper usage.
-  content_enable_legacy_ipc = is_android || enable_ppapi
+  content_enable_legacy_ipc = is_android
 }
 
 enable_screen_capture =

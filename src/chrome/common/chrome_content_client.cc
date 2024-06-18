@@ -33,7 +33,6 @@
 #include "chrome/common/chrome_switches.h"
 #include "chrome/common/crash_keys.h"
 #include "chrome/common/media/cdm_registration.h"
-#include "chrome/common/ppapi_utils.h"
 #include "chrome/common/url_constants.h"
 #include "chrome/common/webui_url_constants.h"
 #include "chrome/grit/common_resources.h"
@@ -58,7 +57,6 @@
 #include "mojo/public/cpp/bindings/pending_receiver.h"
 #include "net/http/http_util.h"
 #include "pdf/buildflags.h"
-#include "ppapi/buildflags/buildflags.h"
 #include "third_party/widevine/cdm/buildflags.h"
 #include "ui/base/l10n/l10n_util.h"
 #include "ui/base/resource/resource_bundle.h"
@@ -84,7 +82,7 @@
 #include "ppapi/shared_impl/ppapi_permissions.h"  // nogncheck
 #endif
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
 #include "content/public/common/content_plugin_info.h"
 #endif
 

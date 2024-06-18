@@ -20,18 +20,17 @@
 #include "content/public/common/webplugininfo.h"
 #include "content/public/test/browser_test.h"
 #include "content/public/test/content_browser_test.h"
-#include "ppapi/buildflags/buildflags.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
-#if BUILDFLAG(ENABLE_PPAPI)
+#if defined(ENABLE_PPAPI)
 #include "content/browser/ppapi_plugin_process_host.h"
-#endif  // BUILDFLAG(ENABLE_PPAPI)
+#endif  // defined(ENABLE_PPAPI)
 
 namespace content {
 
 namespace {
 
-#if BUILDFLAG(ENABLE_PPAPI)
+#if defined(ENABLE_PPAPI)
 class TestPluginClient : public PpapiPluginProcessHost::PluginClient {
  public:
   void GetPpapiChannelInfo(base::ProcessHandle* renderer_handle,
@@ -52,7 +51,7 @@ class TestPluginClient : public PpapiPluginProcessHost::PluginClient {
   base::ProcessId plugin_pid_ = 0;
   raw_ptr<base::RunLoop> run_loop_ = nullptr;
 };
-#endif  // BUILDFLAG(ENABLE_PPAPI)
+#endif  // defined(ENABLE_PPAPI)
 
 }  // anonymous namespace
 
@@ -85,7 +84,7 @@ class PluginServiceImplBrowserTest : public ContentBrowserTest {
     run_loop.Run();
   }
 
-#if BUILDFLAG(ENABLE_PPAPI)
+#if defined(ENABLE_PPAPI)
   void OpenChannelToFakePlugin(const std::optional<url::Origin>& origin,
                                TestPluginClient* client) {
     base::RunLoop run_loop;
@@ -97,7 +96,7 @@ class PluginServiceImplBrowserTest : public ContentBrowserTest {
     client->WaitForQuit();
     client->SetRunLoop(nullptr);
   }
-#endif  // BUILDFLAG(ENABLE_PPAPI)
+#endif  // defined(ENABLE_PPAPI)
 
   base::FilePath plugin_path_;
   base::FilePath profile_dir_;
@@ -114,7 +113,7 @@ IN_PROC_BROWSER_TEST_F(PluginServiceImplBrowserTest, GetPluginInfoByPath) {
   EXPECT_EQ(plugin_path_, plugin_info.path);
 }
 
-#if BUILDFLAG(ENABLE_PPAPI)
+#if defined(ENABLE_PPAPI)
 IN_PROC_BROWSER_TEST_F(PluginServiceImplBrowserTest, OriginLock) {
   RegisterFakePlugin();
 
@@ -190,6 +189,6 @@ IN_PROC_BROWSER_TEST_F(PluginServiceImplBrowserTest, NoForkBombs) {
     EXPECT_NE(base::kNullProcessId, client.plugin_pid());
   }
 }
-#endif  // BUILDFLAG(ENABLE_PPAPI)
+#endif  // defined(ENABLE_PPAPI)
 
 }  // namespace content

@@ -56,11 +56,10 @@
 #include "extensions/browser/sandboxed_unpacker.h"
 #include "extensions/browser/test_extension_registry_observer.h"
 #include "net/test/embedded_test_server/embedded_test_server.h"
-#include "ppapi/buildflags/buildflags.h"
 #include "sandbox/policy/switches.h"
 #include "ui/base/l10n/l10n_util.h"
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
 #include "chrome/browser/plugins/hung_plugin_infobar_delegate.h"
 #include "chrome/browser/plugins/plugin_observer.h"
 #include "chrome/browser/plugins/reload_plugin_infobar_delegate.h"
@@ -209,11 +208,11 @@ void InfoBarUiTest::ShowUi(const std::string& name) {
           {"automation", IBD::AUTOMATION_INFOBAR_DELEGATE},
           {"tab_sharing", IBD::TAB_SHARING_INFOBAR_DELEGATE},
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
           {"hung_plugin", IBD::HUNG_PLUGIN_INFOBAR_DELEGATE},
           {"reload_plugin", IBD::RELOAD_PLUGIN_INFOBAR_DELEGATE},
           {"plugin_observer", IBD::PLUGIN_OBSERVER_INFOBAR_DELEGATE},
-#endif  // BUILDFLAG(ENABLE_PLUGINS)
+#endif  // defined(ENABLE_PLUGINS)
       });
   const auto id_entry = kIdentifiers.find(name);
   if (id_entry == kIdentifiers.end()) {
@@ -262,7 +261,7 @@ void InfoBarUiTest::ShowUi(const std::string& name) {
 #endif
       break;
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
     case IBD::HUNG_PLUGIN_INFOBAR_DELEGATE:
       HungPluginInfoBarDelegate::Create(GetInfoBarManager(), nullptr, 0,
                                         u"Test Plugin");
@@ -279,7 +278,7 @@ void InfoBarUiTest::ShowUi(const std::string& name) {
       PluginObserver::CreatePluginObserverInfoBar(GetInfoBarManager(),
                                                   u"Test Plugin");
       break;
-#endif  // BUILDFLAG(ENABLE_PLUGINS)
+#endif  // defined(ENABLE_PLUGINS)
 
     case IBD::FILE_ACCESS_DISABLED_INFOBAR_DELEGATE:
       ChromeSelectFilePolicy(GetWebContents()).SelectFileDenied();
@@ -414,7 +413,7 @@ IN_PROC_BROWSER_TEST_F(InfoBarUiTest, InvokeUi_nacl) {
 }
 #endif
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
 IN_PROC_BROWSER_TEST_F(InfoBarUiTest, InvokeUi_hung_plugin) {
   ShowAndVerifyUi();
 }
@@ -426,7 +425,7 @@ IN_PROC_BROWSER_TEST_F(InfoBarUiTest, InvokeUi_reload_plugin) {
 IN_PROC_BROWSER_TEST_F(InfoBarUiTest, InvokeUi_plugin_observer) {
   ShowAndVerifyUi();
 }
-#endif  // BUILDFLAG(ENABLE_PLUGINS)
+#endif  // defined(ENABLE_PLUGINS)
 
 IN_PROC_BROWSER_TEST_F(InfoBarUiTest, InvokeUi_file_access_disabled) {
   ShowAndVerifyUi();

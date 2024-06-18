@@ -35,7 +35,6 @@
 #include "components/permissions/contexts/speaker_selection_permission_context.h"
 #include "components/permissions/contexts/window_management_permission_context.h"
 #include "components/permissions/permission_manager.h"
-#include "ppapi/buildflags/buildflags.h"
 #include "services/device/public/cpp/geolocation/buildflags.h"
 
 #if BUILDFLAG(IS_ANDROID) || BUILDFLAG(IS_CHROMEOS) || BUILDFLAG(IS_WIN)

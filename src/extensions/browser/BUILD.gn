@@ -635,7 +635,6 @@ source_set("browser_sources") {
     "//net",
     "//pdf:buildflags",
     "//pdf:features",
-    "//ppapi/buildflags",
     "//services/data_decoder/public/cpp:cpp",
     "//services/device/public/cpp/hid",
     "//services/device/public/mojom",

@@ -134,7 +134,6 @@
 #include "net/test/embedded_test_server/http_response.h"
 #include "net/test/test_data_directory.h"
 #include "pdf/buildflags.h"
-#include "ppapi/buildflags/buildflags.h"
 #include "services/device/public/cpp/test/fake_hid_manager.h"
 #include "services/device/public/cpp/test/fake_usb_device_manager.h"
 #include "services/device/public/cpp/test/scoped_geolocation_overrider.h"
@@ -167,7 +166,7 @@
 #include "ui/aura/window.h"
 #endif
 
-#if BUILDFLAG(ENABLE_PPAPI)
+#if defined(ENABLE_PPAPI)
 #include "content/public/test/ppapi_test_utils.h"
 #endif
 
@@ -6027,7 +6026,7 @@ IN_PROC_BROWSER_TEST_F(WebViewTest, PreserveNameAcrossNavigationsAndCrashes) {
   EXPECT_EQ("foo", content::EvalJs(GetGuestRenderFrameHost(), "window.name"));
 }
 
-#if BUILDFLAG(ENABLE_PPAPI)
+#if defined(ENABLE_PPAPI)
 class WebViewPPAPITest : public WebViewTest {
  protected:
   void SetUpCommandLine(base::CommandLine* command_line) override {
@@ -6043,7 +6042,7 @@ IN_PROC_BROWSER_TEST_F(WebViewPPAPITest, Shim_TestPlugin) {
 IN_PROC_BROWSER_TEST_F(WebViewPPAPITest, Shim_TestPluginLoadPermission) {
   TestHelper("testPluginLoadPermission", "web_view/shim", NO_TEST_SERVER);
 }
-#endif  // BUILDFLAG(ENABLE_PPAPI)
+#endif  // defined(ENABLE_PPAPI)
 
 // Domain which the Webstore hosted app is associated with in production.
 constexpr char kWebstoreURL[] = "https://chrome.google.com/";

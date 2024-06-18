@@ -24,7 +24,6 @@
 #include "chrome/common/webui_url_constants.h"
 #include "content/public/common/url_constants.h"
 #include "net/net_buildflags.h"
-#include "ppapi/buildflags/buildflags.h"
 
 namespace chrome {
 
@@ -883,7 +882,7 @@ inline constexpr char kWindows78DeprecationURL[] =
 inline constexpr char kChromeSyncLearnMoreURL[] =
     "https://support.google.com/chrome?p=chrome_sync";
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
 // The URL for the "Learn more" page for the outdated plugin infobar.
 inline constexpr char kOutdatedPluginLearnMoreURL[] =
     "https://support.google.com/chrome?p=ib_outdated_plugin";

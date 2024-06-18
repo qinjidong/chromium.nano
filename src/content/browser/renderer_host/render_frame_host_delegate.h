@@ -34,7 +34,6 @@
 #include "mojo/public/cpp/bindings/scoped_interface_endpoint_handle.h"
 #include "net/cert/cert_status_flags.h"
 #include "net/http/http_response_headers.h"
-#include "ppapi/buildflags/buildflags.h"
 #include "services/device/public/mojom/geolocation_context.mojom.h"
 #include "services/device/public/mojom/wake_lock.mojom.h"
 #include "services/metrics/public/cpp/ukm_source_id.h"
@@ -672,7 +671,7 @@ class CONTENT_EXPORT RenderFrameHostDelegate {
   // doesn't return nullptr except for some tests.
   virtual PrerenderHostRegistry* GetPrerenderHostRegistry();
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
   virtual void OnPepperInstanceCreated(RenderFrameHostImpl* source,
                                        int32_t pp_instance) {}
   virtual void OnPepperInstanceDeleted(RenderFrameHostImpl* source,

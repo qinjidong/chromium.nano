@@ -48,7 +48,6 @@
 #include "components/nacl/common/buildflags.h"
 #include "components/safe_browsing/core/common/features.h"
 #include "device/vr/buildflags/buildflags.h"
-#include "ppapi/buildflags/buildflags.h"
 #include "services/screen_ai/buildflags/buildflags.h"
 #include "third_party/widevine/cdm/buildflags.h"
 

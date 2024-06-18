@@ -9,10 +9,9 @@
 #include "content/public/browser/render_frame_host_receiver_set.h"
 #include "extensions/browser/guest_view/web_view/web_view_permission_helper.h"
 #include "extensions/browser/guest_view/web_view/web_view_permission_helper_delegate.h"
-#include "ppapi/buildflags/buildflags.h"
 #include "third_party/blink/public/mojom/permissions/permission_status.mojom-forward.h"
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
 #include "chrome/common/plugin.mojom.h"
 #endif
 
@@ -21,13 +20,13 @@ class WebViewGuest;
 
 class ChromeWebViewPermissionHelperDelegate
     : public WebViewPermissionHelperDelegate
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
     ,
       public chrome::mojom::PluginAuthHost
 #endif
 {
  public:
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
   static void BindPluginAuthHost(
       mojo::PendingAssociatedReceiver<chrome::mojom::PluginAuthHost> receiver,
       content::RenderFrameHost* rfh);
@@ -63,7 +62,7 @@ class ChromeWebViewPermissionHelperDelegate
       base::OnceCallback<void(bool)> callback) override;
 
  private:
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
   // chrome::mojom::PluginAuthHost methods.
   void BlockedUnauthorizedPlugin(const std::u16string& name,
                                  const std::string& identifier) override;
@@ -74,7 +73,7 @@ class ChromeWebViewPermissionHelperDelegate
   void OnPermissionResponse(const std::string& identifier,
                             bool allow,
                             const std::string& user_input);
-#endif  // BUILDFLAG(ENABLE_PLUGINS)
+#endif  // defined(ENABLE_PLUGINS)
 
   void OnGeolocationPermissionResponse(
       bool user_gesture,

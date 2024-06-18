@@ -13,7 +13,6 @@ import("//components/spellcheck/spellcheck_build_features.gni")
 import("//extensions/buildflags/buildflags.gni")
 import("//media/media_options.gni")
 import("//pdf/features.gni")
-import("//ppapi/buildflags/buildflags.gni")
 import("//testing/libfuzzer/fuzzer_test.gni")
 import("//third_party/widevine/cdm/widevine.gni")
 import("//tools/grit/grit_rule.gni")
@@ -221,7 +220,6 @@ static_library("renderer") {
     "//mojo/public/cpp/bindings",
     "//net",
     "//pdf:buildflags",
-    "//ppapi/buildflags",
     "//printing/buildflags",
     "//services/metrics/public/cpp:metrics_cpp",
     "//services/metrics/public/cpp:ukm_builders",
@@ -263,30 +261,6 @@ static_library("renderer") {
       "plugins/chrome_plugin_placeholder.h",
     ]
     deps += [ "//components/strings" ]
-  }
-
-  if (enable_ppapi) {
-    sources += [
-      "pepper/chrome_renderer_pepper_host_factory.cc",
-      "pepper/chrome_renderer_pepper_host_factory.h",
-      "pepper/pepper_helper.cc",
-      "pepper/pepper_helper.h",
-      "pepper/pepper_shared_memory_message_filter.cc",
-      "pepper/pepper_shared_memory_message_filter.h",
-      "pepper/pepper_uma_host.cc",
-      "pepper/pepper_uma_host.h",
-    ]
-    deps += [
-      "//media:media_buildflags",
-      "//ppapi/host",
-      "//ppapi/proxy",
-      "//ppapi/proxy:ipc",
-      "//ppapi/shared_impl",
-    ]
-
-    if (is_linux || is_chromeos) {
-      deps += [ "//components/services/font/public/cpp" ]
-    }
   }
 
   if (enable_pdf) {

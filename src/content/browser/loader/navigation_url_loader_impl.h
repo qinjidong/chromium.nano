@@ -21,7 +21,6 @@
 #include "mojo/public/cpp/bindings/pending_remote.h"
 #include "net/base/load_timing_info.h"
 #include "net/url_request/url_request.h"
-#include "ppapi/buildflags/buildflags.h"
 #include "services/metrics/public/cpp/ukm_source_id.h"
 #include "services/network/public/cpp/record_ontransfersizeupdate_utils.h"
 #include "services/network/public/cpp/single_request_url_loader_factory.h"
@@ -181,7 +180,7 @@ class CONTENT_EXPORT NavigationURLLoaderImpl
       std::vector<std::unique_ptr<blink::URLLoaderThrottle>>
           additional_throttles);
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
   void CheckPluginAndContinueOnReceiveResponse(
       network::mojom::URLResponseHeadPtr head,
       network::mojom::URLLoaderClientEndpointsPtr url_loader_client_endpoints,

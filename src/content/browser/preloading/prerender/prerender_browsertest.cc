@@ -125,9 +125,9 @@
 #include "url/gurl.h"
 #include "url/url_constants.h"
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
 #include "content/common/pepper_plugin.mojom.h"
-#endif  // BUILDFLAG(ENABLE_PLUGINS)
+#endif  // defined(ENABLE_PLUGINS)
 
 using ::testing::Exactly;
 
@@ -5646,7 +5646,7 @@ void LoadAndWaitForPrerenderDestroyed(test::PrerenderTestHelper* helper,
   }
 }
 
-#if BUILDFLAG(ENABLE_PPAPI)
+#if defined(ENABLE_PPAPI)
 // Tests that we will cancel the prerendering if the prerendering page attempts
 // to use plugins.
 //
@@ -5697,7 +5697,7 @@ IN_PROC_BROWSER_TEST_P(PrerenderTargetAgnosticBrowserTest,
                      EvalJsOptions::EXECUTE_SCRIPT_NO_RESOLVE_PROMISES));
   WaitForRequest(GetUrl("/title1.html"), 1);
 }
-#endif  // BUILDFLAG(ENABLE_PPAPI)
+#endif  // defined(ENABLE_PPAPI)
 
 #if BUILDFLAG(IS_ANDROID)
 // On Android the Notification constructor throws an exception regardless of

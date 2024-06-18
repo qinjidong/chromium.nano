@@ -119,7 +119,7 @@
 #endif  // BUILDFLAG(ENABLE_PRINT_PREVIEW)
 #endif  // BUILDFLAG(ENABLE_PRINTING)
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
 #include "chrome/browser/guest_view/web_view/chrome_web_view_permission_helper_delegate.h"
 #include "chrome/browser/plugins/plugin_observer.h"
 #endif
@@ -446,7 +446,7 @@ void ChromeContentBrowserClient::
                 std::move(receiver), render_frame_host);
           },
           &render_frame_host));
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
   associated_registry.AddInterface<
       chrome::mojom::PluginAuthHost>(base::BindRepeating(
       [](content::RenderFrameHost* render_frame_host,
@@ -457,7 +457,7 @@ void ChromeContentBrowserClient::
       },
       &render_frame_host));
 #endif
-#if BUILDFLAG(ENABLE_PLUGINS) || BUILDFLAG(IS_ANDROID)
+#if defined(ENABLE_PLUGINS) || BUILDFLAG(IS_ANDROID)
 #if BUILDFLAG(IS_ANDROID)
   using PluginObserverImpl = PluginObserverAndroid;
 #else
@@ -472,7 +472,7 @@ void ChromeContentBrowserClient::
                                                render_frame_host);
           },
           &render_frame_host));
-#endif  // BUILDFLAG(ENABLE_PLUGINS) || BUILDFLAG(IS_ANDROID)
+#endif  // defined(ENABLE_PLUGINS) || BUILDFLAG(IS_ANDROID)
   associated_registry.AddInterface<
       chrome::mojom::TrustedVaultEncryptionKeysExtension>(base::BindRepeating(
       [](content::RenderFrameHost* render_frame_host,
@@ -680,10 +680,10 @@ void ChromeContentBrowserClient::BindHostReceiverForRenderer(
 #endif  // BUILDFLAG(HAS_SPELLCHECK_PANEL)
 #endif  // BUILDFLAG(ENABLE_SPELLCHECK)
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
   if (auto host_receiver = receiver.As<chrome::mojom::MetricsService>()) {
     ChromeMetricsServiceAccessor::BindMetricsServiceReceiver(
         std::move(host_receiver));
   }
-#endif  // BUILDFLAG(ENABLE_PLUGINS)
+#endif  // defined(ENABLE_PLUGINS)
 }

@@ -165,7 +165,6 @@
 #include "extensions/buildflags/buildflags.h"
 #include "media/base/media_switches.h"
 #include "pdf/buildflags.h"
-#include "ppapi/buildflags/buildflags.h"
 #include "printing/buildflags/buildflags.h"
 #include "rlz/buildflags/buildflags.h"
 #include "ui/accessibility/accessibility_features.h"
@@ -277,7 +276,7 @@
 #include "chrome/browser/offline_pages/recent_tab_helper.h"
 #endif
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
 #include "chrome/browser/plugins/plugin_observer.h"
 #include "chrome/browser/ui/hung_plugin_tab_helper.h"
 #endif
@@ -799,7 +798,7 @@ void TabHelpers::AttachTabHelpers(WebContents* web_contents) {
   offline_pages::AutoFetchPageLoadWatcher::CreateForWebContents(web_contents);
 #endif
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
   HungPluginTabHelper::CreateForWebContents(web_contents);
   PluginObserver::CreateForWebContents(web_contents);
 #endif

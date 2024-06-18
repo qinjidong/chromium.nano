@@ -3,7 +3,6 @@
 # found in the LICENSE file.
 
 import("//components/nacl/features.gni")
-import("//ppapi/buildflags/buildflags.gni")
 
 static_library("ipc_message_lib") {
   testonly = true
@@ -28,9 +27,6 @@ static_library("ipc_message_lib") {
   ]
   if (is_win) {
     public_deps += [ "//chrome/chrome_elf:test_stubs" ]
-  }
-  if (enable_ppapi) {
-    public_deps += [ "//ppapi/proxy:ipc" ]
   }
   sources = [
     "all_messages.h",

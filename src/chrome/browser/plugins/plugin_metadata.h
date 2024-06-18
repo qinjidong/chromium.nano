@@ -7,9 +7,7 @@
 
 #include <string>
 
-#include "ppapi/buildflags/buildflags.h"
-
-#if !BUILDFLAG(ENABLE_PLUGINS)
+#if !defined(ENABLE_PLUGINS)
 #error "Plugins should be enabled"
 #endif
 

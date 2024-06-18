@@ -11,7 +11,6 @@
 #include "build/build_config.h"
 #include "build/chromeos_buildflags.h"
 #include "chrome/common/chrome_switches.h"
-#include "ppapi/buildflags/buildflags.h"
 
 namespace features {
 
@@ -378,7 +377,7 @@ BASE_FEATURE(kFileTransferEnterpriseConnectorUI,
              base::FEATURE_ENABLED_BY_DEFAULT);
 #endif
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
 // Show Flash deprecation warning to users who have manually enabled Flash.
 // https://crbug.com/918428
 BASE_FEATURE(kFlashDeprecationWarning,

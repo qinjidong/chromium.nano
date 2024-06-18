@@ -21,7 +21,6 @@
 #include "content/public/browser/context_menu_params.h"
 #include "content/public/browser/page_navigator.h"
 #include "content/public/browser/site_instance.h"
-#include "ppapi/buildflags/buildflags.h"
 #include "third_party/blink/public/common/tokens/tokens.h"
 #include "ui/base/models/simple_menu_model.h"
 #include "ui/base/page_transition_types.h"
@@ -154,7 +153,7 @@ class RenderViewContextMenuBase : public ui::SimpleMenuModel::Delegate,
   // Increments histogram value for visible context menu item specified by |id|.
   virtual void RecordShownItem(int id, bool is_submenu) = 0;
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
   virtual void HandleAuthorizeAllPlugins() = 0;
 #endif
 

@@ -19,7 +19,6 @@
 #include "chrome/common/buildflags.h"
 #include "components/nacl/common/buildflags.h"
 #include "content/public/common/content_client.h"
-#include "ppapi/buildflags/buildflags.h"
 
 #if BUILDFLAG(ENABLE_NACL)
 #include "content/public/common/content_plugin_info.h"

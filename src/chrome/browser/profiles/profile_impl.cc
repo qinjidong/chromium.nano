@@ -174,7 +174,6 @@
 #include "extensions/buildflags/buildflags.h"
 #include "mojo/public/cpp/bindings/pending_remote.h"
 #include "mojo/public/cpp/bindings/self_owned_receiver.h"
-#include "ppapi/buildflags/buildflags.h"
 #include "printing/buildflags/buildflags.h"
 #include "services/data_decoder/public/cpp/data_decoder.h"
 #include "services/preferences/public/mojom/preferences.mojom.h"
@@ -234,7 +233,7 @@
 #include "extensions/browser/extension_system.h"
 #endif
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
 #include "chrome/browser/plugins/chrome_plugin_service_filter.h"
 #include "chrome/browser/plugins/plugin_prefs.h"
 #endif
@@ -759,7 +758,7 @@ void ProfileImpl::DoFinalInit(CreateMode create_mode) {
     }
 #endif  // BUILDFLAG(ENABLE_BACKGROUND_MODE)
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
     ChromePluginServiceFilter::GetInstance()->RegisterProfile(this);
 #endif
   }
@@ -908,7 +907,7 @@ ProfileImpl::~ProfileImpl() {
   // Remove pref observers
   pref_change_registrar_.RemoveAll();
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
   ChromePluginServiceFilter::GetInstance()->UnregisterProfile(this);
 #endif
 

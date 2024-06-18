@@ -27,7 +27,6 @@
 #include "chrome/browser/extensions/permissions/permissions_updater.h"
 #include "chrome/browser/extensions/plugin_manager.h"
 #include "chrome/browser/extensions/warning_badge_service_factory.h"
-#include "ppapi/buildflags/buildflags.h"
 
 namespace chrome_extensions {
 
@@ -51,7 +50,7 @@ void EnsureChromeBrowserContextKeyedServiceFactoriesBuilt() {
   extensions::ManifestV2ExperimentManager::GetFactory();
   extensions::MenuManagerFactory::GetInstance();
   extensions::PermissionsUpdater::EnsureAssociatedFactoryBuilt();
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
   extensions::PluginManager::GetFactoryInstance();
 #endif
   extensions::WarningBadgeServiceFactory::GetInstance();

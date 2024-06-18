@@ -59,7 +59,6 @@ static_library("browser") {
     "//gpu/config",
     "//mojo/public/cpp/system",
     "//net",
-    "//ppapi/buildflags",
     "//services/device/public/cpp/geolocation",
     "//services/device/public/mojom",
     "//services/service_manager/public/cpp",

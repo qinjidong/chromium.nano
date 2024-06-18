@@ -142,7 +142,6 @@
 #include "net/base/network_change_notifier.h"
 #include "net/socket/client_socket_factory.h"
 #include "net/ssl/ssl_config_service.h"
-#include "ppapi/buildflags/buildflags.h"
 #include "services/audio/service.h"
 #include "services/data_decoder/public/cpp/service_provider.h"
 #include "services/data_decoder/public/mojom/data_decoder_service.mojom.h"
@@ -226,7 +225,7 @@
 #include "content/browser/sandbox_host_linux.h"
 #endif
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
 #include "content/browser/plugin_service_impl.h"
 #endif
 
@@ -777,7 +776,7 @@ int BrowserMainLoop::PreCreateThreads() {
   memory_pressure::UserLevelMemoryPressureSignalGenerator::Initialize();
 #endif
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
   // Prior to any processing happening on the IO thread, we create the
   // plugin service as it is predominantly used from the IO thread,
   // but must be created on the main thread. The service ctor is

@@ -39,7 +39,6 @@
 #include "content/public/common/webplugininfo.h"
 #include "net/base/filename_util.h"
 #include "net/base/mime_util.h"
-#include "ppapi/buildflags/buildflags.h"
 #include "third_party/blink/public/common/mime_util/mime_util.h"
 #include "third_party/metrics_proto/omnibox_event.pb.h"
 #include "ui/base/clipboard/clipboard_constants.h"
@@ -56,7 +55,7 @@
 #include "ui/views/view.h"
 #include "url/url_constants.h"
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
 #include "content/public/browser/plugin_service.h"
 #endif
 
@@ -129,7 +128,7 @@ void FilterURLsForDropability(
     // TODO(bauerb): This possibly uses stale information, but it's guaranteed
     // not to do disk access.
     bool supported = mime_type.empty() || blink::IsSupportedMimeType(mime_type);
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
     content::WebPluginInfo plugin;
     supported =
         supported ||

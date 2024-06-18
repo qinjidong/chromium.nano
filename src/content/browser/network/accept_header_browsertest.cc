@@ -20,11 +20,10 @@
 #include "content/shell/browser/shell.h"
 #include "media/media_buildflags.h"
 #include "net/test/embedded_test_server/http_request.h"
-#include "ppapi/buildflags/buildflags.h"
 #include "third_party/blink/public/common/buildflags.h"
 #include "third_party/blink/public/mojom/manifest/manifest.mojom.h"
 
-#if BUILDFLAG(ENABLE_PPAPI)
+#if defined(ENABLE_PPAPI)
 #include "content/test/ppapi/ppapi_test.h"
 #endif
 
@@ -184,7 +183,7 @@ IN_PROC_BROWSER_TEST_F(AcceptHeaderTest, Check) {
   // ChromeAcceptHeaderTest.ObjectAndFavicon.
 }
 
-#if BUILDFLAG(ENABLE_PPAPI)
+#if defined(ENABLE_PPAPI)
 // Checks Accept header for ResourceType::kPluginResource.
 IN_PROC_BROWSER_TEST_F(OutOfProcessPPAPITest, PluginAcceptHeader) {
   net::EmbeddedTestServer server(net::EmbeddedTestServer::TYPE_HTTP);
@@ -215,7 +214,7 @@ IN_PROC_BROWSER_TEST_F(OutOfProcessPPAPITest, PluginAcceptHeader) {
   // Since the server uses local variables.
   ASSERT_TRUE(server.ShutdownAndWaitUntilComplete());
 }
-#endif  // BUILDFLAG(ENABLE_PPAPI)
+#endif  // defined(ENABLE_PPAPI)
 
 }  //  namespace
 }  //  namespace content

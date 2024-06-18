@@ -9,7 +9,6 @@
 
 #include "base/gtest_prod_util.h"
 #include "extensions/browser/extension_function.h"
-#include "ppapi/buildflags/buildflags.h"
 
 namespace content {
 struct WebPluginInfo;
@@ -66,7 +65,7 @@ class ContentSettingsContentSettingGetResourceIdentifiersFunction
   FRIEND_TEST_ALL_PREFIXES(ExtensionApiTest,
                            ContentSettingsGetResourceIdentifiers);
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
   // Callback method that gets executed when |plugins|
   // are asynchronously fetched.
   void OnGotPlugins(const std::vector<content::WebPluginInfo>& plugins);

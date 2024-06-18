@@ -26,7 +26,6 @@
 #include "content/public/common/content_client.h"
 #include "content/public/common/content_features.h"
 #include "content/public/common/content_switches.h"
-#include "ppapi/buildflags/buildflags.h"
 #include "printing/buildflags/buildflags.h"
 #include "sandbox/mac/sandbox_compiler.h"
 #include "sandbox/policy/mac/params.h"
@@ -176,7 +175,7 @@ void SetupNetworkSandboxParameters(sandbox::SandboxCompiler* compiler,
   }
 }
 
-#if BUILDFLAG(ENABLE_PPAPI)
+#if defined(ENABLE_PPAPI)
 void SetupPPAPISandboxParameters(
     const std::vector<content::WebPluginInfo>& plugins,
     sandbox::SandboxCompiler* compiler,
@@ -238,7 +237,7 @@ bool SetupGpuSandboxParameters(sandbox::SandboxCompiler* compiler,
 
 bool SetupSandboxParameters(sandbox::mojom::Sandbox sandbox_type,
                             const base::CommandLine& command_line,
-#if BUILDFLAG(ENABLE_PPAPI)
+#if defined(ENABLE_PPAPI)
                             const std::vector<content::WebPluginInfo>& plugins,
 #endif
                             sandbox::SandboxCompiler* compiler) {
@@ -263,7 +262,7 @@ bool SetupSandboxParameters(sandbox::mojom::Sandbox sandbox_type,
     case sandbox::mojom::Sandbox::kNetwork:
       SetupNetworkSandboxParameters(compiler, command_line);
       break;
-#if BUILDFLAG(ENABLE_PPAPI)
+#if defined(ENABLE_PPAPI)
     case sandbox::mojom::Sandbox::kPpapi:
       SetupPPAPISandboxParameters(plugins, compiler, command_line);
       break;

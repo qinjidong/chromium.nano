@@ -13,21 +13,20 @@
 #include "base/files/file_path.h"
 #include "content/common/content_export.h"
 #include "content/public/common/webplugininfo.h"
-#include "ppapi/buildflags/buildflags.h"
 
-#if !BUILDFLAG(ENABLE_PLUGINS)
+#if !defined(ENABLE_PLUGINS)
 #error "Plugins should be enabled"
 #endif
 
-#if BUILDFLAG(ENABLE_PPAPI)
+#if defined(ENABLE_PPAPI)
 #include "ppapi/c/pp_module.h"
 #include "ppapi/c/ppb.h"
-#endif  // BUILDFLAG(ENABLE_PPAPI)
+#endif  // defined(ENABLE_PPAPI)
 
 namespace content {
 
 struct CONTENT_EXPORT ContentPluginInfo {
-#if BUILDFLAG(ENABLE_PPAPI)
+#if defined(ENABLE_PPAPI)
   typedef const void* (*GetInterfaceFunc)(const char*);
   typedef int (*PPP_InitializeModuleFunc)(PP_Module, PPB_GetInterface);
   typedef void (*PPP_ShutdownModuleFunc)();
@@ -40,7 +39,7 @@ struct CONTENT_EXPORT ContentPluginInfo {
     PPP_InitializeModuleFunc initialize_module = nullptr;
     PPP_ShutdownModuleFunc shutdown_module = nullptr;  // Optional, may be NULL.
   };
-#endif  // BUILDFLAG(ENABLE_PPAPI)
+#endif  // defined(ENABLE_PPAPI)
 
   ContentPluginInfo();
   ContentPluginInfo(const ContentPluginInfo& other);
@@ -64,11 +63,11 @@ struct CONTENT_EXPORT ContentPluginInfo {
   std::string version;
   std::vector<WebPluginMimeType> mime_types;
 
-#if BUILDFLAG(ENABLE_PPAPI)
+#if defined(ENABLE_PPAPI)
   // When is_internal is set, this contains the function pointers to the
   // entry points for the internal plugins.
   EntryPoints internal_entry_points;
-#endif  // BUILDFLAG(ENABLE_PPAPI)
+#endif  // defined(ENABLE_PPAPI)
 
   // Permission bits from ppapi::Permission.
   uint32_t permissions = 0;

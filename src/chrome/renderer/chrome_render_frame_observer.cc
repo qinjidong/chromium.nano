@@ -82,7 +82,7 @@
 #include "chrome/common/mhtml_page_notifier.mojom.h"
 #endif
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
 #include "chrome/renderer/plugins/chrome_plugin_placeholder.h"
 #endif
 
@@ -556,7 +556,7 @@ void ChromeRenderFrameObserver::LoadBlockedPlugins(
   ChromeContentSettingsAgentDelegate::Get(render_frame())
       ->AllowPluginTemporarily(identifier);
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
   ChromePluginPlaceholder::ForEach(
       render_frame(), base::BindRepeating(
                           [](const std::string& identifier,
@@ -564,7 +564,7 @@ void ChromeRenderFrameObserver::LoadBlockedPlugins(
                             placeholder->MaybeLoadBlockedPlugin(identifier);
                           },
                           identifier));
-#endif  // BUILDFLAG(ENABLE_PLUGINS)
+#endif  // defined(ENABLE_PLUGINS)
 }
 
 void ChromeRenderFrameObserver::SetSupportsDraggableRegions(

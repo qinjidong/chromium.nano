@@ -29,7 +29,6 @@
 #include "components/url_formatter/elide_url.h"
 #include "content/public/browser/permission_result.h"
 #include "content/public/common/content_features.h"
-#include "ppapi/buildflags/buildflags.h"
 #include "services/device/public/cpp/device_features.h"
 #include "ui/base/l10n/l10n_util.h"
 #include "ui/base/l10n/time_format.h"

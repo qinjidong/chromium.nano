@@ -111,7 +111,6 @@
 #include "net/base/network_isolation_key.h"
 #include "net/cookies/cookie_setting_override.h"
 #include "net/net_buildflags.h"
-#include "ppapi/buildflags/buildflags.h"
 #include "services/device/public/mojom/vibration_manager.mojom.h"
 #include "services/metrics/public/cpp/ukm_source_id.h"
 #include "services/network/public/cpp/attribution_reporting_runtime_features.h"
@@ -2904,7 +2903,7 @@ class CONTENT_EXPORT RenderFrameHostImpl
     return devtools_frame_token_;
   }
 
-#if BUILDFLAG(ENABLE_PPAPI)
+#if defined(ENABLE_PPAPI)
   RenderFrameHostImplPpapiSupport& GetPpapiSupport();
 #endif
 
@@ -4733,7 +4732,7 @@ class CONTENT_EXPORT RenderFrameHostImpl
   mojo::AssociatedReceiver<mojom::DomAutomationControllerHost>
       dom_automation_controller_receiver_{this};
 
-#if BUILDFLAG(ENABLE_PPAPI)
+#if defined(ENABLE_PPAPI)
   std::unique_ptr<RenderFrameHostImplPpapiSupport> ppapi_support_;
 #endif
 

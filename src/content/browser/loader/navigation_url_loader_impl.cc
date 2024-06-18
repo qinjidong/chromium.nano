@@ -87,7 +87,6 @@
 #include "net/ssl/ssl_info.h"
 #include "net/traffic_annotation/network_traffic_annotation.h"
 #include "net/url_request/redirect_util.h"
-#include "ppapi/buildflags/buildflags.h"
 #include "services/metrics/public/cpp/metrics_utils.h"
 #include "services/metrics/public/cpp/ukm_builders.h"
 #include "services/metrics/public/cpp/ukm_recorder.h"
@@ -116,7 +115,7 @@
 #include "content/browser/android/content_url_loader_factory.h"
 #endif
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
 #include "content/public/browser/plugin_service.h"
 #endif
 
@@ -1028,7 +1027,7 @@ void NavigationURLLoaderImpl::OnReceiveResponse(
       browser_context_, url_, head->headers.get(), head->mime_type);
   bool known_mime_type = blink::IsSupportedMimeType(head->mime_type);
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
   if (!head->intercepted_by_plugin && !must_download && !known_mime_type) {
     // No plugin throttles intercepted the response. Ask if the plugin
     // registered to PluginService wants to handle the request.
@@ -1048,7 +1047,7 @@ void NavigationURLLoaderImpl::OnReceiveResponse(
                          std::move(url_loader_client_endpoints), is_download);
 }
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
 void NavigationURLLoaderImpl::CheckPluginAndContinueOnReceiveResponse(
     network::mojom::URLResponseHeadPtr head,
     network::mojom::URLLoaderClientEndpointsPtr url_loader_client_endpoints,

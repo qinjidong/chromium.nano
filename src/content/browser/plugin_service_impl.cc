@@ -44,17 +44,17 @@
 #include "content/public/common/webplugininfo.h"
 #include "services/metrics/public/cpp/ukm_builders.h"
 
-#if BUILDFLAG(ENABLE_PPAPI)
+#if defined(ENABLE_PPAPI)
 #include "content/browser/ppapi_plugin_process_host.h"
 #include "content/common/pepper_plugin_list.h"
 #include "ppapi/shared_impl/ppapi_permissions.h"
-#endif  // BUILDFLAG(ENABLE_PPAPI)
+#endif  // defined(ENABLE_PPAPI)
 
 namespace content {
 
 namespace {
 
-#if BUILDFLAG(ENABLE_PPAPI)
+#if defined(ENABLE_PPAPI)
 int CountPpapiPluginProcessesForProfile(
     const base::FilePath& plugin_path,
     const base::FilePath& profile_data_directory) {
@@ -67,7 +67,7 @@ int CountPpapiPluginProcessesForProfile(
   }
   return count;
 }
-#endif  // BUILDFLAG(ENABLE_PPAPI)
+#endif  // defined(ENABLE_PPAPI)
 
 }  // namespace
 
@@ -103,7 +103,7 @@ void PluginServiceImpl::Init() {
   RegisterPlugins();
 }
 
-#if BUILDFLAG(ENABLE_PPAPI)
+#if defined(ENABLE_PPAPI)
 PpapiPluginProcessHost* PluginServiceImpl::FindPpapiPluginProcess(
     const base::FilePath& plugin_path,
     const base::FilePath& profile_data_directory,
@@ -180,7 +180,7 @@ void PluginServiceImpl::OpenChannelToPpapiPlugin(
     client->OnPpapiChannelOpened(IPC::ChannelHandle(), base::kNullProcessId, 0);
   }
 }
-#endif  // BUILDFLAG(ENABLE_PPAPI)
+#endif  // defined(ENABLE_PPAPI)
 
 bool PluginServiceImpl::GetPluginInfoArray(
     const GURL& url,
@@ -276,11 +276,11 @@ std::vector<WebPluginInfo> PluginServiceImpl::GetPluginsSynchronous() {
 void PluginServiceImpl::RegisterPlugins() {
   DCHECK_CURRENTLY_ON(BrowserThread::UI);
 
-#if BUILDFLAG(ENABLE_PPAPI)
+#if defined(ENABLE_PPAPI)
   ComputePepperPluginList(&plugins_);
 #else
   GetContentClient()->AddPlugins(&plugins_);
-#endif  // BUILDFLAG(ENABLE_PPAPI)
+#endif  // defined(ENABLE_PPAPI)
   for (const auto& plugin : plugins_)
     RegisterInternalPlugin(plugin.ToWebPluginInfo(), /*add_at_beginning=*/true);
 }
@@ -295,7 +295,7 @@ const ContentPluginInfo* PluginServiceImpl::GetRegisteredPluginInfo(
       return &plugin;
   }
 
-#if BUILDFLAG(ENABLE_PPAPI)
+#if defined(ENABLE_PPAPI)
   // We did not find the plugin in our list. But wait! the plugin can also
   // be a latecomer, as it happens with pepper flash. This information
   // can be obtained from the PluginList singleton and we can use it to
@@ -311,7 +311,7 @@ const ContentPluginInfo* PluginServiceImpl::GetRegisteredPluginInfo(
   return &plugins_.back();
 #else
   return nullptr;
-#endif  // BUILDFLAG(ENABLE_PPAPI)
+#endif  // defined(ENABLE_PPAPI)
 }
 
 void PluginServiceImpl::SetFilter(PluginServiceFilter* filter) {

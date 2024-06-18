@@ -16,7 +16,6 @@
 #include "chrome/common/chrome_constants.h"
 #include "chrome/common/chrome_paths_internal.h"
 #include "media/media_buildflags.h"
-#include "ppapi/buildflags/buildflags.h"
 
 #if BUILDFLAG(IS_ANDROID)
 #include "base/android/path_utils.h"
@@ -121,7 +120,7 @@ base::FilePath& GetInvalidSpecifiedUserDataDirInternal() {
 
 // Gets the path for internal plugins.
 bool GetInternalPluginsDirectory(base::FilePath* result) {
-#if BUILDFLAG(ENABLE_PPAPI)
+#if defined(ENABLE_PPAPI)
 #if BUILDFLAG(IS_MAC)
   // If called from Chrome, get internal plugins from a subdirectory of the
   // framework.
@@ -136,7 +135,7 @@ bool GetInternalPluginsDirectory(base::FilePath* result) {
 
   // The rest of the world expects plugins in the module directory.
   return base::PathService::Get(base::DIR_MODULE, result);
-#else  // BUILDFLAG(ENABLE_PPAPI)
+#else  // defined(ENABLE_PPAPI)
   // PPAPI plugins are not enabled, so don't return an internal plugins path.
   return false;
 #endif

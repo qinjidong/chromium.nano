@@ -533,11 +533,6 @@ AwContentBrowserClient::GetLocalTracesDirectory() {
   return user_data_dir;
 }
 
-void AwContentBrowserClient::DidCreatePpapiPlugin(
-    content::BrowserPpapiHost* browser_host) {
-  NOTREACHED_IN_MIGRATION() << "Android WebView does not support plugins";
-}
-
 bool AwContentBrowserClient::AllowPepperSocketAPI(
     content::BrowserContext* browser_context,
     const GURL& url,

@@ -33,7 +33,6 @@
 #include "base/threading/thread_id_name_manager.h"
 #include "build/build_config.h"
 #include "build/chromeos_buildflags.h"
-#include "ppapi/buildflags/buildflags.h"
 #include "sandbox/constants.h"
 #include "sandbox/linux/seccomp-bpf-helpers/sigsys_handlers.h"
 #include "sandbox/linux/services/credentials.h"
@@ -625,7 +624,7 @@ void SandboxLinux::SealSandbox() {
 void SandboxLinux::CheckForBrokenPromises(
     sandbox::mojom::Sandbox sandbox_type) {
   if (sandbox_type != sandbox::mojom::Sandbox::kRenderer
-#if BUILDFLAG(ENABLE_PPAPI)
+#if defined(ENABLE_PPAPI)
       && sandbox_type != sandbox::mojom::Sandbox::kPpapi
 #endif
   ) {

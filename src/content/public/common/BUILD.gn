@@ -9,7 +9,6 @@ import("//build/config/ui.gni")
 import("//content/public/common/zygote/features.gni")
 import("//media/media_options.gni")
 import("//mojo/public/tools/bindings/mojom.gni")
-import("//ppapi/buildflags/buildflags.gni")
 import("//third_party/webrtc/webrtc.gni")
 import("//tools/ipc_fuzzer/ipc_fuzzer.gni")
 
@@ -276,7 +275,6 @@ source_set("common_sources") {
     "//device/vr/buildflags",
     "//media",
     "//media/mojo/mojom",
-    "//ppapi/buildflags",
     "//services/network/public/cpp",
     "//services/service_manager/public/cpp",
     "//skia",
@@ -337,10 +335,6 @@ source_set("common_sources") {
       "content_plugin_info.cc",
       "content_plugin_info.h",
     ]
-
-    if (enable_ppapi) {
-      deps += [ "//ppapi/c" ]
-    }
   }
 
   if (use_clang_profiling_inside_sandbox) {

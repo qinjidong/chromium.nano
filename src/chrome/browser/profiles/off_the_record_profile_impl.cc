@@ -89,7 +89,6 @@
 #include "media/capabilities/in_memory_video_decode_stats_db_impl.h"
 #include "media/mojo/services/video_decode_perf_history.h"
 #include "net/http/transport_security_state.h"
-#include "ppapi/buildflags/buildflags.h"
 #include "storage/browser/database/database_tracker.h"
 
 #if BUILDFLAG(IS_ANDROID)
@@ -122,7 +121,7 @@
 #include "extensions/common/extension.h"
 #endif
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
 #include "chrome/browser/plugins/chrome_plugin_service_filter.h"
 #include "chrome/browser/plugins/plugin_prefs.h"
 #endif
@@ -202,7 +201,7 @@ void OffTheRecordProfileImpl::Init() {
 
   TrackZoomLevelsFromParent();
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
   ChromePluginServiceFilter::GetInstance()->RegisterProfile(this);
 #endif
 
@@ -255,7 +254,7 @@ void OffTheRecordProfileImpl::Init() {
 OffTheRecordProfileImpl::~OffTheRecordProfileImpl() {
   MaybeSendDestroyedNotification();
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
   ChromePluginServiceFilter::GetInstance()->UnregisterProfile(this);
 #endif
 

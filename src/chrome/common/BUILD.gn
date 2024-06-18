@@ -16,7 +16,6 @@ import("//extensions/buildflags/buildflags.gni")
 import("//media/media_options.gni")
 import("//mojo/public/tools/bindings/mojom.gni")
 import("//pdf/features.gni")
-import("//ppapi/buildflags/buildflags.gni")
 import("//printing/buildflags/buildflags.gni")
 import("//testing/libfuzzer/fuzzer_test.gni")
 import("//third_party/widevine/cdm/widevine.gni")
@@ -237,7 +236,6 @@ static_library("common_lib") {
     "//media",
     "//mojo/public/cpp/bindings",
     "//pdf:buildflags",
-    "//ppapi/buildflags",
     "//sandbox/policy",
     "//skia",
     "//third_party/icu",
@@ -271,10 +269,6 @@ static_library("common_lib") {
 
   if (is_android || enable_library_cdms) {
     public_deps += [ "//components/cdm/common" ]
-  }
-
-  if (enable_ppapi) {
-    public_deps += [ "//ppapi/shared_impl" ]
   }
 
   if (enable_extensions) {
@@ -442,19 +436,6 @@ static_library("common_lib") {
     frameworks = [ "ServiceManagement.framework" ]
   }
 
-  if (enable_plugins) {
-    sources += [
-      "ppapi_utils.cc",
-      "ppapi_utils.h",
-    ]
-  }
-  if (enable_plugins && enable_extensions) {
-    sources += [
-      "pepper_permission_util.cc",
-      "pepper_permission_util.h",
-    ]
-  }
-
   if (enable_library_cdms) {
     deps += [ "//media/cdm:cdm_paths" ]  # Needed by chrome_content_client.cc
 
@@ -527,7 +508,6 @@ static_library("non_code_constants") {
     ":version_header",
     "//base",
     "//build:chromeos_buildflags",
-    "//ppapi/buildflags",
   ]
 
   public_deps = [
@@ -560,7 +540,6 @@ component("chrome_features") {
     "//extensions/buildflags",
     "//media:media_buildflags",
     "//net:buildflags",
-    "//ppapi/buildflags",
     "//printing/buildflags",
     "//rlz/buildflags",
   ]
@@ -634,7 +613,6 @@ static_library("constants") {
     "//components/policy/core/common:policy_path_constants",
     "//extensions/buildflags",
     "//media:media_buildflags",
-    "//ppapi/buildflags",
     "//printing/buildflags",
     "//third_party/widevine/cdm:buildflags",
   ]

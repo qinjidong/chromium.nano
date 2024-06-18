@@ -25,9 +25,7 @@
 #include "chrome/browser/ui/task_manager/task_manager_columns.h"
 #include "chrome/common/pref_names.h"
 #include "chrome/grit/generated_resources.h"
-#include "components/nacl/browser/nacl_browser.h"
 #include "components/nacl/common/buildflags.h"
-#include "components/nacl/common/nacl_switches.h"
 #include "components/prefs/scoped_user_pref_update.h"
 #include "content/public/common/result_codes.h"
 #include "ui/base/l10n/l10n_util.h"
@@ -199,14 +197,6 @@ class TaskManagerValuesStringifier {
   }
 
   std::u16string GetNaClPortText(int nacl_port) {
-    // Only called if NaCl debug stub ports are enabled.
-
-    if (nacl_port == nacl::kGdbDebugStubPortUnused)
-      return n_a_string_;
-
-    if (nacl_port == nacl::kGdbDebugStubPortUnknown)
-      return unknown_string_;
-
     return base::NumberToString16(nacl_port);
   }
 

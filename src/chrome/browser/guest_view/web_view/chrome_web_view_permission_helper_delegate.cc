@@ -17,10 +17,9 @@
 #include "content/public/browser/render_view_host.h"
 #include "extensions/browser/guest_view/web_view/web_view_constants.h"
 #include "extensions/browser/guest_view/web_view/web_view_guest.h"
-#include "ppapi/buildflags/buildflags.h"
 #include "third_party/blink/public/common/permissions/permission_utils.h"
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
 #include "chrome/browser/plugins/chrome_plugin_service_filter.h"
 #endif
 
@@ -35,7 +34,7 @@ void CallbackWrapper(base::OnceCallback<void(bool)> callback,
 
 }  // anonymous namespace
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
 // static
 void ChromeWebViewPermissionHelperDelegate::BindPluginAuthHost(
     mojo::PendingAssociatedReceiver<chrome::mojom::PluginAuthHost> receiver,
@@ -56,7 +55,7 @@ void ChromeWebViewPermissionHelperDelegate::BindPluginAuthHost(
 ChromeWebViewPermissionHelperDelegate::ChromeWebViewPermissionHelperDelegate(
     WebViewPermissionHelper* web_view_permission_helper)
     : WebViewPermissionHelperDelegate(web_view_permission_helper)
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
       ,
       plugin_auth_host_receivers_(
           web_view_permission_helper->web_view_guest()->web_contents(),
@@ -68,7 +67,7 @@ ChromeWebViewPermissionHelperDelegate::ChromeWebViewPermissionHelperDelegate(
 ChromeWebViewPermissionHelperDelegate::~ChromeWebViewPermissionHelperDelegate()
 {}
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
 
 void ChromeWebViewPermissionHelperDelegate::BlockedUnauthorizedPlugin(
     const std::u16string& name,
@@ -100,7 +99,7 @@ void ChromeWebViewPermissionHelperDelegate::OnPermissionResponse(
   }
 }
 
-#endif  // BUILDFLAG(ENABLE_PLUGINS)
+#endif  // defined(ENABLE_PLUGINS)
 
 void ChromeWebViewPermissionHelperDelegate::CanDownload(
     const GURL& url,

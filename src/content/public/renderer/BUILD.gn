@@ -4,7 +4,6 @@
 
 import("//build/config/features.gni")
 import("//media/media_options.gni")
-import("//ppapi/buildflags/buildflags.gni")
 
 # See //content/BUILD.gn for how this works.
 group("renderer") {
@@ -61,7 +60,6 @@ target(link_target_type, "renderer_sources") {
     "//gin",
     "//media/capture",
     "//net",
-    "//ppapi/buildflags",
     "//skia",
     "//third_party/blink/public:blink_headers",
     "//third_party/blink/public/common",
@@ -81,15 +79,6 @@ target(link_target_type, "renderer_sources") {
 
   if (enable_plugins) {
     sources += [ "plugin_ax_tree_action_target_adapter.h" ]
-  }
-
-  if (enable_ppapi) {
-    sources += [
-      "pepper_plugin_instance.h",
-      "ppapi_gfx_conversion.h",
-      "renderer_ppapi_host.h",
-    ]
-    deps += [ "//ppapi/c" ]
   }
 
   if (is_android) {

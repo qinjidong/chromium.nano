@@ -31,7 +31,6 @@
 #include "components/supervised_user/core/browser/supervised_user_utils.h"
 #include "content/public/browser/context_menu_params.h"
 #include "extensions/buildflags/buildflags.h"
-#include "ppapi/buildflags/buildflags.h"
 #include "printing/buildflags/buildflags.h"
 #include "services/screen_ai/buildflags/buildflags.h"
 #include "third_party/blink/public/mojom/frame/frame.mojom-forward.h"
@@ -256,7 +255,7 @@ class RenderViewContextMenu
   // RenderViewContextMenuBase:
   void InitMenu() override;
   void RecordShownItem(int id, bool is_submenu) override;
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
   void HandleAuthorizeAllPlugins() override;
 #endif
   void NotifyMenuShown() override;

@@ -132,7 +132,6 @@
 #include "net/base/port_util.h"
 #include "net/base/registry_controlled_domains/registry_controlled_domain.h"
 #include "net/base/url_util.h"
-#include "ppapi/buildflags/buildflags.h"
 #include "services/network/public/cpp/network_switches.h"
 #include "services/service_manager/public/cpp/interface_provider.h"
 #include "services/viz/public/cpp/gpu/context_provider_command_buffer.h"
@@ -1524,7 +1523,7 @@ void RenderThreadImpl::UpdateSystemColorInfo(
 }
 
 void RenderThreadImpl::PurgePluginListCache(bool reload_pages) {
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
   blink::ResetPluginCache(reload_pages);
 
   for (auto& observer : observers_)

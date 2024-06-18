@@ -32,7 +32,6 @@ import("//extensions/buildflags/buildflags.gni")
 import("//media/gpu/args.gni")
 import("//net/features.gni")
 import("//pdf/features.gni")
-import("//ppapi/buildflags/buildflags.gni")
 import("//printing/buildflags/buildflags.gni")
 import("//rlz/buildflags/buildflags.gni")
 import("//sandbox/features.gni")
@@ -2557,7 +2556,6 @@ static_library("browser") {
     "//mojo/public/cpp/bindings",
     "//net",
     "//net:extras",
-    "//ppapi/buildflags",
     "//printing/buildflags",
     "//rlz/buildflags",
     "//services/audio/public/cpp",
@@ -7803,22 +7801,6 @@ static_library("browser") {
       "//media:media_buildflags",
       "//services/network/public/mojom",
     ]
-  }
-
-  if (enable_ppapi) {
-    sources += [
-      "renderer_host/pepper/chrome_browser_pepper_host_factory.cc",
-      "renderer_host/pepper/chrome_browser_pepper_host_factory.h",
-      "renderer_host/pepper/pepper_isolated_file_system_message_filter.cc",
-      "renderer_host/pepper/pepper_isolated_file_system_message_filter.h",
-    ]
-    deps += [
-      "//ppapi/host",
-      "//ppapi/proxy:ipc",
-    ]
-    if (is_chromeos_ash) {
-      deps += [ "//chromeos/ash/components/cryptohome" ]
-    }
   }
 
   if (enable_plugins || is_android) {

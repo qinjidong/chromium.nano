@@ -10,7 +10,6 @@
 
 #include "base/memory/weak_ptr.h"
 #include "content/public/browser/navigation_throttle.h"
-#include "ppapi/buildflags/buildflags.h"
 
 namespace content {
 class NavigationHandle;
@@ -30,7 +29,7 @@ class PDFIFrameNavigationThrottle : public content::NavigationThrottle {
   const char* GetNameForLogging() override;
 
  private:
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
   // Callback to check on the PDF plugin status after loading the plugin list.
   void OnPluginsLoaded(const std::vector<content::WebPluginInfo>& plugins);
 #endif

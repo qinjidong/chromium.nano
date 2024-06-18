@@ -5,7 +5,6 @@
 #ifndef CHROME_RENDERER_PLUGINS_NON_LOADABLE_PLUGIN_PLACEHOLDER_H_
 #define CHROME_RENDERER_PLUGINS_NON_LOADABLE_PLUGIN_PLACEHOLDER_H_
 
-#include "ppapi/buildflags/buildflags.h"
 
 namespace base {
 class FilePath;
@@ -39,7 +38,7 @@ class NonLoadablePluginPlaceholder {
       content::RenderFrame* render_frame,
       const blink::WebPluginParams& params);
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
   static plugins::PluginPlaceholder* CreateErrorPlugin(
       content::RenderFrame* render_frame,
       const base::FilePath& file_path);

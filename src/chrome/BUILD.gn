@@ -24,7 +24,6 @@ import("//components/nacl/features.gni")
 import("//components/optimization_guide/features.gni")
 import("//extensions/buildflags/buildflags.gni")
 import("//media/media_options.gni")
-import("//ppapi/buildflags/buildflags.gni")
 import("//third_party/blink/public/public_features.gni")
 import("//third_party/widevine/cdm/widevine.gni")
 import("//tools/resources/generate_resource_allowlist.gni")
@@ -440,7 +439,6 @@ if (is_win) {
       "//headless:headless_non_renderer",
       "//headless:headless_shell_browser_lib",
       "//net:net_resources",
-      "//ppapi/buildflags",
       "//sandbox/win:sandbox",
       "//third_party/cld_3/src/src:cld_3",
       "//third_party/wtl",
@@ -988,7 +986,6 @@ if (is_win) {
         } else if (current_cpu == "x64") {
           sources += [ "$root_out_dir/nacl_irt_x86_64.nexe" ]
         }
-        public_deps += [ "//ppapi/native_client:irt" ]
       }
     }
   } else {
@@ -1443,10 +1440,6 @@ group("dependencies") {
     "//third_party/blink/public:blink_devtools_inspector_resources",
     "//v8:v8_headers",
   ]
-
-  if (enable_ppapi) {
-    public_deps += [ "//ppapi/host" ]
-  }
 
   if (enable_printing) {
     public_deps += [ "//printing" ]

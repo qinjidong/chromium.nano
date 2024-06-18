@@ -45,7 +45,6 @@
 #include "extensions/common/constants.h"
 #include "net/base/filename_util.h"
 #include "net/http/http_content_disposition.h"
-#include "ppapi/buildflags/buildflags.h"
 #include "third_party/blink/public/common/mime_util/mime_util.h"
 #include "ui/base/l10n/l10n_util.h"
 #include "url/origin.h"
@@ -55,7 +54,7 @@
 #include "extensions/common/feature_switch.h"
 #endif
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
 #include "chrome/browser/plugins/plugin_prefs.h"
 #include "content/public/browser/plugin_service.h"
 #include "content/public/browser/render_process_host.h"
@@ -741,7 +740,7 @@ void DownloadTargetDeterminer::DetermineMimeTypeDone(
   DoLoop();
 }
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
 // The code below is used by DoDetermineIfHandledSafely to determine if the
 // file type is handled by a sandboxed plugin.
 namespace {
@@ -820,7 +819,7 @@ bool IsHandledBySafePluginSynchronous(content::BrowserContext* browser_context,
 }
 
 }  // namespace
-#endif  // BUILDFLAG(ENABLE_PLUGINS)
+#endif  // defined(ENABLE_PLUGINS)
 
 void DownloadTargetDeterminer::DetermineIfHandledSafelyHelper(
     download::DownloadItem* download,
@@ -832,7 +831,7 @@ void DownloadTargetDeterminer::DetermineIfHandledSafelyHelper(
     return;
   }
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
   IsHandledBySafePlugin(content::DownloadItemUtils::GetBrowserContext(download),
                         net::FilePathToFileURL(local_path), mime_type,
                         RETRY_IF_STALE_PLUGIN_LIST, std::move(callback));
@@ -850,7 +849,7 @@ bool DownloadTargetDeterminer::DetermineIfHandledSafelyHelperSynchronous(
     return true;
   }
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
   return IsHandledBySafePluginSynchronous(
       content::DownloadItemUtils::GetBrowserContext(download),
       net::FilePathToFileURL(local_path), mime_type);

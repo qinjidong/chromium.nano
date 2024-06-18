@@ -969,7 +969,6 @@ static_library("extensions") {
     "//media:media_buildflags",
     "//net",
     "//pdf:buildflags",
-    "//ppapi/buildflags",
     "//printing/buildflags",
     "//rlz/buildflags",
     "//services/audio/public/cpp",

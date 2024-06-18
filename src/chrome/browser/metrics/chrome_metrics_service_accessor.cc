@@ -80,7 +80,7 @@ void ChromeMetricsServiceAccessor::SetForceIsMetricsReportingEnabledPrefLookup(
       value);
 }
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
 // static
 void ChromeMetricsServiceAccessor::BindMetricsServiceReceiver(
     mojo::PendingReceiver<chrome::mojom::MetricsService> receiver) {
@@ -94,4 +94,4 @@ void ChromeMetricsServiceAccessor::BindMetricsServiceReceiver(
   };
   mojo::MakeSelfOwnedReceiver(std::make_unique<Thunk>(), std::move(receiver));
 }
-#endif  // BUILDFLAG(ENABLE_PLUGINS)
+#endif  // defined(ENABLE_PLUGINS)

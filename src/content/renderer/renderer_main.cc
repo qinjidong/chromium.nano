@@ -44,7 +44,6 @@
 #include "content/renderer/renderer_main_platform_delegate.h"
 #include "media/media_buildflags.h"
 #include "mojo/public/cpp/bindings/mojo_buildflags.h"
-#include "ppapi/buildflags/buildflags.h"
 #include "sandbox/policy/switches.h"
 #include "services/tracing/public/cpp/trace_startup.h"
 #include "third_party/blink/public/platform/platform.h"
@@ -84,7 +83,7 @@
 #include "content/child/sandboxed_process_thread_type_handler.h"
 #endif
 
-#if BUILDFLAG(ENABLE_PPAPI)
+#if defined(ENABLE_PPAPI)
 #include "content/renderer/pepper/pepper_plugin_registry.h"
 #endif
 
@@ -219,7 +218,7 @@ int RendererMain(MainFunctionParams parameters) {
 
   platform.PlatformInitialize();
 
-#if BUILDFLAG(ENABLE_PPAPI)
+#if defined(ENABLE_PPAPI)
   // Load pepper plugins before engaging the sandbox.
   PepperPluginRegistry::GetInstance();
 #endif

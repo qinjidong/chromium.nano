@@ -220,7 +220,6 @@
 #include "mojo/public/cpp/system/data_pipe.h"
 #include "net/base/schemeful_site.h"
 #include "net/net_buildflags.h"
-#include "ppapi/buildflags/buildflags.h"
 #include "render_frame_host_impl.h"
 #include "services/metrics/public/cpp/ukm_builders.h"
 #include "services/metrics/public/cpp/ukm_source_id.h"
@@ -310,7 +309,7 @@
 #include "content/browser/renderer_host/popup_menu_helper_mac.h"
 #endif
 
-#if BUILDFLAG(ENABLE_PPAPI)
+#if defined(ENABLE_PPAPI)
 #include "content/browser/renderer_host/render_frame_host_impl_ppapi_support.h"
 #endif
 
@@ -11599,7 +11598,7 @@ void RenderFrameHostImpl::UpdateAccessibilityMode() {
   }
 }
 
-#if BUILDFLAG(ENABLE_PPAPI)
+#if defined(ENABLE_PPAPI)
 RenderFrameHostImplPpapiSupport& RenderFrameHostImpl::GetPpapiSupport() {
   if (!ppapi_support_) {
     ppapi_support_ = std::make_unique<RenderFrameHostImplPpapiSupport>(*this);

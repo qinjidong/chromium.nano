@@ -15,7 +15,6 @@
 #include "chrome/common/metrics.mojom.h"
 #include "components/metrics/metrics_service_accessor.h"
 #include "components/variations/synthetic_trials.h"
-#include "ppapi/buildflags/buildflags.h"
 
 class BrowserProcessImpl;
 class CampaignsManagerClientImpl;
@@ -253,11 +252,11 @@ class ChromeMetricsServiceAccessor : public metrics::MetricsServiceAccessor {
   // ChromeMetricsServiceAccessor for details.
   static void SetForceIsMetricsReportingEnabledPrefLookup(bool value);
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
   // Provides an implementation of chrome::mojom::MetricsService.
   static void BindMetricsServiceReceiver(
       mojo::PendingReceiver<chrome::mojom::MetricsService> receiver);
-#endif  // BUILDFLAG(ENABLE_PLUGINS)
+#endif  // defined(ENABLE_PLUGINS)
 };
 
 #endif  // CHROME_BROWSER_METRICS_CHROME_METRICS_SERVICE_ACCESSOR_H_

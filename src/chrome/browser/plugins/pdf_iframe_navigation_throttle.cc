@@ -22,7 +22,7 @@
 #include "content/public/browser/web_contents_user_data.h"
 #include "net/http/http_response_headers.h"
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
 #include "chrome/browser/plugins/chrome_plugin_service_filter.h"
 #include "content/public/browser/plugin_service.h"
 #include "content/public/common/webplugininfo.h"
@@ -56,7 +56,7 @@ class PdfWebContentsLifetimeHelper
 
 WEB_CONTENTS_USER_DATA_KEY_IMPL(PdfWebContentsLifetimeHelper);
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
 // Returns true if the PDF plugin for |navigation_handle| is enabled. Optionally
 // also sets |is_stale| to true if the plugin list needs a reload.
 bool IsPDFPluginEnabled(content::NavigationHandle* navigation_handle,
@@ -115,7 +115,7 @@ PDFIFrameNavigationThrottle::WillProcessResponse() {
 
   ReportPDFLoadStatus(PDFLoadStatus::kLoadedIframePdfWithNoPdfViewer);
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
   bool is_stale = false;
   bool pdf_plugin_enabled = IsPDFPluginEnabled(navigation_handle(), &is_stale);
 
@@ -137,7 +137,7 @@ PDFIFrameNavigationThrottle::WillProcessResponse() {
   return content::NavigationThrottle::CANCEL_AND_IGNORE;
 }
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
 void PDFIFrameNavigationThrottle::OnPluginsLoaded(
     const std::vector<content::WebPluginInfo>& plugins) {
   if (IsPDFPluginEnabled(navigation_handle(), nullptr /* is_stale */)) {

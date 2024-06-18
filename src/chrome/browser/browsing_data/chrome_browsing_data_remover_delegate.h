@@ -26,7 +26,6 @@
 #include "device/fido/platform_credential_store.h"
 #include "extensions/buildflags/buildflags.h"
 #include "media/media_buildflags.h"
-#include "ppapi/buildflags/buildflags.h"
 #include "services/network/public/mojom/network_context.mojom.h"
 
 class Profile;
@@ -200,7 +199,7 @@ class ChromeBrowsingDataRemoverDelegate
   void OnClearPlatformKeys(base::OnceClosure done, bool);
 #endif
 
-#if BUILDFLAG(ENABLE_PLUGINS)
+#if defined(ENABLE_PLUGINS)
   // Called when plugin data has been cleared. Invokes NotifyIfDone.
   void OnWaitableEventSignaled(base::OnceClosure done,
                                base::WaitableEvent* waitable_event);
