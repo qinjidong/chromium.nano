@@ -126,16 +126,6 @@ void ShellBrowserMainParts::PostCreateMainMessageLoop() {
 #elif BUILDFLAG(IS_CHROMEOS_LACROS)
   chromeos::LacrosDBusThreadManager::Initialize();
 #endif
-
-#if BUILDFLAG(IS_CHROMEOS)
-  if (floss::features::IsFlossEnabled()) {
-    floss::FlossDBusManager::InitializeFake();
-  } else {
-    bluez::BluezDBusManager::InitializeFake();
-  }
-#elif BUILDFLAG(IS_LINUX)
-  bluez::DBusBluezManagerWrapperLinux::Initialize();
-#endif
 }
 
 int ShellBrowserMainParts::PreEarlyInitialization() {

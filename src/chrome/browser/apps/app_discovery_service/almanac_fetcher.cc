@@ -13,7 +13,6 @@
 #include "chrome/browser/apps/app_discovery_service/game_extras.h"
 #include "chrome/browser/apps/app_discovery_service/launcher_app_almanac_endpoint.h"
 #include "chrome/browser/profiles/profile.h"
-#include "chromeos/constants/chromeos_features.h"
 #include "components/pref_registry/pref_registry_syncable.h"
 #include "components/prefs/pref_service.h"
 #include "google_apis/google_api_keys.h"

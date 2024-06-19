@@ -16,7 +16,6 @@
 #include "chrome/browser/ui/views/editor_menu/editor_menu_view.h"
 #include "chrome/browser/ui/views/editor_menu/utils/editor_types.h"
 #include "chrome/test/base/in_process_browser_test.h"
-#include "chromeos/constants/chromeos_features.h"
 #include "chromeos/crosapi/mojom/editor_panel.mojom.h"
 #include "content/public/test/browser_test.h"
 #include "testing/gmock/include/gmock/gmock.h"

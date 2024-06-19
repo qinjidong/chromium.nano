@@ -243,7 +243,6 @@
 #include "components/crash/core/app/crashpad.h"
 #elif !BUILDFLAG(IS_ANDROID)
 #include "chrome/browser/hid/hid_status_icon.h"
-#include "chrome/browser/screen_ai/screen_ai_downloader_non_chromeos.h"
 #include "chrome/browser/usb/usb_status_icon.h"
 #include "components/enterprise/browser/controller/chrome_browser_cloud_management_controller.h"
 #endif

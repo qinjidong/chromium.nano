@@ -15,10 +15,6 @@ BluetoothMetricsProvider::BluetoothMetricsProvider() = default;
 BluetoothMetricsProvider::~BluetoothMetricsProvider() = default;
 
 bool BluetoothMetricsProvider::ProvideHistograms() {
-  base::UmaHistogramEnumeration("Bluetooth.StackName",
-                                floss::features::IsFlossEnabled()
-                                    ? BluetoothStackName::kFloss
-                                    : BluetoothStackName::kBlueZ);
   return true;
 }
 

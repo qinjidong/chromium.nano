@@ -20,7 +20,6 @@
 
 #if BUILDFLAG(IS_CHROMEOS_LACROS)
 #include "chrome/browser/web_applications/web_app_utils.h"
-#include "chromeos/constants/chromeos_features.h"
 #endif  // BUILDFLAG(IS_CHROMEOS_LACROS)
 
 WebAppInternalsUI::WebAppInternalsUI(content::WebUI* web_ui)

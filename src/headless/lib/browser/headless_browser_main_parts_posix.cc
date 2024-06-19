@@ -26,11 +26,6 @@
 #include "components/os_crypt/sync/key_storage_config_linux.h"
 #include "components/os_crypt/sync/os_crypt.h"
 #include "headless/public/switches.h"
-
-#if defined(USE_DBUS)
-#include "device/bluetooth/dbus/bluez_dbus_manager.h"
-#endif
-
 #endif  // BUILDFLAG(IS_LINUX)
 
 namespace headless {
@@ -170,11 +165,6 @@ void HeadlessBrowserMainParts::PostCreateMainMessageLoop() {
       &HeadlessBrowserImpl::ShutdownWithExitCode, browser_->GetWeakPtr()));
 
 #if BUILDFLAG(IS_LINUX)
-
-#if defined(USE_DBUS)
-  bluez::BluezDBusManager::Initialize(/*system_bus=*/nullptr);
-#endif
-
   // Set up crypt config. This needs to be done before anything starts the
   // network service, as the raw encryption key needs to be shared with the
   // network service for encrypted cookie storage.

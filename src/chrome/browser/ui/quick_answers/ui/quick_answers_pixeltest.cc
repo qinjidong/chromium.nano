@@ -15,7 +15,6 @@
 #include "chrome/test/base/in_process_browser_test.h"
 #include "chromeos/components/quick_answers/public/cpp/controller/quick_answers_controller.h"
 #include "chromeos/components/quick_answers/quick_answers_model.h"
-#include "chromeos/constants/chromeos_features.h"
 #include "content/public/common/content_switches.h"
 #include "content/public/test/browser_test.h"
 #include "ui/aura/window.h"

@@ -52,7 +52,6 @@
 
 #if BUILDFLAG(IS_CHROMEOS_ASH)
 #include "chrome/grit/cros_styles_resources.h"  // nogncheck crbug.com/1113869
-#include "chromeos/constants/chromeos_features.h"
 #include "ui/chromeos/styles/cros_tokens_color_mappings.h"
 #endif  // BUILDFLAG(IS_CHROMEOS_ASH)
 

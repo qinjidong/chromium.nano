@@ -55,7 +55,6 @@ source_set("networking_private") {
     sources = default_sources + [
                 "network_config_dbus_constants_linux.cc",
                 "network_config_dbus_constants_linux.h",
-                "networking_private_event_router_nonchromeos.cc",
                 "networking_private_linux.cc",
                 "networking_private_linux.h",
               ]

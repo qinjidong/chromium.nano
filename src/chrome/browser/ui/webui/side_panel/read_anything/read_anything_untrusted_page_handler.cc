@@ -17,8 +17,6 @@
 #include "chrome/browser/accessibility/pdf_ocr_controller_factory.h"
 #include "chrome/browser/browser_features.h"
 #include "chrome/browser/profiles/profile.h"
-#include "chrome/browser/screen_ai/screen_ai_service_router.h"
-#include "chrome/browser/screen_ai/screen_ai_service_router_factory.h"
 #include "chrome/browser/translate/chrome_translate_client.h"
 #include "chrome/browser/ui/browser.h"
 #include "chrome/browser/ui/browser_finder.h"
@@ -306,22 +304,6 @@ ReadAnythingUntrustedPageHandler::ReadAnythingUntrustedPageHandler(
                   .Clone()
             : base::Value::List(),
         highlightGranularity);
-  }
-
-  if (features::IsReadAnythingWithScreen2xEnabled()) {
-    screen_ai::ScreenAIServiceRouterFactory::GetForBrowserContext(
-        browser_->profile())
-        ->GetServiceStateAsync(
-            screen_ai::ScreenAIServiceRouter::Service::kMainContentExtraction,
-            base::BindOnce(
-                &ReadAnythingUntrustedPageHandler::OnScreenAIServiceInitialized,
-                weak_factory_.GetWeakPtr()));
-  }
-  if (features::IsPdfOcrEnabled()) {
-    screen_ai::ScreenAIServiceRouterFactory::GetForBrowserContext(
-        browser_->profile())
-        ->GetServiceStateAsync(screen_ai::ScreenAIServiceRouter::Service::kOCR,
-                               base::DoNothing());
   }
 
   OnActiveWebContentsChanged();
@@ -725,10 +707,6 @@ void ReadAnythingUntrustedPageHandler::SetUpPdfObserver() {
           inner_contents[0]->GetPrimaryMainFrame()->GetLastCommittedOrigin())) {
     pdf_observer_ = std::make_unique<ReadAnythingWebContentsObserver>(
         weak_factory_.GetSafeRef(), inner_contents[0], kReadAnythingAXMode);
-    if (features::IsPdfOcrEnabled()) {
-      screen_ai::PdfOcrControllerFactory::GetForProfile(browser_->profile())
-          ->Activate();
-    }
   }
 }
 

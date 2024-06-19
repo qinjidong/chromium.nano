@@ -31,7 +31,6 @@
 #include "net/test/embedded_test_server/default_handlers.h"
 #include "testing/gtest/include/gtest/gtest.h"
 #if BUILDFLAG(IS_CHROMEOS)
-#include "chromeos/constants/chromeos_features.h"
 #endif  // BUILDFLAG(IS_CHROMEOS)
 #if BUILDFLAG(IS_CHROMEOS_LACROS)
 #include "chromeos/startup/browser_init_params.h"

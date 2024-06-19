@@ -98,7 +98,6 @@
 #include "chrome/browser/policy/networking/policy_cert_service.h"
 #include "chrome/browser/policy/networking/policy_cert_service_factory.h"
 #include "chromeos/components/kiosk/kiosk_utils.h"
-#include "chromeos/constants/chromeos_features.h"
 #include "net/cert/x509_util.h"
 #endif
 

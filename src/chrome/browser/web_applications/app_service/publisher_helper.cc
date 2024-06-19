@@ -12,7 +12,6 @@
 #include "components/webapps/browser/installable/installable_metrics.h"
 
 #if BUILDFLAG(IS_CHROMEOS)
-#include "chromeos/constants/chromeos_features.h"
 #endif
 
 namespace web_app {

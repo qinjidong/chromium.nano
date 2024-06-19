@@ -22,7 +22,6 @@
 #include "chrome/browser/ui/views/editor_menu/utils/pre_target_handler.h"
 #include "chromeos/components/quick_answers/quick_answers_model.h"
 #include "chromeos/components/quick_answers/utils/quick_answers_metrics.h"
-#include "chromeos/constants/chromeos_features.h"
 #include "chromeos/strings/grit/chromeos_strings.h"
 #include "components/vector_icons/vector_icons.h"
 #include "ui/aura/window.h"

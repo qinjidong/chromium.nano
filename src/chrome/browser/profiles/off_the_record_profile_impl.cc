@@ -98,7 +98,6 @@
 #endif  // BUILDFLAG(IS_ANDROID)
 
 #if BUILDFLAG(IS_CHROMEOS)
-#include "chromeos/constants/chromeos_features.h"
 #include "chromeos/constants/pref_names.h"
 #endif
 

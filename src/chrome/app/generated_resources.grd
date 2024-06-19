@@ -298,11 +298,7 @@ are declared in tools/grit/grit_rule.gni.
       <part file="profiles_strings.grdp" />
 
       <!-- Chrome-OS-specific strings -->
-      <if expr="is_chromeos">
-        <part file="chromeos_shared_strings.grdp" />
-      </if>
       <if expr="chromeos_ash">
-        <part file="chromeos_strings.grdp" />
         <part file="os_settings_strings.grdp" />
         <part file="os_settings_search_tag_strings.grdp" />
         <part file="sharesheet_strings.grdp" />

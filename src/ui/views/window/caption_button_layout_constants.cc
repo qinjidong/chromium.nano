@@ -9,7 +9,6 @@
 #include "ui/gfx/geometry/size.h"
 
 #if BUILDFLAG(IS_CHROMEOS)
-#include "chromeos/constants/chromeos_features.h"
 #endif  // BUILDFLAG(IS_CHROMEOS)
 
 namespace views {

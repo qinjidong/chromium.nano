@@ -1117,7 +1117,6 @@ static_library("extensions") {
     sources += [
       "api/enterprise_reporting_private/chrome_desktop_report_request_helper.cc",
       "api/enterprise_reporting_private/chrome_desktop_report_request_helper.h",
-      "api/image_writer_private/operation_nonchromeos.cc",
       "api/messaging/native_message_process_host.cc",
       "api/messaging/native_message_process_host.h",
       "api/messaging/native_messaging_launch_from_native.cc",

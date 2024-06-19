@@ -13,7 +13,6 @@
 
 #if BUILDFLAG(IS_CHROMEOS)
 #include "chrome/browser/enterprise/browser_management/management_service_factory.h"
-#include "chromeos/constants/chromeos_features.h"
 #include "components/policy/core/common/management/management_service.h"
 #endif  // BUILDFLAG(IS_CHROMEOS)
 

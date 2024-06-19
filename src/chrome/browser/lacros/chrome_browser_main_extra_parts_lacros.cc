@@ -64,7 +64,6 @@
 #include "chrome/browser/profiles/profiles_state.h"
 #include "chrome/browser/ui/quick_answers/read_write_cards_manager_impl.h"
 #include "chromeos/components/kiosk/kiosk_utils.h"
-#include "chromeos/constants/chromeos_features.h"
 #include "chromeos/crosapi/mojom/crosapi.mojom.h"
 #include "chromeos/crosapi/mojom/mahi.mojom.h"
 #include "chromeos/lacros/lacros_service.h"

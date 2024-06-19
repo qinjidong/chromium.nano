@@ -19,7 +19,6 @@
 #include "chrome/browser/ui/quick_answers/ui/rich_answers_view.h"
 #include "chromeos/components/quick_answers/public/cpp/controller/quick_answers_controller.h"
 #include "chromeos/components/quick_answers/quick_answers_model.h"
-#include "chromeos/constants/chromeos_features.h"
 #include "chromeos/strings/grit/chromeos_strings.h"
 #include "mojo/public/cpp/bindings/remote.h"
 #include "ui/aura/client/aura_constants.h"

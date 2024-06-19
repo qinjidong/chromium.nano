@@ -56,7 +56,6 @@
 
 #if BUILDFLAG(IS_CHROMEOS)
 #include "base/strings/utf_string_conversions.h"
-#include "chromeos/constants/chromeos_features.h"
 #include "net/base/url_util.h"
 #endif
 

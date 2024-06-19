@@ -18,7 +18,6 @@
 #include "chrome/browser/ui/views/mahi/mahi_menu_controller.h"
 #include "chromeos/components/quick_answers/public/cpp/quick_answers_state.h"
 #include "chromeos/components/quick_answers/quick_answers_client.h"
-#include "chromeos/constants/chromeos_features.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/context_menu_params.h"
 #include "services/network/public/cpp/shared_url_loader_factory.h"

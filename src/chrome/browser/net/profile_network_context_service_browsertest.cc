@@ -91,7 +91,6 @@
 #include "testing/gtest/include/gtest/gtest.h"
 
 #if BUILDFLAG(IS_CHROMEOS)
-#include "chromeos/constants/chromeos_features.h"
 #endif
 
 // Most tests for this class are in NetworkContextConfigurationBrowserTest.

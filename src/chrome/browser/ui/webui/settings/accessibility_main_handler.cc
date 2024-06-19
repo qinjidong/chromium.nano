@@ -55,14 +55,6 @@ void AccessibilityMainHandler::OnJavascriptAllowed() {
           &AccessibilityMainHandler::OnAccessibilityStatusChanged,
           base::Unretained(this)));
 #endif  // BUILDFLAG(IS_CHROMEOS_ASH)
-
-#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_MAC)
-  if (features::IsPdfOcrEnabled() || features::IsMainNodeAnnotationsEnabled()) {
-    CHECK(!component_ready_observer_.IsObserving());
-    component_ready_observer_.Observe(
-        screen_ai::ScreenAIInstallState::GetInstance());
-  }
-#endif  // BUILDFLAG(IS_WIN) || BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_MAC)
 }
 
 void AccessibilityMainHandler::OnJavascriptDisallowed() {
@@ -95,13 +87,7 @@ void AccessibilityMainHandler::StateChanged(
 void AccessibilityMainHandler::HandleGetScreenAIInstallState(
     const base::Value::List& args) {
   CHECK_EQ(1U, args.size());
-  const base::Value& callback_id = args[0];
   AllowJavascript();
-  // Get the current install state and send it back to a UI callback.
-  screen_ai::ScreenAIInstallState::State current_install_state =
-      screen_ai::ScreenAIInstallState::GetInstance()->get_state();
-  ResolveJavascriptCallback(
-      callback_id, base::Value(static_cast<int>(current_install_state)));
 }
 #endif  // BUILDFLAG(IS_WIN) || BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_MAC)
 

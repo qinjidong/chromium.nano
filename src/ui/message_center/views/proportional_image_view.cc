@@ -13,7 +13,6 @@
 #include "ui/message_center/public/cpp/message_center_constants.h"
 
 #if BUILDFLAG(IS_CHROMEOS_ASH)
-#include "chromeos/constants/chromeos_features.h"
 #endif  // BUILDFLAG(IS_CHROMEOS_ASH)
 
 namespace message_center {

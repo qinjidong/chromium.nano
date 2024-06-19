@@ -298,7 +298,6 @@
 #include "chrome/browser/chromeos/policy/dlp/dlp_rules_manager.h"
 #include "chrome/browser/chromeos/policy/dlp/dlp_rules_manager_factory.h"
 #include "chrome/browser/renderer_context_menu/read_write_card_observer.h"
-#include "chromeos/constants/chromeos_features.h"
 #include "chromeos/ui/clipboard_history/clipboard_history_submenu_model.h"
 #include "chromeos/ui/clipboard_history/clipboard_history_util.h"
 #endif

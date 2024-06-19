@@ -5,7 +5,6 @@
 #include "chrome/browser/chromeos/cros_apps/api/cros_apps_api_mutable_registry.h"
 #include "chrome/browser/chromeos/cros_apps/api/test/cros_apps_apitest.h"
 #include "chrome/browser/ui/browser.h"
-#include "chromeos/constants/chromeos_features.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/test/browser_test.h"
 #include "content/public/test/browser_test_utils.h"

@@ -64,7 +64,6 @@
 #include "ui/events/devices/touchscreen_device.h"
 
 #if BUILDFLAG(IS_CHROMEOS)
-#include "chromeos/constants/chromeos_features.h"
 #endif
 
 #if BUILDFLAG(IS_CHROMEOS_ASH)

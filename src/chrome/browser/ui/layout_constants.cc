@@ -14,7 +14,6 @@
 #include "ui/gfx/geometry/insets.h"
 
 #if BUILDFLAG(IS_CHROMEOS)
-#include "chromeos/constants/chromeos_features.h"
 #endif
 
 int GetLayoutConstant(LayoutConstant constant) {

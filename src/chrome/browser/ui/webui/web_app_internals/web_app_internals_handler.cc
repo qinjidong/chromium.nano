@@ -61,7 +61,6 @@
 #include "chrome/browser/browser_process.h"
 #include "chrome/browser/profiles/profile_attributes_storage.h"
 #include "chrome/browser/profiles/profile_manager.h"
-#include "chromeos/constants/chromeos_features.h"
 #include "content/public/browser/browser_thread.h"
 #endif  // BUILDFLAG(IS_CHROMEOS_LACROS)
 

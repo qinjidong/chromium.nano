@@ -5,7 +5,6 @@
 #include "chrome/browser/lacros/views_text_services_context_menu_lacros.h"
 
 #include "chrome/app/chrome_command_ids.h"
-#include "chromeos/constants/chromeos_features.h"
 #include "chromeos/crosapi/mojom/clipboard_history.mojom.h"
 #include "chromeos/lacros/lacros_service.h"
 #include "chromeos/ui/clipboard_history/clipboard_history_submenu_model.h"

@@ -118,7 +118,6 @@
 #include "extensions/common/switches.h"
 
 #if BUILDFLAG(IS_CHROMEOS)
-#include "chromeos/constants/chromeos_features.h"
 #endif
 
 #if BUILDFLAG(IS_CHROMEOS_ASH)

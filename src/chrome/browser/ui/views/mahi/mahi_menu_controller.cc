@@ -17,7 +17,6 @@
 #include "chrome/browser/ui/views/mahi/mahi_menu_view.h"
 #include "chromeos/components/mahi/public/cpp/mahi_manager.h"
 #include "chromeos/components/mahi/public/cpp/mahi_switches.h"
-#include "chromeos/constants/chromeos_features.h"
 #include "ui/views/view_utils.h"
 
 namespace chromeos::mahi {

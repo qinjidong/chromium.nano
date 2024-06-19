@@ -21,7 +21,7 @@ declare_args() {
   use_vaapi = (is_chromeos_lacros ||
                (is_linux && !is_castos &&
                 (ozone_platform_x11 || ozone_platform_wayland))) &&
-              (target_cpu == "x86" || target_cpu == "x64")
+              (target_cpu == "x86" || target_cpu == "x64") && false
 
   # Indicates if ChromeOS protected media support exists. This is used
   # to enable the CDM daemon in Chrome OS as well as support for

@@ -180,7 +180,6 @@
 #include "content/public/common/content_switches.h"
 #include "device/base/features.h"
 #include "device/bluetooth/bluez/bluez_features.h"
-#include "device/bluetooth/chromeos_platform_features.h"
 #include "device/bluetooth/floss/floss_features.h"
 #include "device/fido/features.h"
 #include "device/gamepad/public/cpp/gamepad_features.h"
@@ -240,7 +239,6 @@
 
 #if BUILDFLAG(IS_CHROMEOS)
 #include "base/process/process.h"
-#include "chromeos/constants/chromeos_features.h"
 #endif
 
 #if BUILDFLAG(IS_ANDROID)

@@ -53,7 +53,6 @@
 
 #if BUILDFLAG(IS_CHROMEOS)
 #include "chrome/browser/web_applications/chromeos_web_app_experiments.h"
-#include "chromeos/constants/chromeos_features.h"
 #endif
 
 namespace web_app {

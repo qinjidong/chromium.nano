@@ -26,7 +26,6 @@
 #include "base/values.h"
 #include "base/version.h"
 #include "chrome/common/chrome_features.h"
-#include "chromeos/constants/chromeos_features.h"
 #include "components/component_updater/component_installer.h"
 #include "components/component_updater/component_updater_paths.h"
 #include "content/public/browser/browser_thread.h"

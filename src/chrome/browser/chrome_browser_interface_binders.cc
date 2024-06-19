@@ -391,7 +391,6 @@
 #include "chromeos/ash/services/nearby/public/mojom/nearby_share_settings.mojom.h"  // nogncheck crbug.com/1125897
 #include "chromeos/ash/services/orca/public/mojom/orca_service.mojom.h"
 #include "chromeos/components/print_management/mojom/printing_manager.mojom.h"  // nogncheck
-#include "chromeos/constants/chromeos_features.h"
 #include "chromeos/services/network_config/public/mojom/cros_network_config.mojom.h"  // nogncheck
 #include "chromeos/services/network_health/public/mojom/network_diagnostics.mojom.h"  // nogncheck
 #include "chromeos/services/network_health/public/mojom/network_health.mojom.h"  // nogncheck
@@ -406,7 +405,6 @@
 #include "chrome/browser/chromeos/cros_apps/api/cros_apps_api_frame_context.h"
 #include "chrome/browser/chromeos/cros_apps/api/cros_apps_api_registry.h"
 #include "chrome/browser/lacros/cros_apps/api/diagnostics/cros_diagnostics_impl.h"
-#include "chromeos/constants/chromeos_features.h"
 #include "chromeos/lacros/lacros_service.h"
 #include "third_party/blink/public/mojom/chromeos/diagnostics/cros_diagnostics.mojom.h"
 #else

@@ -30,7 +30,6 @@ generate_grd("build_grd") {
   out_grd = "$target_gen_dir/resources.grd"
   input_files = [
     "browser_bridge.js",
-    "chromeos_view.js",
     "dns_view.js",
     "domain_security_policy_view.js",
     "events_view.js",

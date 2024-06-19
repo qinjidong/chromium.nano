@@ -29,7 +29,6 @@
 #include "ash/constants/ash_features.h"
 #include "chrome/browser/apps/app_service/promise_apps/promise_app.h"
 #include "chrome/browser/apps/app_service/promise_apps/promise_app_registry_cache.h"
-#include "chromeos/constants/chromeos_features.h"
 #include "components/services/app_service/public/cpp/shortcut/shortcut.h"  // nogncheck
 #include "components/services/app_service/public/cpp/shortcut/shortcut_registry_cache.h"  // nogncheck
 #endif  // BUILDFLAG(IS_CHROMEOS_ASH)

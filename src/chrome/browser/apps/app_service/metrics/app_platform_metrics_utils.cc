@@ -26,7 +26,6 @@
 #include "chrome/browser/ui/extensions/application_launch.h"
 #include "chromeos/components/kiosk/kiosk_utils.h"
 #include "chromeos/components/mgs/managed_guest_session_utils.h"
-#include "chromeos/constants/chromeos_features.h"
 #include "chromeos/ui/base/app_types.h"
 #include "chromeos/ui/base/window_properties.h"
 #include "components/app_constants/constants.h"

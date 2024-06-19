@@ -25,7 +25,6 @@
 #include "chrome/browser/ash/profiles/profile_helper.h"
 #include "chrome/browser/web_applications/app_service/browser_shortcuts.h"
 #include "chromeos/ash/components/browser_context_helper/browser_context_helper.h"
-#include "chromeos/constants/chromeos_features.h"
 #include "components/services/app_service/public/cpp/instance_registry.h"
 #include "components/user_manager/user_manager.h"
 #endif

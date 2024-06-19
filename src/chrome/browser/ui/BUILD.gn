@@ -10,7 +10,6 @@ import("//build/config/ozone.gni")
 import("//build/config/ui.gni")
 import("//chrome/browser/buildflags.gni")
 import("//chrome/common/features.gni")
-import("//chromeos/dbus/config/use_real_dbus_clients.gni")
 import("//components/compose/features.gni")
 import("//components/enterprise/buildflags/buildflags.gni")
 import("//components/feed/features.gni")
@@ -1877,8 +1876,6 @@ static_library("ui") {
       "webui/searchbox/searchbox_handler.h",
       "webui/settings/about_handler.cc",
       "webui/settings/about_handler.h",
-      "webui/settings/accessibility_main_handler.cc",
-      "webui/settings/accessibility_main_handler.h",
       "webui/settings/appearance_handler.cc",
       "webui/settings/appearance_handler.h",
       "webui/settings/browser_lifetime_handler.cc",

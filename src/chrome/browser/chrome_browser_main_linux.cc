@@ -72,8 +72,6 @@ void ChromeBrowserMainPartsLinux::PostCreateMainMessageLoop() {
 #endif  // BUILDFLAG(IS_CHROMEOS)
 
 #if !BUILDFLAG(IS_CHROMEOS)
-  bluez::BluezDBusManager::Initialize(nullptr /* system_bus */);
-
   // Set up crypt config. This needs to be done before anything starts the
   // network service, as the raw encryption key needs to be shared with the
   // network service for encrypted cookie storage.
@@ -137,12 +135,5 @@ void ChromeBrowserMainPartsLinux::PostBrowserStart() {
 #endif  // defined(USE_DBUS) && !BUILDFLAG(IS_CHROMEOS)
 
 void ChromeBrowserMainPartsLinux::PostDestroyThreads() {
-#if BUILDFLAG(IS_CHROMEOS)
-  // No-op; per PostBrowserStart() comment, this is done elsewhere.
-#else
-  bluez::BluezDBusManager::Shutdown();
-  bluez::BluezDBusThreadManager::Shutdown();
-#endif  // BUILDFLAG(IS_CHROMEOS)
-
   ChromeBrowserMainPartsPosix::PostDestroyThreads();
 }

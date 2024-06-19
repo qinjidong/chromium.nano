@@ -12,7 +12,6 @@
 #include "chrome/browser/chromeos/telemetry/fake_probe_service.h"
 #include "chrome/browser/ui/browser.h"
 #include "chrome/test/base/ui_test_utils.h"
-#include "chromeos/constants/chromeos_features.h"
 #include "chromeos/lacros/lacros_service.h"
 #include "content/public/browser/network_service_instance.h"
 #include "content/public/browser/web_contents.h"

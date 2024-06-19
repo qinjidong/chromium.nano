@@ -38,7 +38,7 @@ NetworkingPrivateEventRouterFactory::NetworkingPrivateEventRouterFactory()
 std::unique_ptr<KeyedService>
 NetworkingPrivateEventRouterFactory::BuildServiceInstanceForBrowserContext(
     content::BrowserContext* context) const {
-  return NetworkingPrivateEventRouter::Create(context);
+  return nullptr;
 }
 
 content::BrowserContext*

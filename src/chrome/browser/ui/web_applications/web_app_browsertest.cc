@@ -134,7 +134,6 @@
 #include "ui/views/widget/widget.h"
 // TODO(crbug.com/40147906): Enable gn check once it handles conditional
 // includes
-#include "chromeos/constants/chromeos_features.h"
 #include "components/metrics/structured/structured_events.h"  // nogncheck
 #endif
 

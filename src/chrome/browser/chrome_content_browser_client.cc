@@ -530,7 +530,6 @@
 #include "chrome/browser/web_applications/web_app_tab_helper.h"
 #include "chrome/common/chromeos/extensions/chromeos_system_extension_info.h"
 #include "chromeos/components/kiosk/kiosk_utils.h"
-#include "chromeos/constants/chromeos_features.h"
 #include "content/public/browser/chromeos/multi_capture_service.h"
 #include "third_party/cros_system_api/switches/chrome_switches.h"
 #endif

@@ -310,7 +310,6 @@
 #include "chrome/browser/ash/policy/multi_screen_capture/multi_screen_capture_policy_service_factory.h"
 #include "chrome/browser/nearby_sharing/nearby_sharing_service_factory.h"
 #include "chrome/browser/push_notification/push_notification_service_factory.h"
-#include "chromeos/constants/chromeos_features.h"
 #else
 #include "chrome/browser/policy/cloud/user_policy_signin_service_factory.h"
 #include "chrome/browser/profiles/gaia_info_update_service_factory.h"
@@ -326,7 +325,6 @@
 #include "chrome/browser/policy/networking/user_network_configuration_updater_factory.h"
 #include "chrome/browser/smart_card/smart_card_permission_context_factory.h"
 #include "chrome/browser/webauthn/chromeos/passkey_service_factory.h"
-#include "chromeos/constants/chromeos_features.h"
 #endif
 
 #if BUILDFLAG(IS_WIN)

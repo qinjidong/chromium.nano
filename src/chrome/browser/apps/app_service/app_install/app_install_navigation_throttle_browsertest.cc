@@ -27,7 +27,6 @@
 #include "chrome/browser/web_applications/web_app_install_utils.h"
 #include "chrome/test/base/in_process_browser_test.h"
 #include "chrome/test/base/ui_test_utils.h"
-#include "chromeos/constants/chromeos_features.h"
 #include "chromeos/crosapi/mojom/test_controller.mojom-test-utils.h"
 #include "components/services/app_service/public/cpp/package_id.h"
 #include "components/webapps/common/web_app_id.h"

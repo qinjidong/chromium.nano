@@ -31,8 +31,6 @@ using testing::Return;
 
 using extensions::NetworkingPrivateDelegate;
 using extensions::NetworkingPrivateDelegateFactory;
-using extensions::NetworkingPrivateEventRouter;
-using extensions::NetworkingPrivateEventRouterFactory;
 using extensions::NetworkingPrivateServiceClient;
 
 namespace {

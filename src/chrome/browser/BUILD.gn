@@ -2697,8 +2697,6 @@ static_library("browser") {
       sources += [
         "component_updater/screen_ai_component_installer.cc",
         "component_updater/screen_ai_component_installer.h",
-        "screen_ai/screen_ai_downloader_non_chromeos.cc",
-        "screen_ai/screen_ai_downloader_non_chromeos.h",
       ]
     }
 

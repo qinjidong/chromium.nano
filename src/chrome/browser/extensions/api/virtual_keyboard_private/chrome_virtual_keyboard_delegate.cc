@@ -26,7 +26,6 @@
 #include "chrome/browser/profiles/profile_manager.h"
 #include "chrome/browser/ui/ash/keyboard/chrome_keyboard_controller_client.h"
 #include "chrome/browser/ui/settings_window_manager_chromeos.h"
-#include "chromeos/constants/chromeos_features.h"
 #include "chromeos/crosapi/mojom/clipboard_history.mojom.h"
 #include "chromeos/services/machine_learning/public/cpp/ml_switches.h"
 #include "components/user_manager/user_manager.h"

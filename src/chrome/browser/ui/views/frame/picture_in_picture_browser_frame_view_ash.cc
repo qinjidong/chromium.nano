@@ -7,7 +7,6 @@
 #include "ash/wm/splitview/layout_divider_controller.h"
 #include "ash/wm/window_util.h"
 #include "base/check.h"
-#include "chromeos/constants/chromeos_features.h"
 #include "chromeos/ui/base/chromeos_ui_constants.h"
 #include "chromeos/ui/frame/frame_utils.h"
 #include "ui/aura/client/aura_constants.h"

@@ -36,12 +36,6 @@ static_library("error_reporting") {
     "//services/network:network_service",
     "//services/network/public/cpp",
   ]
-  if (is_chromeos) {
-    sources += [ "chrome_js_error_report_processor_chromeos.cc" ]
-    deps += [ ":constants" ]
-  } else {
-    sources += [ "chrome_js_error_report_processor_nonchromeos.cc" ]
-  }
 }
 
 source_set("test_support") {
