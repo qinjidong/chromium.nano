@@ -56,7 +56,6 @@ import org.chromium.chrome.browser.paint_preview.StartupPaintPreviewHelper;
 import org.chromium.chrome.browser.pdf.PdfInfo;
 import org.chromium.chrome.browser.pdf.PdfUtils;
 import org.chromium.chrome.browser.profiles.Profile;
-import org.chromium.chrome.browser.rlz.RevenueStats;
 import org.chromium.chrome.browser.tab.TabUtils.UseDesktopUserAgentCaller;
 import org.chromium.chrome.browser.ui.native_page.FrozenNativePage;
 import org.chromium.chrome.browser.ui.native_page.NativePage;
@@ -1049,8 +1048,6 @@ class TabImpl implements Tab {
             }
 
             initializeNative();
-
-            RevenueStats.getInstance().tabCreated(this);
 
             // If there is a frozen WebContents state or a pending lazy load, don't create a new
             // WebContents. Restoring will be done when showing the tab in the foreground.

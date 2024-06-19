@@ -59,7 +59,6 @@ import org.chromium.chrome.browser.privacy.settings.PrivacyPreferencesManagerImp
 import org.chromium.chrome.browser.profiles.OTRProfileID;
 import org.chromium.chrome.browser.profiles.Profile;
 import org.chromium.chrome.browser.profiles.ProfileProvider;
-import org.chromium.chrome.browser.rlz.RevenueStats;
 import org.chromium.chrome.browser.search_engines.TemplateUrlServiceFactory;
 import org.chromium.chrome.browser.settings.SettingsLauncherImpl;
 import org.chromium.chrome.browser.tab.Tab;
@@ -571,7 +570,6 @@ public class SearchActivity extends AsyncInitializationActivity
     @Override
     public void onPauseWithNative() {
         umaSessionEnd();
-        RevenueStats.setCustomTabSearchClient(null);
         super.onPauseWithNative();
     }
 
@@ -583,8 +581,6 @@ public class SearchActivity extends AsyncInitializationActivity
             var referrer = SearchActivityUtils.getReferrer(getIntent());
             var referrerValid = !TextUtils.isEmpty(referrer);
             RecordHistogram.recordBooleanHistogram(HISTOGRAM_INTENT_REFERRER_VALID, referrerValid);
-            RevenueStats.setCustomTabSearchClient(
-                    referrerValid ? CCT_CLIENT_PACKAGE_PREFIX + referrer : null);
         }
 
         // Inform the actity lifecycle observers. Among other things, the observers record

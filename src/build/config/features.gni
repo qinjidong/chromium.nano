@@ -39,7 +39,7 @@ declare_args() {
 
   use_blink = !is_ios
 
-  enable_plugins = true
+  enable_plugins = !is_android
 }
 #
 # =============================================
