@@ -4,8 +4,6 @@
 
 #include "chrome/browser/ui/views/desktop_capture/screen_capture_permission_checker.h"
 
-#include "chrome/browser/ui/views/desktop_capture/screen_capture_permission_checker_mac.h"
-
 std::unique_ptr<ScreenCapturePermissionChecker>
 ScreenCapturePermissionChecker::MaybeCreate(
     base::RepeatingCallback<void(bool)> callback) {
