@@ -50,7 +50,6 @@ def GenerateResourceUsages(item_list, input_file_path, src_dir, fake,
     Tuple (item, tag_name_to_usage), where |item| is from |item_list| and
       |tag_name_to_usage| is a dict() mapping tag name to (int) usage.
   """
-  print(input_file_path)
   if fake:
     for item in item_list:
       tag_name_to_usage = collections.Counter({t.name: 10 for t in item.tags})

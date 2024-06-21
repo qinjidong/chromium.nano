@@ -20,8 +20,6 @@ static_library("default_model") {
     "device_switcher_result_dispatcher.h",
     "feed_user_segment.cc",
     "feed_user_segment.h",
-    "ios_module_ranker.cc",
-    "ios_module_ranker.h",
     "low_user_engagement_model.cc",
     "low_user_engagement_model.h",
     "most_visited_tiles_user.cc",
