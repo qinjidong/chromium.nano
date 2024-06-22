@@ -38,18 +38,6 @@ WriteFromUrlOperation::~WriteFromUrlOperation() = default;
 
 void WriteFromUrlOperation::StartImpl() {
   DCHECK(IsRunningInCorrectSequence());
-
-  GetDownloadTarget(base::BindOnce(
-      &WriteFromUrlOperation::Download, this,
-      base::BindOnce(
-          &WriteFromUrlOperation::VerifyDownload, this,
-          base::BindOnce(
-              &WriteFromUrlOperation::Extract, this,
-              base::BindOnce(
-                  &WriteFromUrlOperation::Write, this,
-                  base::BindOnce(&WriteFromUrlOperation::VerifyWrite, this,
-                                 base::BindOnce(&WriteFromUrlOperation::Finish,
-                                                this)))))));
 }
 
 void WriteFromUrlOperation::GetDownloadTarget(base::OnceClosure continuation) {

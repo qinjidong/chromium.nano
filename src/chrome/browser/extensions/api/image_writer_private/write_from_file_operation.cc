@@ -33,14 +33,6 @@ void WriteFromFileOperation::StartImpl() {
     Error(error::kImageInvalid);
     return;
   }
-
-  PostTask(base::BindOnce(
-      &WriteFromFileOperation::Extract, this,
-      base::BindOnce(
-          &WriteFromFileOperation::Write, this,
-          base::BindOnce(
-              &WriteFromFileOperation::VerifyWrite, this,
-              base::BindOnce(&WriteFromFileOperation::Finish, this)))));
 }
 
 }  // namespace image_writer

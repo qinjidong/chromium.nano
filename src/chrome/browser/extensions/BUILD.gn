@@ -198,28 +198,6 @@ static_library("extensions") {
     "api/identity/web_auth_flow_info_bar_delegate.h",
     "api/idltest/idltest_api.cc",
     "api/idltest/idltest_api.h",
-    "api/image_writer_private/destroy_partitions_operation.cc",
-    "api/image_writer_private/destroy_partitions_operation.h",
-    "api/image_writer_private/error_constants.cc",
-    "api/image_writer_private/error_constants.h",
-    "api/image_writer_private/extraction_properties.cc",
-    "api/image_writer_private/extraction_properties.h",
-    "api/image_writer_private/image_writer_private_api.cc",
-    "api/image_writer_private/image_writer_private_api.h",
-    "api/image_writer_private/image_writer_utility_client.cc",
-    "api/image_writer_private/image_writer_utility_client.h",
-    "api/image_writer_private/operation.cc",
-    "api/image_writer_private/operation.h",
-    "api/image_writer_private/operation_manager.cc",
-    "api/image_writer_private/operation_manager.h",
-    "api/image_writer_private/removable_storage_provider.cc",
-    "api/image_writer_private/removable_storage_provider.h",
-    "api/image_writer_private/write_from_file_operation.cc",
-    "api/image_writer_private/write_from_file_operation.h",
-    "api/image_writer_private/write_from_url_operation.cc",
-    "api/image_writer_private/write_from_url_operation.h",
-    "api/image_writer_private/zip_extractor.cc",
-    "api/image_writer_private/zip_extractor.h",
     "api/instance_id/instance_id_api.cc",
     "api/instance_id/instance_id_api.h",
     "api/language_settings_private/language_settings_private_api.cc",
@@ -1152,8 +1130,6 @@ static_library("extensions") {
       "api/file_system/chrome_file_system_delegate_ash.h",
       "api/identity/launch_web_auth_flow_delegate_ash.cc",
       "api/identity/launch_web_auth_flow_delegate_ash.h",
-      "api/image_writer_private/operation_chromeos.cc",
-      "api/image_writer_private/removable_storage_provider_chromeos.cc",
       "api/input_ime/input_ime_api.cc",
       "api/input_ime/input_ime_api.h",
       "api/input_ime/input_ime_api_chromeos.cc",
@@ -1286,9 +1262,6 @@ static_library("extensions") {
       "api/file_system/chrome_file_system_delegate_lacros.h",
       "api/file_system/volume_list_provider_lacros.cc",
       "api/file_system/volume_list_provider_lacros.h",
-      "api/image_writer_private/image_writer_controller_lacros.cc",
-      "api/image_writer_private/image_writer_controller_lacros.h",
-      "api/image_writer_private/operation_nonchromeos.cc",
       "api/messaging/native_message_host_lacros.cc",
       "api/quick_unlock_private/quick_unlock_private_api_lacros.cc",
       "api/quick_unlock_private/quick_unlock_private_api_lacros.h",
@@ -1321,17 +1294,11 @@ static_library("extensions") {
     sources += [
       "api/enterprise_reporting_private/keychain_data_helper_mac.cc",
       "api/enterprise_reporting_private/keychain_data_helper_mac.h",
-      "api/image_writer_private/removable_storage_provider_mac.cc",
       "global_shortcut_listener_mac.h",
       "global_shortcut_listener_mac.mm",
       "system_display/display_info_provider_mac.cc",
       "system_display/display_info_provider_mac.h",
     ]
-  }
-
-  if (is_linux || is_chromeos_lacros) {
-    sources +=
-        [ "api/image_writer_private/removable_storage_provider_linux.cc" ]
   }
 
   if (is_linux || is_chromeos) {
@@ -1347,7 +1314,6 @@ static_library("extensions") {
 
   if (is_win) {
     sources += [
-      "api/image_writer_private/removable_storage_provider_win.cc",
       "api/messaging/native_process_launcher_win.cc",
       "external_registry_loader_win.cc",
       "external_registry_loader_win.h",

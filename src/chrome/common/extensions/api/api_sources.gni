@@ -34,7 +34,6 @@ schema_sources_ = [
   "gcm.json",
   "history.json",
   "identity.idl",
-  "image_writer_private.idl",
   "instance_id.json",
   "language_settings_private.idl",
   "notifications.idl",
