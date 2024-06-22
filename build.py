@@ -140,7 +140,7 @@ def main():
   print("[nano] please enter the index of the platform you want to compile")
   for i, file in enumerate(platform_list):
     print("[nano] " + str(i) + ": " + file)
-  user_input = raw_input()
+  user_input = input()
   if user_input.isdigit():
     user_input = (int)(user_input)
     if 0 <= user_input < len(platform_list):
