@@ -205,7 +205,6 @@ group("gn_all") {
 
     if (enable_pdf) {
       deps += [
-        "//pdf/pdfium/fuzzers",
         "//third_party/pdfium/testing:pdfium_test",
       ]
     }

@@ -26,7 +26,3 @@ group("sdk") {
     "cpp/bindings",
   ]
 }
-
-group("fuzzers") {
-  deps = [ "tools/fuzzers" ]
-}

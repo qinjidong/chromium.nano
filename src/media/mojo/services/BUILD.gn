@@ -6,7 +6,6 @@ import("//build/config/cast.gni")
 import("//build/config/chromeos/ui_mode.gni")
 import("//media/gpu/args.gni")
 import("//media/media_options.gni")
-import("//mojo/public/tools/fuzzers/mojolpm.gni")
 import("//testing/test.gni")
 
 enable_playback_events_recorder =
@@ -310,29 +309,4 @@ source_set("unit_tests") {
 
     deps += [ "//third_party/fuchsia-sdk/sdk/pkg/fit-promise" ]
   }
-}
-
-mojolpm_fuzzer_test("webrtc_video_perf_mojolpm_fuzzer") {
-  sources = [ "webrtc_video_perf_mojolpm_fuzzer.cc" ]
-
-  proto_source = "webrtc_video_perf_mojolpm_fuzzer.proto"
-  testcase_proto_kind = "media.fuzzing.webrtc_video_perf.proto.Testcase"
-
-  seed_corpus_sources = [
-    "webrtc_video_perf_fuzzer_seed_corpus/update_record_and_get_perf.textproto",
-  ]
-
-  proto_deps = [ "//third_party/blink/public/mojom:mojom_platform_mojolpm" ]
-
-  deps = [
-    ":services",
-    "//base",
-    "//base/test:test_support",
-    "//components/leveldb_proto:test_support",
-    "//media",
-    "//media/capabilities:webrtc_video_stats_proto",
-    "//third_party/blink/public:blink",
-    "//third_party/blink/public/common",
-    "//third_party/libprotobuf-mutator",
-  ]
 }

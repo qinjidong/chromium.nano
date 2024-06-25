@@ -732,11 +732,3 @@ if (is_android) {
     ]
   }
 }
-
-group("viz_service_fuzzers") {
-  testonly = true
-  deps = [
-    ":hit_test_manager_fuzzer",
-    "compositor_frame_fuzzer:compositor_frame_fuzzer",
-  ]
-}

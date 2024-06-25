@@ -39,7 +39,6 @@ import("//net/features.gni")
 import("//pdf/features.gni")
 import("//printing/buildflags/buildflags.gni")
 import("//services/screen_ai/buildflags/features.gni")
-import("//testing/libfuzzer/fuzzer_test.gni")
 import("//testing/test.gni")
 import("//third_party/protobuf/proto_library.gni")
 import("//third_party/widevine/cdm/widevine.gni")
@@ -68,7 +67,6 @@ if (is_chromeos_ash && include_js2gtest_tests) {
 group("test") {
   testonly = true
   deps = [
-    "fuzzing:test",
     "//chrome/test/variations:variations_desktop_smoke_tests",
   ]
 }
@@ -12413,23 +12411,6 @@ if (!is_android) {
       "//content/test:webgpu_cts_scripts",
       "//testing:test_scripts_shared",
     ]
-  }
-}
-
-if (is_win) {
-  fuzzer_test("safe_browsing_binary_feature_extractor_fuzzer") {
-    sources = [ "../common/safe_browsing/binary_feature_extractor_fuzzer.cc" ]
-    deps = [
-      "//base",
-      "//chrome/common/safe_browsing:binary_feature_extractor",
-      "//components/safe_browsing/core/common/proto:csd_proto",
-      "//crypto",
-    ]
-    libs = [ "wintrust.lib" ]
-
-    # Directory contains useful and non-useful files. Don't worry about
-    # non-useful since they are eliminated during pruning.
-    seed_corpus = "data/safe_browsing/download_protection/"
   }
 }
 

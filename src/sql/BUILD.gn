@@ -119,8 +119,3 @@ test("sql_unittests") {
     "//third_party/sqlite",
   ]
 }
-
-group("fuzzers") {
-  testonly = true
-  deps = [ "//sql/fuzzers:sql_recovery_lpm_fuzzer" ]
-}

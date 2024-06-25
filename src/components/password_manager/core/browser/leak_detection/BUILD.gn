@@ -119,7 +119,3 @@ source_set("unit_tests") {
     "//third_party/private-join-and-compute/src:ec_commutative_cipher",
   ]
 }
-
-group("fuzzers") {
-  deps = [ "//components/password_manager/core/browser/leak_detection/fuzzer" ]
-}

@@ -3419,10 +3419,6 @@ if (enable_nocompile_tests) {
   }
 }
 
-group("fuzzers") {
-  deps = [ "//content/test/fuzzer" ]
-}
-
 # This group defines the isolate files needed to run
 # test_buildbucket_api_gpu_cases.py on bots. This also tells the build system
 # when the tests should be re-run - when one of the dependent files changes.

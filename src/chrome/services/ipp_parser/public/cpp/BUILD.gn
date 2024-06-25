@@ -35,7 +35,3 @@ if (use_cups) {
     }
   }
 }
-
-# A dummy group to make fuzz targets discoverable.
-group("fuzzers") {
-}

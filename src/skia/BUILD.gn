@@ -1034,7 +1034,3 @@ if (!is_ios) {
     ]
   }
 }
-
-group("fuzzers") {
-  deps = [ "//skia/tools/fuzzers" ]
-}
