@@ -83,7 +83,6 @@
 #include "content/browser/indexed_db/indexed_db_tombstone_sweeper.h"
 #include "content/browser/indexed_db/indexed_db_transaction.h"
 #include "content/browser/indexed_db/list_set.h"
-#include "content/browser/indexed_db/mock_browsertest_indexed_db_class_factory.h"
 #include "content/public/common/content_features.h"
 #include "env_chromium.h"
 #include "mojo/public/cpp/base/big_buffer.h"
@@ -1122,9 +1121,6 @@ void IndexedDBBucketContext::WriteToIndexedDBForTesting(
 void IndexedDBBucketContext::BindMockFailureSingletonForTesting(
     mojo::PendingReceiver<storage::mojom::MockFailureInjector> receiver) {
   CHECK(!backing_store_);
-  transactional_leveldb_factory_ =
-      std::make_unique<MockBrowserTestIndexedDBClassFactory>(
-          std::move(receiver));
 }
 
 // static
