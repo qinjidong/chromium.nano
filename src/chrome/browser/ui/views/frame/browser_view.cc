@@ -182,7 +182,6 @@
 #include "chrome/grit/theme_resources.h"
 #include "components/autofill/core/common/autofill_payments_features.h"
 #include "components/content_settings/core/common/features.h"
-#include "components/enterprise/buildflags/buildflags.h"
 #include "components/feature_engagement/public/event_constants.h"
 #include "components/feature_engagement/public/feature_constants.h"
 #include "components/feature_engagement/public/tracker.h"
@@ -196,7 +195,6 @@
 #include "components/permissions/permission_request_manager.h"
 #include "components/prefs/pref_service.h"
 #include "components/reading_list/core/reading_list_pref_names.h"
-#include "components/safe_browsing/core/browser/password_protection/metrics_util.h"
 #include "components/segmentation_platform/embedder/default_model/device_switcher_model.h"
 #include "components/segmentation_platform/public/constants.h"
 #include "components/segmentation_platform/public/input_context.h"
@@ -336,11 +334,6 @@
 #if BUILDFLAG(ENABLE_WEBUI_TAB_STRIP)
 #include "chrome/browser/ui/views/frame/webui_tab_strip_container_view.h"
 #endif  // BUILDFLAG(ENABLE_WEBUI_TAB_STRIP)
-
-#if BUILDFLAG(ENTERPRISE_WATERMARK)
-#include "chrome/browser/enterprise/data_protection/data_protection_navigation_observer.h"
-#include "chrome/browser/enterprise/watermark/watermark_view.h"
-#endif
 
 using base::UserMetricsAction;
 using content::NativeWebKeyboardEvent;
@@ -924,15 +917,8 @@ BrowserView::BrowserView(std::unique_ptr<Browser> browser)
       contents_container->AddChildView(std::move(contents_web_view));
   contents_web_view_->set_is_primary_web_contents_for_window(true);
 
-#if BUILDFLAG(ENTERPRISE_WATERMARK)
-  if (base::FeatureList::IsEnabled(features::kEnableWatermarkView)) {
-    watermark_view_ = contents_container->AddChildView(
-        std::make_unique<enterprise_watermark::WatermarkView>());
-  }
-#endif  // BUILDFLAG(ENTERPRISE_WATERMARK)
-
   contents_container->SetLayoutManager(std::make_unique<ContentsLayoutManager>(
-      devtools_web_view_, contents_web_view_, watermark_view_));
+      devtools_web_view_, contents_web_view_));
 
   toolbar_ = top_container_->AddChildView(
       std::make_unique<ToolbarView>(browser_.get(), this));
@@ -1039,12 +1025,6 @@ BrowserView::~BrowserView() {
     auto tabstrip = tabstrip_.ExtractAsDangling();
     tabstrip->parent()->RemoveChildViewT(tabstrip);
   }
-
-#if BUILDFLAG(ENTERPRISE_WATERMARK)
-  // `watermark_view_` is a raw pointer to a child view, so it needs to be set
-  // to null before `RemoveAllChildViews()` is called to avoid dangling.
-  watermark_view_ = nullptr;
-#endif  // BUILDFLAG(ENTERPRISE_WATERMARK)
 
   // Child views maintain PrefMember attributes that point to
   // OffTheRecordProfile's PrefService which gets deleted by ~Browser.
@@ -1782,15 +1762,6 @@ void BrowserView::OnActiveTabChanged(content::WebContents* old_contents,
   if (AppUsesBorderlessMode() && !old_contents) {
     SetWindowManagementPermissionSubscriptionForBorderlessMode(new_contents);
   }
-
-#if BUILDFLAG(ENTERPRISE_WATERMARK)
-  enterprise_data_protection::DataProtectionNavigationObserver::
-      GetDataProtectionSettings(
-          GetProfile(), web_contents(),
-          base::BindOnce(&BrowserView::ApplyDataProtectionSettings,
-                         weak_ptr_factory_.GetWeakPtr(),
-                         web_contents()->GetWeakPtr()));
-#endif
 }
 
 void BrowserView::OnTabDetached(content::WebContents* contents,
@@ -2707,52 +2678,6 @@ void BrowserView::TouchModeChanged() {
   MaybeInitializeWebUITabStrip();
   MaybeShowWebUITabStripIPH();
 }
-
-#if BUILDFLAG(ENTERPRISE_WATERMARK)
-void BrowserView::DidStartNavigation(
-    content::NavigationHandle* navigation_handle) {
-  if (base::FeatureList::IsEnabled(features::kEnableWatermarkView)) {
-    enterprise_data_protection::DataProtectionNavigationObserver::
-        CreateForNavigationIfNeeded(
-            GetProfile(), navigation_handle,
-            base::BindOnce(
-                &BrowserView::DelayApplyDataProtectionSettingsIfEmpty,
-                weak_ptr_factory_.GetWeakPtr(), web_contents()->GetWeakPtr()));
-  }
-}
-
-void BrowserView::DocumentOnLoadCompletedInPrimaryMainFrame() {
-  // It is possible for `clear_watermark_text_on_page_load_` to be set to false
-  // even when the watermark should be cleared.  However, in this case there
-  // is a queued call to `ApplyDataProtectionSettings()` which will correctly
-  // reset the watermark.  The scenario is as followed:
-  //
-  // 1/ User is viewing a page in Tab A that is watermarked.
-  // 2/ User loads a page that should not be watermarked into Tab A.
-  // 3/ `DelayApplyDataProtectionSettingsIfEmpty()` is called at navigation
-  //     finish time which sets clear_watermark_text_on_page_load_=true.
-  //    `DocumentOnLoadCompletedInPrimaryMainFrame()` will be called later.
-  // 4/ User switches to Tab B, which may or may not be watermarked.
-  //    This calls `ApplyDataProtectionSettings()` setting the watermark
-  //    appropriate to Tab B and sets clear_watermark_text_on_page_load_=false.
-  // 5/ User switches back to Tab A (which shows a page that should not be
-  //    watermarked, as described in step 2 above). This also calls
-  //    `ApplyDataProtectionSettings()` setting the watermark
-  //    appropriate to Tab A (i.e. clears the watermark) and sets
-  //    clear_watermark_text_on_page_load_=false.
-  // 6/ `DocumentOnLoadCompletedInPrimaryMainFrame()` is eventually called
-  //    which does nothing because clear_watermark_text_on_page_load_==false.
-  //    However, the watermark is already cleared in step #5.
-  //
-  // Note that steps #5 and #6 are racy but the final outcome is correct
-  // regardless of the order in which they execute.
-
-  if (watermark_view_ && clear_watermark_text_on_page_load_) {
-    ApplyWatermarkSettings(std::string());
-  }
-}
-
-#endif
 
 void BrowserView::MaybeShowWebUITabStripIPH() {
   if (!webui_tab_strip_)
@@ -5430,17 +5355,6 @@ void BrowserView::ApplyDataProtectionSettings(
   if (!expected_web_contents || web_contents() != expected_web_contents.get()) {
     return;
   }
-
-  ApplyWatermarkSettings(settings.watermark_text);
-}
-
-void BrowserView::ApplyWatermarkSettings(const std::string& watermark_text) {
-  if (watermark_view_) {
-    watermark_view_->SetString(watermark_text);
-  }
-
-  // Watermark string should not be changed once the page loads.
-  clear_watermark_text_on_page_load_ = false;
 }
 
 void BrowserView::DelayApplyDataProtectionSettingsIfEmpty(
@@ -5450,14 +5364,6 @@ void BrowserView::DelayApplyDataProtectionSettingsIfEmpty(
   // still on the right tab before applying the settings.
   if (!expected_web_contents || web_contents() != expected_web_contents.get()) {
     return;
-  }
-
-  if (!settings.watermark_text.empty()) {
-    ApplyDataProtectionSettings(expected_web_contents, settings);
-  } else {
-    // The watermark string should be cleared.  Delay that until the page
-    // finishes loading.
-    clear_watermark_text_on_page_load_ = true;
   }
 
   if (!on_delay_apply_data_protection_settings_if_empty_called_for_testing_

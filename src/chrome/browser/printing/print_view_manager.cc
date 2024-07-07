@@ -20,7 +20,6 @@
 #include "chrome/browser/bad_message.h"
 #include "chrome/browser/printing/print_preview_dialog_controller.h"
 #include "chrome/browser/ui/webui/print_preview/print_preview_ui.h"
-#include "components/enterprise/buildflags/buildflags.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/global_routing_id.h"
 #include "content/public/browser/render_frame_host.h"
@@ -36,10 +35,6 @@
 
 #if BUILDFLAG(IS_CHROMEOS)
 #include "chrome/browser/chromeos/policy/dlp/dlp_content_manager.h"
-#endif
-
-#if BUILDFLAG(ENTERPRISE_CONTENT_ANALYSIS)
-#include "chrome/browser/enterprise/data_protection/print_utils.h"
 #endif
 
 using content::BrowserThread;
@@ -249,14 +244,7 @@ void PrintViewManager::PrintPreviewDone() {
 void PrintViewManager::RejectPrintPreviewRequestIfRestricted(
     content::GlobalRenderFrameHostId rfh_id,
     base::OnceCallback<void(bool should_proceed)> callback) {
-#if BUILDFLAG(IS_CHROMEOS)
-  // Don't print DLP restricted content on Chrome OS, and use `callback`
-  // directly since scanning isn't an option.
-  policy::DlpContentManager::Get()->CheckPrintingRestriction(
-      web_contents(), rfh_id, std::move(callback));
-#else
   std::move(callback).Run(/*should_proceed=*/true);
-#endif
 }
 
 void PrintViewManager::OnPrintPreviewRequestRejected(
@@ -380,9 +368,6 @@ void PrintViewManager::ShowScriptedPrintPreview(bool source_is_modifiable) {
   DCHECK(print_preview_rfh_);
   if (GetCurrentTargetFrame() != print_preview_rfh_)
     return;
-#if BUILDFLAG(ENTERPRISE_CONTENT_ANALYSIS)
-  set_analyzing_content(/*analyzing=*/true);
-#endif
   RejectPrintPreviewRequestIfRestricted(
       print_preview_rfh_->GetGlobalId(),
       base::BindOnce(&PrintViewManager::OnScriptedPrintPreviewCallback,
@@ -394,9 +379,6 @@ void PrintViewManager::OnScriptedPrintPreviewCallback(
     bool source_is_modifiable,
     content::GlobalRenderFrameHostId rfh_id,
     bool should_proceed) {
-#if BUILDFLAG(ENTERPRISE_CONTENT_ANALYSIS)
-  set_analyzing_content(/*analyzing=*/false);
-#endif
   if (!should_proceed) {
     OnPrintPreviewRequestRejected(rfh_id);
     return;
@@ -427,9 +409,6 @@ void PrintViewManager::OnScriptedPrintPreviewCallback(
 
 void PrintViewManager::RequestPrintPreview(
     mojom::RequestPrintPreviewParamsPtr params) {
-#if BUILDFLAG(ENTERPRISE_CONTENT_ANALYSIS)
-  set_analyzing_content(/*analyzing=*/true);
-#endif
   RejectPrintPreviewRequestIfRestricted(
       GetCurrentTargetFrame()->GetGlobalId(),
       base::BindOnce(&PrintViewManager::OnRequestPrintPreviewCallback,
@@ -441,9 +420,6 @@ void PrintViewManager::OnRequestPrintPreviewCallback(
     mojom::RequestPrintPreviewParamsPtr params,
     content::GlobalRenderFrameHostId rfh_id,
     bool should_proceed) {
-#if BUILDFLAG(ENTERPRISE_CONTENT_ANALYSIS)
-  set_analyzing_content(/*analyzing=*/false);
-#endif
   if (!should_proceed) {
     OnPrintPreviewRequestRejected(rfh_id);
     return;

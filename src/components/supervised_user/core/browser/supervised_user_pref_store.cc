@@ -16,7 +16,6 @@
 #include "base/values.h"
 #include "build/build_config.h"
 #include "components/feed/core/shared_prefs/pref_names.h"
-#include "components/policy/core/common/policy_pref_names.h"
 #include "components/prefs/pref_value_map.h"
 #include "components/safe_search_api/safe_search_util.h"
 #include "components/signin/public/base/signin_pref_names.h"
@@ -134,7 +133,6 @@ void SupervisedUserPrefStore::OnNewSettingsAvailable(
         prefs::kDefaultSupervisedUserFilteringBehavior,
         static_cast<int>(supervised_user::FilteringBehavior::kAllow));
 
-    prefs_->SetBoolean(policy::policy_prefs::kHideWebStoreIcon, false);
     prefs_->SetBoolean(feed::prefs::kEnableSnippets,
                        supervised_user::IsKidFriendlyContentFeedAvailable());
 
@@ -149,16 +147,6 @@ void SupervisedUserPrefStore::OnNewSettingsAvailable(
       if (value) {
         prefs_->SetValue(entry.pref_name, value->Clone());
       }
-    }
-
-    // Manually set preferences that aren't direct copies of the settings value.
-    {
-      // Incognito is disabled for supervised users across platforms.
-      // First-party sites use signed-in cookies to ensure that parental
-      // restrictions are applied for Unicorn accounts.
-      prefs_->SetInteger(
-          policy::policy_prefs::kIncognitoModeAvailability,
-          static_cast<int>(policy::IncognitoModeAvailability::kDisabled));
     }
 
 #if BUILDFLAG(ENABLE_EXTENSIONS)

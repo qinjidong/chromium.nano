@@ -21,8 +21,6 @@
 #include "base/version.h"
 #include "build/chromeos_buildflags.h"
 #include "components/country_codes/country_codes.h"
-#include "components/policy/core/common/policy_service.h"
-#include "components/policy/policy_constants.h"
 #include "components/prefs/pref_service.h"
 #include "components/search_engines/eea_countries_ids.h"
 #include "components/search_engines/search_engine_choice/search_engine_choice_metrics_service_accessor.h"
@@ -43,47 +41,6 @@
 
 namespace search_engines {
 namespace {
-
-#if !(BUILDFLAG(IS_ANDROID) || BUILDFLAG(IS_FUCHSIA) || \
-      BUILDFLAG(CHROME_FOR_TESTING))
-// The choice screen should be shown if the `DefaultSearchProviderEnabled`
-// policy is not set, or set to true and the
-// `DefaultSearchProviderSearchURL` policy is not set.
-bool IsSearchEngineChoiceScreenAllowedByPolicy(
-    const policy::PolicyService& policy_service) {
-  const auto& policies = policy_service.GetPolicies(
-      policy::PolicyNamespace(policy::POLICY_DOMAIN_CHROME, std::string()));
-
-  const auto* default_search_provider_enabled = policies.GetValue(
-      policy::key::kDefaultSearchProviderEnabled, base::Value::Type::BOOLEAN);
-  // Policy is not set.
-  if (!default_search_provider_enabled) {
-    return true;
-  }
-
-  if (default_search_provider_enabled->GetBool()) {
-    const auto* default_search_provider_search_url =
-        policies.GetValue(policy::key::kDefaultSearchProviderSearchURL,
-                          base::Value::Type::STRING);
-    if (!default_search_provider_search_url) {
-      return true;
-    }
-  }
-  return false;
-}
-
-bool IsSetOrBlockedByPolicy(const TemplateURL* default_search_engine) {
-  return !default_search_engine ||
-         default_search_engine->created_by_policy() ==
-             TemplateURLData::CreatedByPolicy::kDefaultSearchProvider;
-}
-
-bool IsDefaultSearchProviderSetOrBlockedByPolicy(
-    const TemplateURLService& template_url_service) {
-  return IsSetOrBlockedByPolicy(
-      template_url_service.GetDefaultSearchProvider());
-}
-#endif
 
 SearchEngineType GetDefaultSearchEngineType(
     TemplateURLService& template_url_service) {
@@ -177,72 +134,6 @@ bool SearchEngineChoiceService::ShouldShowUpdatedSettings() {
 }
 
 SearchEngineChoiceScreenConditions
-SearchEngineChoiceService::GetStaticChoiceScreenConditions(
-    const policy::PolicyService& policy_service,
-    bool is_regular_profile,
-    const TemplateURLService& template_url_service) {
-#if BUILDFLAG(IS_ANDROID) || BUILDFLAG(IS_FUCHSIA) || \
-    BUILDFLAG(CHROME_FOR_TESTING)
-  // TODO(b/319050536): Remove the function declaration on these platforms.
-  return SearchEngineChoiceScreenConditions::kUnsupportedBrowserType;
-#else
-  if (!IsChoiceScreenFlagEnabled(ChoicePromo::kAny)) {
-    return SearchEngineChoiceScreenConditions::kFeatureSuppressed;
-  }
-
-#if !BUILDFLAG(IS_IOS)
-  // `prefs::kDefaultSearchProviderChoicePending` does not get set on
-  // iOS. Instead, the iOS-specific wrapper
-  // `ShouldDisplaySearchEngineChoiceScreen()` handles checking whether
-  // the screen should be displayed based on the promo type.
-  if (switches::kSearchEngineChoiceTriggerForTaggedProfilesOnly.Get() &&
-      !profile_prefs_->GetBoolean(prefs::kDefaultSearchProviderChoicePending)) {
-    return SearchEngineChoiceScreenConditions::kProfileOutOfScope;
-  }
-#endif
-
-  if (!is_regular_profile) {
-    // Naming not exactly accurate, but still reflect the fact that incognito,
-    // kiosk, etc. are not supported and belongs in this bucked more than in
-    // `kProfileOutOfScope` for example.
-    return SearchEngineChoiceScreenConditions::kUnsupportedBrowserType;
-  }
-
-  base::CommandLine* const command_line =
-      base::CommandLine::ForCurrentProcess();
-  // A command line argument with the option for disabling the choice screen for
-  // testing and automation environments.
-  if (command_line->HasSwitch(switches::kDisableSearchEngineChoiceScreen)) {
-    return SearchEngineChoiceScreenConditions::kFeatureSuppressed;
-  }
-
-  if (IsSearchEngineChoiceCompleted(*profile_prefs_)) {
-    return SearchEngineChoiceScreenConditions::kAlreadyCompleted;
-  }
-
-  int country_id = GetCountryId();
-  DVLOG(1) << "Checking country for choice screen, found: "
-           << country_codes::CountryIDToCountryString(country_id);
-  if (!IsEeaChoiceCountry(country_id)) {
-    return SearchEngineChoiceScreenConditions::kNotInRegionalScope;
-  }
-
-  // Initially exclude users with this type of override. Consult b/302675777 for
-  // next steps.
-  if (profile_prefs_->HasPrefPath(prefs::kSearchProviderOverrides)) {
-    return SearchEngineChoiceScreenConditions::kSearchProviderOverride;
-  }
-
-  if (!IsSearchEngineChoiceScreenAllowedByPolicy(policy_service) ||
-      IsDefaultSearchProviderSetOrBlockedByPolicy(template_url_service)) {
-    return SearchEngineChoiceScreenConditions::kControlledByPolicy;
-  }
-
-  return SearchEngineChoiceScreenConditions::kEligible;
-#endif
-}
-
-SearchEngineChoiceScreenConditions
 SearchEngineChoiceService::GetDynamicChoiceScreenConditions(
     const TemplateURLService& template_url_service) {
 #if BUILDFLAG(IS_ANDROID) || BUILDFLAG(IS_FUCHSIA) || \
@@ -262,15 +153,6 @@ SearchEngineChoiceService::GetDynamicChoiceScreenConditions(
 
   const TemplateURL* default_search_engine =
       template_url_service.GetDefaultSearchProvider();
-  if (IsSetOrBlockedByPolicy(default_search_engine)) {
-    // It is possible that between the static checks at service creation (around
-    // the time the profile was loaded) and the moment a compatible URL is
-    // loaded to show the search engine choice dialog, some new policies come in
-    // and take control of the default search provider. If we proceeded here,
-    // the choice screen could be shown and we might attempt to set a DSE based
-    // on the user selection, but that would be ignored.
-    return SearchEngineChoiceScreenConditions::kControlledByPolicy;
-  }
   CHECK(default_search_engine);
 
   if (switches::kSearchEngineChoiceTriggerSkipFor3p.Get()) {
@@ -278,11 +160,6 @@ SearchEngineChoiceService::GetDynamicChoiceScreenConditions(
             template_url_service.search_terms_data()) != SEARCH_ENGINE_GOOGLE) {
       return SearchEngineChoiceScreenConditions::kHasNonGoogleSearchEngine;
     }
-  }
-
-  if (!template_url_service.IsPrepopulatedOrDefaultProviderByPolicy(
-          default_search_engine)) {
-    return SearchEngineChoiceScreenConditions::kHasCustomSearchEngine;
   }
 
   if (default_search_engine->prepopulate_id() >

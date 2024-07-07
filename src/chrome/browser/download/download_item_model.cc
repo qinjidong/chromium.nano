@@ -34,21 +34,13 @@
 #include "chrome/browser/download/download_target_determiner.h"
 #include "chrome/browser/download/download_ui_model.h"
 #include "chrome/browser/download/offline_item_utils.h"
-#include "chrome/browser/enterprise/connectors/common.h"
 #include "chrome/browser/profiles/profile.h"
-#include "chrome/browser/safe_browsing/download_protection/download_protection_util.h"
-#include "chrome/browser/safe_browsing/safe_browsing_service.h"
 #include "chrome/browser/signin/identity_manager_factory.h"
 #include "chrome/grit/branded_strings.h"
 #include "chrome/grit/generated_resources.h"
 #include "components/download/public/common/download_danger_type.h"
 #include "components/download/public/common/download_interrupt_reasons.h"
 #include "components/download/public/common/download_item.h"
-#include "components/safe_browsing/buildflags.h"
-#include "components/safe_browsing/content/browser/web_ui/safe_browsing_ui.h"
-#include "components/safe_browsing/content/common/file_type_policies.h"
-#include "components/safe_browsing/content/common/proto/download_file_types.pb.h"
-#include "components/safe_browsing/core/common/features.h"
 #include "components/signin/public/base/consent_level.h"
 #include "components/signin/public/identity_manager/account_info.h"
 #include "components/signin/public/identity_manager/identity_manager.h"
@@ -72,21 +64,9 @@
 #include "ui/views/vector_icons.h"
 #endif
 
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-#include "chrome/browser/safe_browsing/advanced_protection_status_manager.h"
-#include "chrome/browser/safe_browsing/advanced_protection_status_manager_factory.h"
-#include "chrome/browser/safe_browsing/download_protection/deep_scanning_request.h"
-#include "chrome/browser/safe_browsing/download_protection/download_feedback_service.h"
-#include "chrome/browser/enterprise/connectors/connectors_manager.h"
-#endif
-
 using DangerUiPattern = DownloadUIModel::DangerUiPattern;
 using download::DownloadItem;
 using InsecureDownloadStatus = download::DownloadItem::InsecureDownloadStatus;
-using safe_browsing::DownloadFileType;
-using ReportThreatDetailsResult =
-    safe_browsing::PingManager::ReportThreatDetailsResult;
-using TailoredVerdict = safe_browsing::ClientDownloadResponse::TailoredVerdict;
 using TailoredWarningType = DownloadUIModel::TailoredWarningType;
 
 namespace {
@@ -116,10 +96,6 @@ class DownloadItemModelData : public base::SupportsUserData::Data {
   // Whether the download should be opened in the browser vs. the system handler
   // for the file type.
   std::optional<bool> should_prefer_opening_in_browser_;
-
-  // Danger level of the file determined based on the file type and whether
-  // there was a user action associated with the download.
-  DownloadFileType::DangerLevel danger_level_ = DownloadFileType::NOT_DANGEROUS;
 
   // Whether the download is currently being revived.
   bool is_being_revived_ = false;
@@ -167,75 +143,6 @@ DownloadItemModelData* DownloadItemModelData::GetOrCreate(
 }
 
 DownloadItemModelData::DownloadItemModelData() = default;
-
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-bool ShouldSendDownloadReport(download::DownloadDangerType danger_type) {
-  switch (danger_type) {
-    case download::DOWNLOAD_DANGER_TYPE_DANGEROUS_URL:
-    case download::DOWNLOAD_DANGER_TYPE_DANGEROUS_CONTENT:
-    case download::DOWNLOAD_DANGER_TYPE_UNCOMMON_CONTENT:
-    case download::DOWNLOAD_DANGER_TYPE_DANGEROUS_HOST:
-    case download::DOWNLOAD_DANGER_TYPE_POTENTIALLY_UNWANTED:
-    case download::DOWNLOAD_DANGER_TYPE_DANGEROUS_ACCOUNT_COMPROMISE:
-    case download::DOWNLOAD_DANGER_TYPE_ASYNC_SCANNING:
-    case download::DOWNLOAD_DANGER_TYPE_PROMPT_FOR_SCANNING:
-    case download::DOWNLOAD_DANGER_TYPE_PROMPT_FOR_LOCAL_PASSWORD_SCANNING:
-      return true;
-    default:
-      return false;
-  }
-}
-
-void MaybeSendDownloadReport(const GURL& url,
-                             download::DownloadDangerType danger_type,
-                             bool did_proceed,
-                             Profile* profile,
-                             download::DownloadItem* download) {
-  // Only sends dangerous download report if :
-  // 1. FULL_SAFE_BROWSING is enabled, and
-  // 2. Download verdict is one of the dangerous types, and
-  // 3. Download URL is not empty, and
-  // 4. User is not in incognito mode.
-  if (ShouldSendDownloadReport(danger_type) && !url.is_empty() &&
-      !profile->IsOffTheRecord()) {
-    safe_browsing::SafeBrowsingService* sb_service =
-        g_browser_process->safe_browsing_service();
-    if (sb_service) {
-      bool is_successful = sb_service->SendDownloadReport(
-          download,
-          safe_browsing::ClientSafeBrowsingReportRequest::
-              DANGEROUS_DOWNLOAD_WARNING,
-          did_proceed, /*show_download_in_folder=*/std::nullopt);
-      DCHECK(is_successful);
-    }
-  }
-}
-
-// Submits download to download feedback service if the user has approved and
-// the download is suitable for submission.
-// If user hasn't seen SBER opt-in text before, show SBER opt-in dialog first.
-bool MaybeSubmitDownloadToFeedbackService(DownloadCommands::Command command,
-                                          Profile* profile,
-                                          download::DownloadItem* download) {
-  if (!download->IsDangerous() || download->IsInsecure()) {
-    return false;
-  }
-  if (!safe_browsing::DownloadFeedbackService::IsEnabledForDownload(
-          *download)) {
-    return false;
-  }
-
-  auto* const sb_service = g_browser_process->safe_browsing_service();
-  if (!sb_service)
-    return false;
-  auto* const dp_service = sb_service->download_protection_service();
-  if (!dp_service)
-    return false;
-  // TODO(shaktisahu): Enable feedback service for offline item.
-  return dp_service->MaybeBeginFeedbackForDownload(profile, download, command);
-}
-
-#endif
 
 }  // namespace
 
@@ -536,17 +443,6 @@ void DownloadItemModel::SetShouldPreferOpeningInBrowser(bool preference) {
   data->should_prefer_opening_in_browser_ = preference;
 }
 
-DownloadFileType::DangerLevel DownloadItemModel::GetDangerLevel() const {
-  const DownloadItemModelData* data = DownloadItemModelData::Get(download_);
-  return data ? data->danger_level_ : DownloadFileType::NOT_DANGEROUS;
-}
-
-void DownloadItemModel::SetDangerLevel(
-    DownloadFileType::DangerLevel danger_level) {
-  DownloadItemModelData* data = DownloadItemModelData::GetOrCreate(download_);
-  data->danger_level_ = danger_level;
-}
-
 download::DownloadItem::InsecureDownloadStatus
 DownloadItemModel::GetInsecureDownloadStatus() const {
   return download_->GetInsecureDownloadStatus();
@@ -749,9 +645,6 @@ bool DownloadItemModel::IsCommandEnabled(
       // filename. Don't base an "Always open" decision based on it. Also
       // exclude extensions.
       return download_->CanOpenDownload() &&
-             safe_browsing::FileTypePolicies::GetInstance()
-                 ->IsAllowedToOpenAutomatically(
-                     download_->GetTargetFilePath()) &&
              !download_crx_util::IsExtensionDownload(*download_);
     case DownloadCommands::PAUSE:
       return !download_->IsSavePackageDownload() &&
@@ -862,32 +755,10 @@ void DownloadItemModel::ExecuteCommand(DownloadCommands* download_commands,
       break;
     }
     case DownloadCommands::BYPASS_DEEP_SCANNING_AND_OPEN:
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-      SetOpenWhenComplete(true);
-#endif
       [[fallthrough]];
     case DownloadCommands::BYPASS_DEEP_SCANNING:
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-      CompleteSafeBrowsingScan();
-#endif
-      if (download_->GetDangerType() ==
-              download::DOWNLOAD_DANGER_TYPE_ASYNC_LOCAL_PASSWORD_SCANNING ||
-          download_->GetDangerType() ==
-              download::
-                  DOWNLOAD_DANGER_TYPE_PROMPT_FOR_LOCAL_PASSWORD_SCANNING) {
-        safe_browsing::LogLocalDecryptionEvent(
-            safe_browsing::DeepScanEvent::kPromptBypassed);
-      } else {
-        LogDeepScanEvent(download_,
-                         safe_browsing::DeepScanEvent::kPromptBypassed);
-      }
       [[fallthrough]];
     case DownloadCommands::KEEP:
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-      if (command == DownloadCommands::KEEP) {
-        MaybeSubmitDownloadToFeedbackService(command, profile(), download_);
-      }
-#endif
       if (IsInsecure()) {
         download_->ValidateInsecureDownload();
         break;
@@ -896,41 +767,12 @@ void DownloadItemModel::ExecuteCommand(DownloadCommands* download_commands,
         break;
       }
       DCHECK(IsDangerous());
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-      MaybeSendDownloadReport(GetURL(), GetDangerType(), /*did_proceed=*/true,
-                              profile(), download_);
-#endif
       download_->ValidateDangerousDownload();
       break;
     case DownloadCommands::DISCARD:
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-      MaybeSendDownloadReport(GetURL(), GetDangerType(), /*did_proceed=*/false,
-                              profile(), download_);
-      if (GetDangerType() == download::DOWNLOAD_DANGER_TYPE_ASYNC_SCANNING) {
-        LogDeepScanEvent(download_, safe_browsing::DeepScanEvent::kScanDeleted);
-      }
-      if (MaybeSubmitDownloadToFeedbackService(command, profile(), download_)) {
-        // Skip Remove because it is handled by download feedback service.
-        break;
-      }
-#endif
       DownloadUIModel::ExecuteCommand(download_commands, command);
       break;
     case DownloadCommands::LEARN_MORE_SCANNING: {
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-      using safe_browsing::DownloadProtectionService;
-
-      safe_browsing::SafeBrowsingService* sb_service =
-          g_browser_process->safe_browsing_service();
-      DownloadProtectionService* protection_service =
-          (sb_service ? sb_service->download_protection_service() : nullptr);
-      if (protection_service)
-        protection_service->ShowDetailsForDownload(
-            download_, download_commands->GetBrowser());
-#else
-      // Should only be getting invoked if we are using safe browsing.
-      NOTREACHED_IN_MIGRATION();
-#endif
       break;
     }
     case DownloadCommands::PLATFORM_OPEN:
@@ -948,55 +790,15 @@ void DownloadItemModel::ExecuteCommand(DownloadCommands* download_commands,
     case DownloadCommands::EDIT_WITH_MEDIA_APP:
       DownloadUIModel::ExecuteCommand(download_commands, command);
       break;
-    case DownloadCommands::DEEP_SCAN: {
-      safe_browsing::DownloadProtectionService::UploadForConsumerDeepScanning(
-          download_,
-          DownloadItemWarningData::DeepScanTrigger::TRIGGER_CONSUMER_PROMPT,
-          /*password=*/std::nullopt);
+    case DownloadCommands::DEEP_SCAN:
       break;
-    }
     case DownloadCommands::CANCEL_DEEP_SCAN: {
-      DownloadCoreService* download_core_service =
-          DownloadCoreServiceFactory::GetForBrowserContext(
-              content::DownloadItemUtils::GetBrowserContext(download_));
-      DCHECK(download_core_service);
-      ChromeDownloadManagerDelegate* delegate =
-          download_core_service->GetDownloadManagerDelegate();
-      DCHECK(delegate);
-      LogDeepScanEvent(download_, safe_browsing::DeepScanEvent::kScanCanceled);
-      delegate->CheckClientDownloadDone(
-          download_->GetId(),
-          safe_browsing::DownloadCheckResult::PROMPT_FOR_SCANNING);
       break;
     }
   }
 }
 
 TailoredWarningType DownloadItemModel::GetTailoredWarningType() const {
-  if (!base::FeatureList::IsEnabled(safe_browsing::kDownloadTailoredWarnings)) {
-    return TailoredWarningType::kNoTailoredWarning;
-  }
-
-  download::DownloadDangerType danger_type = GetDangerType();
-  TailoredVerdict tailored_verdict = safe_browsing::DownloadProtectionService::
-      GetDownloadProtectionTailoredVerdict(download_);
-  if (danger_type == download::DOWNLOAD_DANGER_TYPE_UNCOMMON_CONTENT &&
-      tailored_verdict.tailored_verdict_type() ==
-          TailoredVerdict::SUSPICIOUS_ARCHIVE) {
-    return TailoredWarningType::kSuspiciousArchive;
-  }
-
-  if (danger_type ==
-          download::DOWNLOAD_DANGER_TYPE_DANGEROUS_ACCOUNT_COMPROMISE &&
-      tailored_verdict.tailored_verdict_type() ==
-          TailoredVerdict::COOKIE_THEFT) {
-    if (base::Contains(tailored_verdict.adjustments(),
-                       TailoredVerdict::ACCOUNT_INFO_STRING)) {
-      return TailoredWarningType::kCookieTheftWithAccountInfo;
-    }
-    return TailoredWarningType::kCookieTheft;
-  }
-
   return TailoredWarningType::kNoTailoredWarning;
 }
 
@@ -1165,44 +967,6 @@ std::string DownloadItemModel::GetMimeType() const {
 bool DownloadItemModel::IsExtensionDownload() const {
   return download_crx_util::IsExtensionDownload(*download_);
 }
-
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-void DownloadItemModel::CompleteSafeBrowsingScan() {
-  if (download_->IsSavePackageDownload()) {
-    download_->OnAsyncScanningCompleted(
-        download::DOWNLOAD_DANGER_TYPE_USER_VALIDATED);
-    enterprise_connectors::RunSavePackageScanningCallback(download_, true);
-  } else {
-    ChromeDownloadManagerDelegate::SafeBrowsingState* state =
-        static_cast<ChromeDownloadManagerDelegate::SafeBrowsingState*>(
-            download_->GetUserData(
-                &ChromeDownloadManagerDelegate::SafeBrowsingState::
-                    kSafeBrowsingUserDataKey));
-    state->CompleteDownload();
-  }
-}
-
-void DownloadItemModel::ReviewScanningVerdict(
-    content::WebContents* web_contents) {
-  auto command_callback =
-      [](std::unique_ptr<DownloadItemModel> model,
-         std::unique_ptr<DownloadCommands> download_commands,
-         DownloadCommands::Command command) {
-        model->ExecuteCommand(download_commands.get(), command);
-      };
-  enterprise_connectors::ShowDownloadReviewDialog(
-      GetFileNameToReportUser().LossyDisplayName(), profile(), download_,
-      web_contents,
-      base::BindOnce(
-          command_callback, std::make_unique<DownloadItemModel>(download_),
-          std::make_unique<DownloadCommands>(DownloadUIModel::GetWeakPtr()),
-          DownloadCommands::KEEP),
-      base::BindOnce(
-          command_callback, std::make_unique<DownloadItemModel>(download_),
-          std::make_unique<DownloadCommands>(DownloadUIModel::GetWeakPtr()),
-          DownloadCommands::DISCARD));
-}
-#endif
 
 bool DownloadItemModel::ShouldShowDropdown() const {
   // We don't show the dropdown for dangerous file types or for files

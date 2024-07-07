@@ -9,11 +9,7 @@
 #include "chrome/browser/download/bubble/download_bubble_prefs.h"
 #include "chrome/browser/download/download_item_model.h"
 #include "chrome/browser/download/download_item_warning_data.h"
-#include "chrome/browser/download/download_ui_safe_browsing_util.h"
 #include "chrome/browser/download/offline_item_utils.h"
-#include "chrome/browser/enterprise/connectors/common.h"
-#include "chrome/browser/safe_browsing/advanced_protection_status_manager.h"
-#include "chrome/browser/safe_browsing/advanced_protection_status_manager_factory.h"
 #include "chrome/browser/signin/identity_manager_factory.h"
 #include "chrome/browser/ui/color/chrome_color_id.h"
 #include "chrome/grit/branded_strings.h"
@@ -175,11 +171,6 @@ void DownloadBubbleSecurityViewInfo::PopulateForInterrupted(
           IDS_DOWNLOAD_BUBBLE_SUBPAGE_SUMMARY_TOO_BIG);
       return;
     case download::DOWNLOAD_DANGER_TYPE_SENSITIVE_CONTENT_BLOCK: {
-      if (!enterprise_connectors::ShouldPromptReviewForDownload(
-              model.profile(), model.GetDownloadItem())) {
-        warning_summary_ = l10n_util::GetStringUTF16(
-            IDS_DOWNLOAD_BUBBLE_SUBPAGE_SUMMARY_SENSITIVE_CONTENT_BLOCK);
-      }
       return;
     }
     case download::DOWNLOAD_DANGER_TYPE_BLOCKED_SCAN_FAILED: {
@@ -290,18 +281,6 @@ void DownloadBubbleSecurityViewInfo::PopulateForInProgressOrComplete(
       break;
   }
 
-  if (enterprise_connectors::ShouldPromptReviewForDownload(
-          model.profile(), model.GetDownloadItem())) {
-    switch (model.GetDangerType()) {
-      case download::DOWNLOAD_DANGER_TYPE_DANGEROUS_CONTENT:
-      case download::DOWNLOAD_DANGER_TYPE_POTENTIALLY_UNWANTED:
-      case download::DOWNLOAD_DANGER_TYPE_SENSITIVE_CONTENT_WARNING:
-        return;
-      default:
-        break;
-    }
-  }
-
   if (TailoredWarningType type = model.GetTailoredWarningType();
       type != TailoredWarningType::kNoTailoredWarning) {
     return PopulateForTailoredWarning(model);
@@ -316,18 +295,6 @@ void DownloadBubbleSecurityViewInfo::PopulateForInProgressOrComplete(
                 l10n_util::GetStringUTF16(IDS_EXTENSION_WEB_STORE_TITLE)),
             l10n_util::GetStringUTF16(
                 IDS_DOWNLOAD_BUBBLE_CONTINUE_SUSPICIOUS_FILE));
-        return;
-      }
-      if (WasSafeBrowsingVerdictObtained(model.GetDownloadItem())) {
-        PopulateForSuspiciousUi(
-            l10n_util::GetStringUTF16(
-                IDS_DOWNLOAD_BUBBLE_SUBPAGE_SUMMARY_WARNING_DANGEROUS_FILE_TYPE),
-            l10n_util::GetStringUTF16(
-                IDS_DOWNLOAD_BUBBLE_CONTINUE_SUSPICIOUS_FILE));
-        return;
-      }
-      if (ShouldShowWarningForNoSafeBrowsing(model.profile())) {
-        PopulateForFileTypeWarningNoSafeBrowsing(model);
         return;
       }
       PopulateForSuspiciousUi(
@@ -352,12 +319,6 @@ void DownloadBubbleSecurityViewInfo::PopulateForInProgressOrComplete(
 
     case download::DOWNLOAD_DANGER_TYPE_UNCOMMON_CONTENT: {
       bool request_ap_verdicts = false;
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-      request_ap_verdicts =
-          safe_browsing::AdvancedProtectionStatusManagerFactory::GetForProfile(
-              model.profile())
-              ->IsUnderAdvancedProtection();
-#endif
       if (request_ap_verdicts) {
         warning_summary_ = l10n_util::GetStringUTF16(
             IDS_DOWNLOAD_BUBBLE_SUBPAGE_SUMMARY_ADVANCED_PROTECTION);
@@ -566,12 +527,6 @@ void DownloadBubbleSecurityViewInfo::PopulateForFileTypeWarningNoSafeBrowsing(
   // Clear the "Learn why Chrome..." link. If the user is not capable of turning
   // on SB, do not show the default link and label.
   learn_more_link_ = std::nullopt;
-  if (CanUserTurnOnSafeBrowsing(model.profile())) {
-    PopulateLearnMoreLink(
-        IDS_DOWNLOAD_BUBBLE_SUBPAGE_SUMMARY_WARNING_SAFE_BROWSING_SETTING_LABEL,
-        IDS_DOWNLOAD_BUBBLE_SUBPAGE_SUMMARY_WARNING_SAFE_BROWSING_SETTING_LINK,
-        DownloadCommands::Command::OPEN_SAFE_BROWSING_SETTING);
-  }
 }
 
 void DownloadBubbleSecurityViewInfo::PopulateLearnMoreLink(

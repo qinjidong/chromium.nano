@@ -15,7 +15,6 @@ import org.chromium.chrome.browser.notifications.NotificationTriggerBackgroundTa
 import org.chromium.chrome.browser.notifications.scheduler.NotificationSchedulerTask;
 import org.chromium.chrome.browser.offlinepages.OfflineBackgroundTask;
 import org.chromium.chrome.browser.omaha.OmahaService;
-import org.chromium.chrome.browser.safety_hub.SafetyHubFetchTask;
 import org.chromium.chrome.browser.services.gcm.GCMBackgroundTask;
 import org.chromium.chrome.browser.services.gcm.GCMNativeBackgroundTask;
 import org.chromium.chrome.browser.webapps.WebApkUpdateTask;
@@ -86,9 +85,6 @@ public class ChromeBackgroundTaskFactory implements BackgroundTaskFactory {
                 return new NotificationTriggerBackgroundTask();
             case TaskIds.PERIODIC_BACKGROUND_SYNC_CHROME_WAKEUP_TASK_JOB_ID:
                 return new PeriodicBackgroundSyncChromeWakeUpTask();
-            case TaskIds.SAFETY_HUB_JOB_ID:
-                return new SafetyHubFetchTask();
-                // End of Java tasks. All native tasks should be listed here.
             case TaskIds.QUERY_TILE_JOB_ID:
             case TaskIds.FEEDV2_REFRESH_JOB_ID:
             case TaskIds.WEBFEEDS_REFRESH_JOB_ID:

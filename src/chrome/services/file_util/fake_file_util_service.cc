@@ -10,12 +10,6 @@ FakeFileUtilService::FakeFileUtilService(
 
 FakeFileUtilService::~FakeFileUtilService() = default;
 
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-MockSafeArchiveAnalyzer& FakeFileUtilService::GetSafeArchiveAnalyzer() {
-  return safe_archive_analyzer_;
-}
-#endif
-
 #if BUILDFLAG(IS_CHROMEOS_ASH)
 void FakeFileUtilService::BindZipFileCreator(
     mojo::PendingReceiver<chrome::mojom::ZipFileCreator> receiver) {

@@ -334,15 +334,6 @@ base::Value BuildIsolatedWebAppUpdaterManagerJson(
                               provider.iwa_update_manager().AsDebugValue()));
 }
 
-#if BUILDFLAG(IS_CHROMEOS)
-base::Value BuildIsolatedWebAppPolicyManagerJson(
-    web_app::WebAppProvider& provider) {
-  return base::Value(
-      base::Value::Dict().Set(kIsolatedWebAppPolicyManager,
-                              provider.iwa_policy_manager().GetDebugValue()));
-}
-#endif  // BUILDFLAG(IS_CHROMEOS)
-
 void BuildDirectoryState(base::FilePath file_or_folder,
                          base::Value::Dict* folder) {
   base::File::Info info;
@@ -487,9 +478,6 @@ void WebAppInternalsHandler::BuildDebugInfo(
   root.Append(BuildAppShimRegistryLocalStorageJson());
 #endif
   root.Append(BuildIsolatedWebAppUpdaterManagerJson(*provider));
-#if BUILDFLAG(IS_CHROMEOS)
-  root.Append(BuildIsolatedWebAppPolicyManagerJson(*provider));
-#endif  // BUILDFLAG(IS_CHROMEOS)
   base::ThreadPool::PostTaskAndReplyWithResult(
       FROM_HERE, {base::TaskPriority::USER_VISIBLE, base::MayBlock()},
       base::BindOnce(&BuildWebAppDiskStateJson,

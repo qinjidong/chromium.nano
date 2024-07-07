@@ -10,11 +10,6 @@
 #include "base/memory/raw_ptr.h"
 #include "components/prefs/pref_service_factory.h"
 
-namespace policy {
-class BrowserPolicyConnector;
-class PolicyService;
-}  // namespace policy
-
 namespace user_prefs {
 class PrefRegistrySyncable;
 }
@@ -36,13 +31,6 @@ class PrefServiceSyncableFactory : public PrefServiceFactory {
       delete;
 
   ~PrefServiceSyncableFactory() override;
-
-  // Set up policy pref stores using the given policy service and connector.
-  // These will assert when policy is not used.
-  void SetManagedPolicies(policy::PolicyService* service,
-                          policy::BrowserPolicyConnector* connector);
-  void SetRecommendedPolicies(policy::PolicyService* service,
-                              policy::BrowserPolicyConnector* connector);
 
   void SetPrefModelAssociatorClient(
       scoped_refptr<PrefModelAssociatorClient> pref_model_associator_client);

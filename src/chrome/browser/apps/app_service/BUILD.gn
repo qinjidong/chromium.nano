@@ -337,7 +337,6 @@ source_set("unit_tests") {
     "//chrome/browser/web_applications:web_applications_test_support",
     "//chrome/common:chrome_features",
     "//chrome/common:non_code_constants",
-    "//chrome/test:test_support",
     "//components/account_id",
     "//components/app_constants",
     "//components/services/app_service",
@@ -440,7 +439,6 @@ source_set("test_support") {
 
   deps = [
     "//build:chromeos_buildflags",
-    "//chrome/test:test_support",
     "//components/services/app_service",
     "//skia",
   ]

@@ -87,18 +87,6 @@ void TopLevelStorageAccessPermissionContext::DecidePermission(
     std::move(callback).Run(CONTENT_SETTING_BLOCK);
     return;
   }
-
-  net::SchemefulSite embedding_site(request_data.embedding_origin);
-  net::SchemefulSite requesting_site(request_data.requesting_origin);
-
-  first_party_sets::FirstPartySetsPolicyServiceFactory::GetForBrowserContext(
-      browser_context())
-      ->ComputeFirstPartySetMetadata(
-          requesting_site, &embedding_site,
-          base::BindOnce(&TopLevelStorageAccessPermissionContext::
-                             CheckForAutoGrantOrAutoDenial,
-                         weak_factory_.GetWeakPtr(), std::move(request_data),
-                         std::move(callback)));
 }
 
 void TopLevelStorageAccessPermissionContext::CheckForAutoGrantOrAutoDenial(

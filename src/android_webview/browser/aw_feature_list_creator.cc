@@ -38,7 +38,6 @@
 #include "components/metrics/android_metrics_helper.h"
 #include "components/metrics/metrics_pref_names.h"
 #include "components/metrics/persistent_histograms.h"
-#include "components/policy/core/browser/configuration_policy_pref_store.h"
 #include "components/pref_registry/pref_registry_syncable.h"
 #include "components/prefs/in_memory_pref_store.h"
 #include "components/prefs/json_pref_store.h"
@@ -153,7 +152,6 @@ void AwFeatureListCreator::CreateFeatureListAndFieldTrials() {
 }
 
 void AwFeatureListCreator::CreateLocalState() {
-  browser_policy_connector_ = std::make_unique<AwBrowserPolicyConnector>();
   local_state_ = CreatePrefService();
 }
 
@@ -169,8 +167,6 @@ std::unique_ptr<PrefService> AwFeatureListCreator::CreatePrefService() {
 
   embedder_support::OriginTrialPrefs::RegisterPrefs(pref_registry.get());
   AwBrowserProcess::RegisterNetworkContextLocalStatePrefs(pref_registry.get());
-  AwBrowserProcess::RegisterEnterpriseAuthenticationAppLinkPolicyPref(
-      pref_registry.get());
   AwTracingDelegate::RegisterPrefs(pref_registry.get());
   AwBrowserContextStore::RegisterPrefs(pref_registry.get());
 
@@ -192,13 +188,6 @@ std::unique_ptr<PrefService> AwFeatureListCreator::CreatePrefService() {
       base::MakeRefCounted<InMemoryPrefStore>(),
       base::MakeRefCounted<JsonPrefStore>(GetPrefStorePath()),
       std::move(persistent_prefs)));
-
-  pref_service_factory.set_managed_prefs(
-      base::MakeRefCounted<policy::ConfigurationPolicyPrefStore>(
-          browser_policy_connector_.get(),
-          browser_policy_connector_->GetPolicyService(),
-          browser_policy_connector_->GetHandlerList(),
-          policy::POLICY_LEVEL_MANDATORY));
 
   pref_service_factory.set_read_error_callback(
       base::BindRepeating(&HandleReadError));

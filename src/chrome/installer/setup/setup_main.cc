@@ -58,10 +58,6 @@
 #include "base/win/win_util.h"
 #include "build/branding_buildflags.h"
 #include "build/build_config.h"
-#include "chrome/browser/enterprise/connectors/device_trust/key_management/core/network/win_key_network_delegate.h"
-#include "chrome/browser/enterprise/connectors/device_trust/key_management/installer/key_rotation_manager.h"
-#include "chrome/browser/enterprise/connectors/device_trust/key_management/installer/key_rotation_types.h"
-#include "chrome/browser/enterprise/connectors/device_trust/key_management/installer/management_service/rotate_util.h"
 #include "chrome/common/chrome_constants.h"
 #include "chrome/common/chrome_paths.h"
 #include "chrome/common/chrome_switches.h"
@@ -1066,45 +1062,6 @@ bool HandleNonInstallCmdLineOptions(installer::ModifyParams& modify_params,
 
     *exit_code = OverwriteDisplayVersionsAfterMsiexec(
         std::move(startup_event), registry_product, registry_value);
-#if BUILDFLAG(GOOGLE_CHROME_BRANDING)
-  } else if (cmd_line.HasSwitch(installer::switches::kStoreDMToken)) {
-    // Write the specified token to the registry, overwriting any already
-    // existing value.
-    std::wstring token_switch_value =
-        cmd_line.GetSwitchValueNative(installer::switches::kStoreDMToken);
-    auto token = installer::DecodeDMTokenSwitchValue(token_switch_value);
-    *exit_code = token && installer::StoreDMToken(*token)
-                     ? installer::STORE_DMTOKEN_SUCCESS
-                     : installer::STORE_DMTOKEN_FAILED;
-  } else if (cmd_line.HasSwitch(installer::switches::kDeleteDMToken)) {
-    // Delete any existing DMToken from the registry.
-    *exit_code = installer::DeleteDMToken() ? installer::DELETE_DMTOKEN_SUCCESS
-                                            : installer::DELETE_DMTOKEN_FAILED;
-  } else if (cmd_line.HasSwitch(installer::switches::kRotateDeviceTrustKey)) {
-    // RotateDeviceTrustKey() expects a single
-    // threaded task runner so creating one here.
-    base::SingleThreadTaskExecutor executor;
-
-    const auto result = enterprise_connectors::RotateDeviceTrustKey(
-        enterprise_connectors::KeyRotationManager::Create(
-            std::make_unique<enterprise_connectors::WinKeyNetworkDelegate>()),
-        cmd_line, install_static::GetChromeChannel());
-
-    switch (result) {
-      case enterprise_connectors::KeyRotationResult::kSucceeded:
-        *exit_code = installer::ROTATE_DTKEY_SUCCESS;
-        break;
-      case enterprise_connectors::KeyRotationResult::kInsufficientPermissions:
-        *exit_code = installer::ROTATE_DTKEY_FAILED_PERMISSIONS;
-        break;
-      case enterprise_connectors::KeyRotationResult::kFailedKeyConflict:
-        *exit_code = installer::ROTATE_DTKEY_FAILED_CONFLICT;
-        break;
-      case enterprise_connectors::KeyRotationResult::kFailed:
-        *exit_code = installer::ROTATE_DTKEY_FAILED;
-        break;
-    }
-#endif
   } else if (cmd_line.HasSwitch(installer::switches::kCreateShortcuts)) {
     std::string install_op_arg =
         cmd_line.GetSwitchValueASCII(installer::switches::kCreateShortcuts);

@@ -23,7 +23,6 @@
 #include "components/password_manager/core/browser/password_reuse_manager_signin_notifier.h"
 #include "components/password_manager/core/common/password_manager_features.h"
 #include "components/prefs/pref_service.h"
-#include "components/safe_browsing/core/common/safe_browsing_prefs.h"
 #include "components/signin/public/base/consent_level.h"
 #include "google_apis/gaia/gaia_auth_util.h"
 
@@ -383,22 +382,6 @@ void PasswordReuseManagerImpl::SchedulePasswordHashUpdate(
 
 void PasswordReuseManagerImpl::ScheduleEnterprisePasswordURLUpdate() {
   DCHECK(main_task_runner_->RunsTasksInCurrentSequence());
-
-  if (!prefs_) {
-    return;
-  }
-  std::vector<GURL> enterprise_login_urls;
-  safe_browsing::GetPasswordProtectionLoginURLsPref(*prefs_,
-                                                    &enterprise_login_urls);
-  GURL enterprise_change_password_url =
-      safe_browsing::GetPasswordProtectionChangePasswordURLPref(*prefs_);
-  if (!reuse_detector_) {
-    return;
-  }
-  ScheduleTask(base::BindOnce(&PasswordReuseDetector::UseEnterprisePasswordURLs,
-                              base::Unretained(reuse_detector_.get()),
-                              std::move(enterprise_login_urls),
-                              std::move(enterprise_change_password_url)));
 }
 
 void PasswordReuseManagerImpl::RequestLoginsFromStores() {

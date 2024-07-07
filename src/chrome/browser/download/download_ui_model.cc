@@ -17,22 +17,14 @@
 #include "chrome/browser/download/bubble/download_bubble_prefs.h"
 #include "chrome/browser/download/download_commands.h"
 #include "chrome/browser/download/download_item_warning_data.h"
-#include "chrome/browser/download/download_ui_safe_browsing_util.h"
 #include "chrome/browser/download/offline_item_utils.h"
-#include "chrome/browser/enterprise/connectors/common.h"
-#include "chrome/browser/safe_browsing/advanced_protection_status_manager.h"
-#include "chrome/browser/safe_browsing/advanced_protection_status_manager_factory.h"
 #include "chrome/browser/ui/chrome_pages.h"
 #include "chrome/browser/ui/color/chrome_color_id.h"
 #include "chrome/common/url_constants.h"
 #include "chrome/grit/branded_strings.h"
 #include "chrome/grit/generated_resources.h"
 #include "components/download/public/common/download_danger_type.h"
-#include "components/enterprise/common/proto/connectors.pb.h"
 #include "components/google/core/common/google_util.h"
-#include "components/safe_browsing/buildflags.h"
-#include "components/safe_browsing/core/common/safe_browsing_prefs.h"
-#include "components/safe_browsing/core/common/safebrowsing_referral_methods.h"
 #include "components/vector_icons/vector_icons.h"
 #include "net/base/mime_util.h"
 #include "third_party/blink/public/common/mime_util/mime_util.h"
@@ -51,7 +43,6 @@
 
 using download::DownloadItem;
 using offline_items_collection::FailState;
-using safe_browsing::DownloadFileType;
 
 namespace {
 
@@ -323,12 +314,6 @@ std::u16string DownloadUIModel::GetWarningText(const std::u16string& filename,
                                         filename, offset);
     case download::DOWNLOAD_DANGER_TYPE_UNCOMMON_CONTENT: {
       bool request_ap_verdicts = false;
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-      request_ap_verdicts =
-          safe_browsing::AdvancedProtectionStatusManagerFactory::GetForProfile(
-              profile())
-              ->IsUnderAdvancedProtection();
-#endif
       return l10n_util::GetStringFUTF16(
           request_ap_verdicts
               ? IDS_PROMPT_UNCOMMON_DOWNLOAD_CONTENT_IN_ADVANCED_PROTECTION
@@ -491,13 +476,6 @@ bool DownloadUIModel::ShouldPreferOpeningInBrowser() {
 }
 
 void DownloadUIModel::SetShouldPreferOpeningInBrowser(bool preference) {}
-
-DownloadFileType::DangerLevel DownloadUIModel::GetDangerLevel() const {
-  return DownloadFileType::NOT_DANGEROUS;
-}
-
-void DownloadUIModel::SetDangerLevel(
-    DownloadFileType::DangerLevel danger_level) {}
 
 download::DownloadItem::InsecureDownloadStatus
 DownloadUIModel::GetInsecureDownloadStatus() const {
@@ -666,7 +644,7 @@ bool DownloadUIModel::IsCommandEnabled(
     case DownloadCommands::CANCEL_DEEP_SCAN:
       return true;
     case DownloadCommands::OPEN_SAFE_BROWSING_SETTING:
-      return CanUserTurnOnSafeBrowsing(profile());
+      return false;
   }
   NOTREACHED_IN_MIGRATION();
   return false;
@@ -755,10 +733,6 @@ void DownloadUIModel::ExecuteCommand(DownloadCommands* download_commands,
           /*navigation_handle_callback=*/{});
       break;
     case DownloadCommands::OPEN_SAFE_BROWSING_SETTING:
-      chrome::ShowSafeBrowsingEnhancedProtectionWithIph(
-          download_commands->GetBrowser(),
-          safe_browsing::SafeBrowsingSettingReferralMethod::
-              kDownloadBubbleSubpage);
       break;
     case DownloadCommands::PAUSE:
       Pause();
@@ -941,11 +915,6 @@ DownloadUIModel::BubbleStatusTextBuilder::GetBubbleWarningStatusText() const {
         // "Blocked • Unknown source"
         return get_blocked_warning(IDS_DOWNLOAD_BUBBLE_STATUS_UNKNOWN_SOURCE);
       }
-      if (WasSafeBrowsingVerdictObtained(model_->GetDownloadItem())) {
-        // "Suspicious download blocked"
-        return l10n_util::GetStringUTF16(
-            IDS_DOWNLOAD_BUBBLE_STATUS_WARNING_SUSPICIOUS);
-      }
       // "Unverified download blocked"
       return l10n_util::GetStringUTF16(
           IDS_DOWNLOAD_BUBBLE_STATUS_WARNING_UNVERIFIED);
@@ -965,12 +934,6 @@ DownloadUIModel::BubbleStatusTextBuilder::GetBubbleWarningStatusText() const {
       return get_blocked_warning(IDS_DOWNLOAD_BUBBLE_STATUS_TOO_BIG);
     case download::DOWNLOAD_DANGER_TYPE_UNCOMMON_CONTENT: {
       bool request_ap_verdicts = false;
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-      request_ap_verdicts =
-          safe_browsing::AdvancedProtectionStatusManagerFactory::GetForProfile(
-              model_->profile())
-              ->IsUnderAdvancedProtection();
-#endif
       // "Blocked by Advanced Protection" or "Suspicious download blocked"
       return request_ap_verdicts
                  ? l10n_util::GetStringUTF16(
@@ -1008,16 +971,8 @@ DownloadUIModel::BubbleStatusTextBuilder::GetBubbleWarningStatusText() const {
       return l10n_util::GetStringUTF16(
           IDS_DOWNLOAD_BUBBLE_STATUS_ASYNC_SCANNING);
 #else
-      // Either "Checking with your organization's security policies..." or
-      // "Scanning..."
-      if (download::DoesDownloadConnectorBlock(
-              model_->profile(), model_->GetDownloadItem()->GetURL())) {
-        return l10n_util::GetStringUTF16(
-            IDS_DOWNLOAD_BUBBLE_STATUS_ASYNC_SCANNING_ENTERPRISE);
-      } else {
-        return l10n_util::GetStringUTF16(
-            IDS_DOWNLOAD_BUBBLE_STATUS_ASYNC_SCANNING);
-      }
+      return l10n_util::GetStringUTF16(
+          IDS_DOWNLOAD_BUBBLE_STATUS_ASYNC_SCANNING);
 #endif
     case download::DOWNLOAD_DANGER_TYPE_ASYNC_LOCAL_PASSWORD_SCANNING:
       // "Checking for malware..."
@@ -1317,12 +1272,6 @@ DownloadUIModel::BubbleStatusTextBuilder::GetInterruptedStatusText(
 
   return l10n_util::GetStringUTF16(string_id);
 }
-
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-void DownloadUIModel::CompleteSafeBrowsingScan() {}
-void DownloadUIModel::ReviewScanningVerdict(
-    content::WebContents* web_contents) {}
-#endif
 
 bool DownloadUIModel::ShouldShowDropdown() const {
   return true;

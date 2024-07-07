@@ -51,7 +51,6 @@
 #include "components/password_manager/core/common/password_manager_constants.h"
 #include "components/password_manager/core/common/password_manager_features.h"
 #include "components/password_manager/core/common/password_manager_util.h"
-#include "components/safe_browsing/buildflags.h"
 #include "content/public/renderer/render_frame.h"
 #include "net/base/registry_controlled_domains/registry_controlled_domain.h"
 #include "services/service_manager/public/cpp/interface_provider.h"
@@ -1134,25 +1133,6 @@ bool PasswordAutofillAgent::HasElementsToFill(
 void PasswordAutofillAgent::MaybeCheckSafeBrowsingReputation(
     const WebInputElement& element) {
   // Enabled on desktop and Android
-#if BUILDFLAG(FULL_SAFE_BROWSING) || BUILDFLAG(SAFE_BROWSING_DB_REMOTE)
-  // Note: A site may use a Password field to collect a CVV or a Credit Card
-  // number, but showing a slightly misleading warning here is better than
-  // showing no warning at all.
-  if (!element.IsPasswordFieldForAutofill())
-    return;
-  if (checked_safe_browsing_reputation_)
-    return;
-
-  checked_safe_browsing_reputation_ = true;
-  WebLocalFrame* frame = render_frame()->GetWebFrame();
-  GURL frame_url = GURL(frame->GetDocument().Url());
-  WebFormElement form_element =
-      form_util::GetFormElementForPasswordInput(element);
-  GURL action_url = form_element.IsNull()
-                        ? GURL()
-                        : form_util::GetCanonicalActionForForm(form_element);
-  GetPasswordManagerDriver().CheckSafeBrowsingReputation(action_url, frame_url);
-#endif
 }
 
 #if BUILDFLAG(IS_ANDROID)

@@ -23,12 +23,6 @@ public interface WebViewClientBoundaryInterface extends FeatureFlagHolderBoundar
     void onReceivedHttpError(
             WebView view, WebResourceRequest request, WebResourceResponse errorResponse);
 
-    void onSafeBrowsingHit(
-            WebView view,
-            WebResourceRequest request,
-            int threatType,
-            /* SafeBrowsingResponse */ InvocationHandler callback);
-
     boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request);
 
     boolean onWebAuthnIntent(

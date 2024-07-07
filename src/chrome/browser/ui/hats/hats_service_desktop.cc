@@ -29,7 +29,6 @@
 #include "chrome/common/chrome_features.h"
 #include "chrome/common/pref_names.h"
 #include "components/metrics_services_manager/metrics_services_manager.h"
-#include "components/policy/core/common/policy_pref_names.h"
 #include "components/pref_registry/pref_registry_syncable.h"
 #include "components/prefs/scoped_user_pref_update.h"
 #include "components/version_info/version_info.h"
@@ -456,12 +455,6 @@ bool HatsServiceDesktop::CanShowAnySurvey(bool user_prompted) const {
     return false;
   }
 
-  // HaTs can also be disabled by policy if metrics consent is given.
-  if (!profile()->GetPrefs()->GetBoolean(
-          policy::policy_prefs::kFeedbackSurveysEnabled)) {
-    return false;
-  }
-
   // Surveys can always be shown in Demo mode.
   if (base::FeatureList::IsEnabled(
           features::kHappinessTrackingSurveysForDesktopDemo)) {
@@ -579,17 +572,6 @@ void HatsServiceDesktop::LaunchSurveyForBrowser(
     // Never show HaTS bubble for Incognito mode.
     UMA_HISTOGRAM_ENUMERATION(kHatsShouldShowSurveyReasonHistogram,
                               ShouldShowSurveyReasons::kNoNotRegularBrowser);
-    if (!failure_callback.is_null()) {
-      std::move(failure_callback).Run();
-    }
-    return;
-  }
-  if (IncognitoModePrefs::GetAvailability(profile()->GetPrefs()) ==
-      policy::IncognitoModeAvailability::kDisabled) {
-    // Incognito mode needs to be enabled to create an off-the-record profile
-    // for HaTS dialog.
-    UMA_HISTOGRAM_ENUMERATION(kHatsShouldShowSurveyReasonHistogram,
-                              ShouldShowSurveyReasons::kNoIncognitoDisabled);
     if (!failure_callback.is_null()) {
       std::move(failure_callback).Run();
     }

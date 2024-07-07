@@ -48,13 +48,6 @@ class VolumeListProviderLacros;
 }  // namespace extensions
 #endif  // BUILDFLAG(IS_CHROMEOS_LACROS)
 
-namespace policy {
-class AsyncPolicyProvider;
-class ConfigurationPolicyProvider;
-class ProfilePolicyConnector;
-class ProfileCloudPolicyManager;
-}  // namespace policy
-
 namespace sync_preferences {
 class PrefServiceSyncable;
 }
@@ -134,17 +127,6 @@ class ProfileImpl : public Profile {
   const PrefService* GetPrefs() const override;
   ChromeZoomLevelPrefs* GetZoomLevelPrefs() override;
   PrefService* GetReadOnlyOffTheRecordPrefs() override;
-  policy::SchemaRegistryService* GetPolicySchemaRegistryService() override;
-#if BUILDFLAG(IS_CHROMEOS_ASH)
-  policy::UserCloudPolicyManagerAsh* GetUserCloudPolicyManagerAsh() override;
-#else
-  policy::UserCloudPolicyManager* GetUserCloudPolicyManager() override;
-  policy::ProfileCloudPolicyManager* GetProfileCloudPolicyManager() override;
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
-  policy::CloudPolicyManager* GetCloudPolicyManager() override;
-  policy::ProfilePolicyConnector* GetProfilePolicyConnector() override;
-  const policy::ProfilePolicyConnector* GetProfilePolicyConnector()
-      const override;
   scoped_refptr<network::SharedURLLoaderFactory> GetURLLoaderFactory() override;
   bool IsSameOrParent(Profile* profile) override;
   base::Time GetStartTime() const override;
@@ -222,8 +204,6 @@ class ProfileImpl : public Profile {
   // Called to initialize Data Reduction Proxy.
   void InitializeDataReductionProxy();
 
-  policy::ConfigurationPolicyProvider* configuration_policy_provider();
-
   PrefChangeRegistrar pref_change_registrar_;
 
   base::FilePath path_;
@@ -238,37 +218,6 @@ class ProfileImpl : public Profile {
   //  you know what you're doing. Also, if adding a new member here make sure
   //  that the declaration occurs AFTER things it depends on as destruction
   //  happens in reverse order of declaration.
-
-  // TODO(mnissler, joaodasilva): The |profile_policy_connector_| provides the
-  // PolicyService that the |prefs_| depend on, and must outlive |prefs_|. This
-  // can be removed once |prefs_| becomes a KeyedService too.
-
-  // - |prefs_| depends on |profile_policy_connector_|
-  // - |profile_policy_connector_| depends on configuration_policy_provider(),
-  //   which can be:
-  //     - |user_cloud_policy_manager_|;
-  //     - |user_cloud_policy_manager_ash_|;
-  // - configuration_policy_provider() depends on |schema_registry_service_|
-
-  std::unique_ptr<policy::SchemaRegistryService> schema_registry_service_;
-
-  // configuration_policy_provider() is either of these, or nullptr in some
-  // tests.
-#if BUILDFLAG(IS_CHROMEOS_ASH)
-  std::unique_ptr<policy::UserCloudPolicyManagerAsh>
-      user_cloud_policy_manager_ash_;
-#else
-  std::unique_ptr<policy::UserCloudPolicyManager> user_cloud_policy_manager_;
-  std::unique_ptr<policy::ProfileCloudPolicyManager>
-      profile_cloud_policy_manager_;
-#endif
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-  std::unique_ptr<policy::AsyncPolicyProvider> user_policy_provider_;
-  // Provider (monitor and dispatcher) of volume list updates.
-  std::unique_ptr<extensions::VolumeListProviderLacros> volume_list_provider_;
-#endif
-
-  std::unique_ptr<policy::ProfilePolicyConnector> profile_policy_connector_;
 
   // Keep |prefs_| on top for destruction order because |extension_prefs_|,
   // |io_data_| and others store pointers to |prefs_| and shall be destructed

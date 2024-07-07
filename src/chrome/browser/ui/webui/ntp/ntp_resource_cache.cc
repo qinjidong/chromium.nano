@@ -17,7 +17,6 @@
 #include "build/chromeos_buildflags.h"
 #include "chrome/browser/browser_process.h"
 #include "chrome/browser/browser_process_platform_part.h"
-#include "chrome/browser/policy/profile_policy_connector.h"
 #include "chrome/browser/privacy_sandbox/tracking_protection_settings_factory.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/themes/theme_properties.h"
@@ -40,8 +39,6 @@
 #include "chrome/grit/theme_resources.h"
 #include "components/content_settings/core/common/cookie_controls_enforcement.h"
 #include "components/content_settings/core/common/pref_names.h"
-#include "components/policy/core/common/policy_service.h"
-#include "components/policy/policy_constants.h"
 #include "components/prefs/pref_service.h"
 #include "components/privacy_sandbox/tracking_protection_settings.h"
 #include "components/reading_list/features/reading_list_switches.h"
@@ -59,7 +56,6 @@
 #include "ui/native_theme/native_theme.h"
 
 #if BUILDFLAG(IS_CHROMEOS_ASH)
-#include "chrome/browser/ash/policy/core/browser_policy_connector_ash.h"
 #include "chromeos/strings/grit/chromeos_strings.h"
 #include "ui/chromeos/devicetype_utils.h"
 #endif
@@ -142,14 +138,6 @@ NTPResourceCache::NTPResourceCache(Profile* profile)
 
   // TODO(crbug.com/40677117): Remove the global accessor to NativeTheme.
   theme_observation_.Observe(ui::NativeTheme::GetInstanceForNativeUi());
-
-  policy_change_registrar_ = std::make_unique<policy::PolicyChangeRegistrar>(
-      profile->GetProfilePolicyConnector()->policy_service(),
-      policy::PolicyNamespace(policy::POLICY_DOMAIN_CHROME, std::string()));
-  policy_change_registrar_->Observe(
-      policy::key::kBlockThirdPartyCookies,
-      base::BindRepeating(&NTPResourceCache::OnPolicyChanged,
-                          base::Unretained(this)));
 }
 
 NTPResourceCache::~NTPResourceCache() = default;
@@ -340,37 +328,6 @@ void NTPResourceCache::CreateNewTabGuestHTML() {
   int guest_tab_description_ids = IDS_NEW_TAB_GUEST_SESSION_DESCRIPTION;
   int guest_tab_heading_ids = IDS_NEW_TAB_GUEST_SESSION_HEADING;
   int guest_tab_link_ids = IDS_LEARN_MORE;
-
-#if BUILDFLAG(IS_CHROMEOS_ASH)
-  guest_tab_idr = IDR_GUEST_SESSION_TAB_HTML;
-
-  policy::BrowserPolicyConnectorAsh* connector =
-      g_browser_process->platform_part()->browser_policy_connector_ash();
-
-  if (connector->IsDeviceEnterpriseManaged()) {
-    localized_strings.Set("enterpriseInfoVisible", "true");
-    localized_strings.Set("enterpriseLearnMore",
-                          l10n_util::GetStringUTF16(IDS_LEARN_MORE));
-    localized_strings.Set("enterpriseInfoHintLink",
-                          chrome::kLearnMoreEnterpriseURL);
-    std::u16string enterprise_info;
-    if (connector->IsCloudManaged()) {
-      const std::string enterprise_domain_manager =
-          connector->GetEnterpriseDomainManager();
-      enterprise_info = l10n_util::GetStringFUTF16(
-          IDS_ASH_ENTERPRISE_DEVICE_MANAGED_BY, ui::GetChromeOSDeviceName(),
-          base::UTF8ToUTF16(enterprise_domain_manager));
-    } else {
-      NOTREACHED_IN_MIGRATION() << "Unknown management type";
-    }
-    localized_strings.Set("enterpriseInfoMessage", enterprise_info);
-  } else {
-    localized_strings.Set("enterpriseInfoVisible", "false");
-    localized_strings.Set("enterpriseInfoMessage", "");
-    localized_strings.Set("enterpriseLearnMore", "");
-    localized_strings.Set("enterpriseInfoHintLink", "");
-  }
-#endif
 
   localized_strings.Set("guestTabDescription",
                         l10n_util::GetStringUTF16(guest_tab_description_ids));

@@ -15,7 +15,6 @@
 #include "build/buildflag.h"
 #include "build/chromeos_buildflags.h"
 #include "chrome/browser/browser_process.h"
-#include "chrome/browser/enterprise/util/managed_browser_utils.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/profiles/profile_attributes_storage.h"
 #include "chrome/browser/profiles/profile_avatar_icon_util.h"
@@ -338,8 +337,7 @@ void SyncConfirmationUI::InitializeForSyncDisabled(
       IDR_SIGNIN_SYNC_CONFIRMATION_SYNC_DISABLED_CONFIRMATION_APP_HTML_JS);
 
   bool managed_account_signout_disallowed =
-      base::FeatureList::IsEnabled(kDisallowManagedProfileSignout) &&
-      chrome::enterprise_util::UserAcceptedAccountManagement(profile_);
+      base::FeatureList::IsEnabled(kDisallowManagedProfileSignout);
 
   source->AddBoolean("signoutDisallowed", managed_account_signout_disallowed);
   AddStringResource(source, "syncDisabledConfirmationTitle",

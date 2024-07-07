@@ -20,7 +20,6 @@
 #include "chrome/browser/profiles/incognito_helpers.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/profiles/profile_keyed_service_factory.h"
-#include "chrome/browser/safe_browsing/user_interaction_observer.h"
 #include "chrome/common/channel_info.h"
 #include "components/content_settings/core/browser/host_content_settings_map.h"
 #include "components/lookalikes/core/lookalike_url_util.h"

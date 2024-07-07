@@ -8,10 +8,8 @@
 #include <memory>
 #include <utility>
 
-#include "android_webview/browser/aw_browser_policy_connector.h"
 #include "android_webview/browser/aw_field_trials.h"
 #include "android_webview/browser/variations/aw_variations_service_client.h"
-#include "components/policy/core/browser/browser_policy_connector_base.h"
 #include "components/variations/service/variations_field_trial_creator.h"
 
 class PrefService;
@@ -41,12 +39,6 @@ class AwFeatureListCreator {
     return std::move(local_state_);
   }
 
-  // Passes ownership of the |browser_policy_connector_| to the caller.
-  std::unique_ptr<AwBrowserPolicyConnector> TakeBrowserPolicyConnector() {
-    DCHECK(browser_policy_connector_);
-    return std::move(browser_policy_connector_);
-  }
-
   static void DisableSignatureVerificationForTesting();
 
  private:
@@ -69,8 +61,6 @@ class AwFeatureListCreator {
       variations_field_trial_creator_;
 
   std::unique_ptr<AwVariationsServiceClient> client_;
-
-  std::unique_ptr<AwBrowserPolicyConnector> browser_policy_connector_;
 };
 
 }  // namespace android_webview

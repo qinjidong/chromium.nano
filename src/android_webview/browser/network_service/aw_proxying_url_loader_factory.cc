@@ -34,7 +34,6 @@
 #include "components/embedder_support/android/util/input_stream.h"
 #include "components/embedder_support/android/util/response_delegate_impl.h"
 #include "components/embedder_support/android/util/web_resource_response.h"
-#include "components/safe_browsing/core/common/safebrowsing_constants.h"
 #include "content/public/browser/browser_task_traits.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/global_request_id.h"
@@ -853,14 +852,10 @@ void InterceptedRequest::OnURLLoaderClientError() {
 void InterceptedRequest::OnURLLoaderError(uint32_t custom_reason,
                                           const std::string& description) {
   if (custom_reason == network::mojom::URLLoader::kClientDisconnectReason) {
-    if (description == safe_browsing::kCustomCancelReasonForURLLoader) {
-      SendErrorCallback(safe_browsing::kNetErrorCodeForSafeBrowsing, true);
-    } else {
-      int parsed_error_code;
-      if (base::StringToInt(std::string_view(description),
-                            &parsed_error_code)) {
-        SendErrorCallback(parsed_error_code, false);
-      }
+    int parsed_error_code;
+    if (base::StringToInt(std::string_view(description),
+                          &parsed_error_code)) {
+      SendErrorCallback(parsed_error_code, false);
     }
   }
 

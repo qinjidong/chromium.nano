@@ -11,7 +11,6 @@
 #include "base/values.h"
 #include "components/grit/components_resources.h"
 #include "components/prefs/pref_service.h"
-#include "components/safe_browsing/core/common/safe_browsing_prefs.h"
 #include "components/security_interstitials/content/security_interstitial_controller_client.h"
 #include "components/security_interstitials/core/common_string_util.h"
 #include "components/security_interstitials/core/metrics_helper.h"
@@ -32,13 +31,6 @@ SecurityInterstitialPage::SecurityInterstitialPage(
       on_show_extended_reporting_pref_exists_(false),
       on_show_extended_reporting_pref_value_(false),
       controller_(std::move(controller)) {
-  // Determine if any prefs need to be updated prior to showing the security
-  // interstitial. Note that some content embedders (such as Android WebView)
-  // uses security interstitials without a prefservice.
-  if (controller_->GetPrefService()) {
-    safe_browsing::UpdatePrefsBeforeSecurityInterstitial(
-        controller_->GetPrefService());
-  }
   SetUpMetrics();
 }
 
@@ -91,17 +83,7 @@ SecurityInterstitialControllerClient* SecurityInterstitialPage::controller()
   return controller_.get();
 }
 
-void SecurityInterstitialPage::SetUpMetrics() {
-  // Remember the initial state of the extended reporting pref, to be compared
-  // to the same data when the interstitial is closed.
-  PrefService* prefs = controller_->GetPrefService();
-  if (prefs) {
-    on_show_extended_reporting_pref_exists_ =
-        safe_browsing::ExtendedReportingPrefExists(*prefs);
-    on_show_extended_reporting_pref_value_ =
-        safe_browsing::IsExtendedReportingEnabled(*prefs);
-  }
-}
+void SecurityInterstitialPage::SetUpMetrics() {}
 
 std::u16string SecurityInterstitialPage::GetFormattedHostName() const {
   return security_interstitials::common_string_util::GetFormattedHostName(

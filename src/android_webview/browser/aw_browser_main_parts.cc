@@ -188,17 +188,6 @@ int AwBrowserMainParts::PreCreateThreads() {
   child_exit_observer_ =
       std::make_unique<::crash_reporter::ChildExitObserver>();
 
-  // We need to create the safe browsing specific directory even if the
-  // AwSafeBrowsingConfigHelper::GetSafeBrowsingEnabled() is false
-  // initially, because safe browsing can be enabled later at runtime
-  // on a per-webview basis.
-  base::FilePath safe_browsing_dir;
-  if (base::PathService::Get(android_webview::DIR_SAFE_BROWSING,
-                             &safe_browsing_dir)) {
-    if (!base::PathExists(safe_browsing_dir))
-      base::CreateDirectory(safe_browsing_dir);
-  }
-
   base::FilePath crash_dir;
   if (base::PathService::Get(android_webview::DIR_CRASH_DUMPS, &crash_dir)) {
     if (!base::PathExists(crash_dir)) {

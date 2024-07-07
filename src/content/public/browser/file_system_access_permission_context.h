@@ -184,15 +184,6 @@ class FileSystemAccessPermissionContext {
       const GURL& file_picker_binding_context,
       const storage::FileSystemURL& url) = 0;
 
-  // Checks the paths listed in `entries` to determine if they should be allowed
-  // or blocked within this context, for the given render frame host, based on
-  // enterprise policies. Invokes `callback` with the list of entries which are
-  // allowed.
-  virtual void CheckPathsAgainstEnterprisePolicy(
-      std::vector<PathInfo> entries,
-      GlobalRenderFrameHostId frame_id,
-      EntriesAllowedByEnterprisePolicyCallback callback) = 0;
-
  protected:
   virtual ~FileSystemAccessPermissionContext() = default;
 };

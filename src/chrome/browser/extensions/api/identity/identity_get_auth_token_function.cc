@@ -43,7 +43,6 @@
 #include "ui/base/idle/idle.h"
 
 #if BUILDFLAG(IS_CHROMEOS)
-#include "chrome/browser/policy/chrome_browser_policy_connector.h"
 #include "chromeos/components/kiosk/kiosk_utils.h"
 #include "chromeos/components/mgs/managed_guest_session_utils.h"
 #include "components/account_manager_core/account_manager_util.h"
@@ -235,21 +234,6 @@ void IdentityGetAuthTokenFunction::FetchExtensionAccountInfo(
 void IdentityGetAuthTokenFunction::OnReceivedExtensionAccountInfo(
     const CoreAccountInfo& account_info) {
   token_key_.account_info = account_info;
-
-#if BUILDFLAG(IS_CHROMEOS)
-  if (g_browser_process->browser_policy_connector()
-          ->IsDeviceEnterpriseManaged()) {
-    if (chromeos::IsManagedGuestSession()) {
-      CompleteFunctionWithError(IdentityGetAuthTokenError(
-          IdentityGetAuthTokenError::State::kNotAllowlistedInPublicSession));
-      return;
-    }
-    if (chromeos::IsKioskSession()) {
-      StartMintTokenFlow(IdentityMintRequestQueue::MINT_TYPE_NONINTERACTIVE);
-      return;
-    }
-  }
-#endif
 
   if (account_info.IsEmpty() ||
       !IdentityManagerFactory::GetForProfile(GetProfile())
@@ -458,27 +442,6 @@ void IdentityGetAuthTokenFunction::StartMintToken(
   if (type == IdentityMintRequestQueue::MINT_TYPE_NONINTERACTIVE) {
     switch (cache_status) {
       case IdentityTokenCacheValue::CACHE_STATUS_NOTFOUND:
-#if BUILDFLAG(IS_CHROMEOS)
-        // Always force minting token for ChromeOS kiosk app and managed guest
-        // session.
-        if (chromeos::IsManagedGuestSession()) {
-          CompleteFunctionWithError(
-              IdentityGetAuthTokenError(IdentityGetAuthTokenError::State::
-                                            kNotAllowlistedInPublicSession));
-          return;
-        }
-        if (chromeos::IsKioskSession()) {
-          gaia_mint_token_mode_ = OAuth2MintTokenFlow::MODE_MINT_TOKEN_FORCE;
-          if (g_browser_process->browser_policy_connector()
-                  ->IsDeviceEnterpriseManaged()) {
-            StartDeviceAccessTokenRequest();
-          } else {
-            StartTokenKeyAccountAccessTokenRequest();
-          }
-          return;
-        }
-#endif
-
         if (oauth2_info.auto_approve && *oauth2_info.auto_approve) {
           // oauth2_info.auto_approve is protected by an allowlist in
           // _manifest_features.json hence only selected extensions take

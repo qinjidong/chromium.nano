@@ -20,7 +20,6 @@
 #include "build/build_config.h"
 #include "build/chromeos_buildflags.h"
 #include "chrome/browser/browser_process.h"
-#include "chrome/browser/component_updater/optimization_guide_on_device_model_installer.h"
 #include "chrome/browser/download/background_download_service_factory.h"
 #include "chrome/browser/metrics/chrome_metrics_service_accessor.h"
 #include "chrome/browser/optimization_guide/chrome_hints_manager.h"
@@ -212,19 +211,10 @@ class OnDeviceModelComponentStateManagerDelegate
   }
 
   void RegisterInstaller(scoped_refptr<OnDeviceModelComponentStateManager>
-                             state_manager) override {
-    if (!g_browser_process) {
-      return;
-    }
-    component_updater::RegisterOptimizationGuideOnDeviceModelComponent(
-        g_browser_process->component_updater(), state_manager);
-  }
+                             state_manager) override {}
 
   void Uninstall(scoped_refptr<OnDeviceModelComponentStateManager>
-                     state_manager) override {
-    component_updater::UninstallOptimizationGuideOnDeviceModelComponent(
-        state_manager);
-  }
+                     state_manager) override {}
 };
 
 }  // namespace
@@ -311,8 +301,7 @@ OptimizationGuideKeyedService::BackgroundDownloadServiceProvider() {
 }
 
 bool OptimizationGuideKeyedService::ComponentUpdatesEnabledProvider() const {
-  return g_browser_process->local_state()->GetBoolean(
-      ::prefs::kComponentUpdatesEnabled);
+  return false;
 }
 
 void OptimizationGuideKeyedService::Initialize() {

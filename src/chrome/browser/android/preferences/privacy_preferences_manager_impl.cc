@@ -10,7 +10,6 @@
 #include "chrome/browser/preloading/preloading_prefs.h"
 #include "chrome/common/pref_names.h"
 #include "components/metrics/metrics_pref_names.h"
-#include "components/policy/core/common/features.h"
 #include "components/prefs/pref_service.h"
 
 static jboolean JNI_PrivacyPreferencesManagerImpl_IsMetricsReportingEnabled(

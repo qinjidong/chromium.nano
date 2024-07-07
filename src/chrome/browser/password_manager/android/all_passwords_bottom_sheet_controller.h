@@ -23,10 +23,6 @@ class PasswordManagerClient;
 class PasswordManagerDriver;
 }  // namespace password_manager
 
-namespace safe_browsing {
-class PasswordReuseDetectionManagerClient;
-}
-
 namespace content {
 class WebContents;
 }  // namespace content
@@ -55,8 +51,6 @@ class AllPasswordsBottomSheetController
       base::OnceCallback<void()> dismissal_callback,
       autofill::mojom::FocusedFieldType focused_field_type,
       password_manager::PasswordManagerClient* client,
-      safe_browsing::PasswordReuseDetectionManagerClient*
-          password_reuse_detection_manager_client,
       ShowMigrationWarningCallback show_migration_warning_callback);
 
   AllPasswordsBottomSheetController(
@@ -142,12 +136,6 @@ class AllPasswordsBottomSheetController
   // The PasswordManagerClient associated with the current |web_contents_|.
   // Used to get a pointer to a BiometricAuthenticator.
   raw_ptr<password_manager::PasswordManagerClient> client_ = nullptr;
-
-  // The passwordReuseDetectionManagerClient associated with the current
-  // |web_contents_|. Used to tell `PasswordReuseDetectionManager` that a
-  // password has been reused.
-  raw_ptr<safe_browsing::PasswordReuseDetectionManagerClient>
-      password_reuse_detection_manager_client_ = nullptr;
 
   // Callback invoked to try to show the password migration warning. Used
   // to facilitate testing.

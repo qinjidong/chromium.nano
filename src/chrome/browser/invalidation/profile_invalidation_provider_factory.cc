@@ -35,7 +35,6 @@
 
 #if BUILDFLAG(IS_CHROMEOS_ASH)
 #include "base/files/file_path.h"
-#include "chrome/browser/ash/policy/core/browser_policy_connector_ash.h"
 #include "chrome/browser/device_identity/device_identity_provider.h"
 #include "chrome/browser/device_identity/device_oauth2_token_service_factory.h"
 #include "chromeos/ash/components/browser_context_helper/browser_context_types.h"
@@ -122,17 +121,6 @@ ProfileInvalidationProviderFactory::BuildServiceInstanceForBrowserContext(
     return testing_factory_.Run(context);
 
   std::unique_ptr<IdentityProvider> identity_provider;
-
-#if BUILDFLAG(IS_CHROMEOS_ASH)
-  policy::BrowserPolicyConnectorAsh* connector =
-      g_browser_process->platform_part()->browser_policy_connector_ash();
-  if (user_manager::UserManager::IsInitialized() &&
-      user_manager::UserManager::Get()->IsLoggedInAsKioskApp() &&
-      connector->IsDeviceEnterpriseManaged()) {
-    identity_provider = std::make_unique<DeviceIdentityProvider>(
-        DeviceOAuth2TokenServiceFactory::Get());
-  }
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
 
   Profile* profile = Profile::FromBrowserContext(context);
 

@@ -67,7 +67,6 @@ source_set("unit_test") {
     ":test_support",
     "//base",
     "//chrome/browser/crash_upload_list",
-    "//chrome/test:test_support",
     "//components/crash/content/browser/error_reporting",
     "//components/crash/content/browser/error_reporting:mock_crash_endpoint",
     "//components/crash/core/app",

@@ -26,10 +26,6 @@ class RefCountedMemory;
 class Value;
 }  // namespace base
 
-namespace policy {
-class PolicyChangeRegistrar;
-}
-
 namespace ui {
 class ColorProvider;
 class ThemeProvider;
@@ -124,8 +120,6 @@ class NTPResourceCache : public ThemeServiceObserver,
 
   base::ScopedObservation<ui::NativeTheme, ui::NativeThemeObserver>
       theme_observation_{this};
-
-  std::unique_ptr<policy::PolicyChangeRegistrar> policy_change_registrar_;
 };
 
 #endif  // CHROME_BROWSER_UI_WEBUI_NTP_NTP_RESOURCE_CACHE_H_

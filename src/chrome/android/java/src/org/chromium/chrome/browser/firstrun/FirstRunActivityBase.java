@@ -31,13 +31,11 @@ import org.chromium.chrome.browser.init.ActivityProfileProvider;
 import org.chromium.chrome.browser.init.AsyncInitializationActivity;
 import org.chromium.chrome.browser.metrics.SimpleStartupForegroundSessionDetector;
 import org.chromium.chrome.browser.metrics.UmaUtils;
-import org.chromium.chrome.browser.policy.PolicyServiceFactory;
 import org.chromium.chrome.browser.profiles.OTRProfileID;
 import org.chromium.chrome.browser.profiles.ProfileManagerUtils;
 import org.chromium.chrome.browser.profiles.ProfileProvider;
 import org.chromium.chrome.browser.ui.system.StatusBarColorController;
 import org.chromium.components.browser_ui.widget.gesture.BackPressHandler;
-import org.chromium.components.policy.PolicyService;
 import org.chromium.components.signin.AccountManagerFacade;
 import org.chromium.components.signin.AccountManagerFacadeProvider;
 
@@ -71,7 +69,6 @@ public abstract class FirstRunActivityBase extends AsyncInitializationActivity
     private boolean mNativeInitialized;
 
     private final FirstRunAppRestrictionInfo mFirstRunAppRestrictionInfo;
-    private final OneshotSupplierImpl<PolicyService> mPolicyServiceSupplier;
     private final ObservableSupplierImpl<Boolean> mBackPressStateSupplier =
             new ObservableSupplierImpl<>() {
                 // Always intercept back press.
@@ -79,7 +76,6 @@ public abstract class FirstRunActivityBase extends AsyncInitializationActivity
                     set(true);
                 }
             };
-    private PolicyLoadListener mPolicyLoadListener;
 
     private final long mStartTime;
     private long mNativeInitializedTime;
@@ -88,15 +84,7 @@ public abstract class FirstRunActivityBase extends AsyncInitializationActivity
 
     public FirstRunActivityBase() {
         mFirstRunAppRestrictionInfo = FirstRunAppRestrictionInfo.takeMaybeInitialized();
-        mPolicyServiceSupplier = new OneshotSupplierImpl<>();
-        mPolicyLoadListener =
-                sPolicyLoadListenerFactoryForTesting == null
-                        ? new PolicyLoadListener(
-                                mFirstRunAppRestrictionInfo, mPolicyServiceSupplier)
-                        : sPolicyLoadListenerFactoryForTesting.inject(
-                                mFirstRunAppRestrictionInfo, mPolicyServiceSupplier);
         mStartTime = SystemClock.elapsedRealtime();
-        mPolicyLoadListener.onAvailable(this::onPolicyLoadListenerAvailable);
     }
 
     @Override
@@ -171,14 +159,12 @@ public abstract class FirstRunActivityBase extends AsyncInitializationActivity
         // TODO(b/41493788): Do not record this outside of the FRE.
         RecordHistogram.recordTimesHistogram(
                 "MobileFre.NativeInitialized", mNativeInitializedTime - mStartTime);
-        mPolicyServiceSupplier.set(PolicyServiceFactory.getGlobalPolicyService());
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
 
-        mPolicyLoadListener.destroy();
         mFirstRunAppRestrictionInfo.destroy();
     }
 
@@ -260,7 +246,7 @@ public abstract class FirstRunActivityBase extends AsyncInitializationActivity
      * @see PolicyLoadListener for return value expectation.
      */
     public OneshotSupplier<Boolean> getPolicyLoadListener() {
-        return mPolicyLoadListener;
+        return mChildAccountStatusSupplier;
     }
 
     /** Returns the supplier that supplies child account status. */
@@ -291,11 +277,7 @@ public abstract class FirstRunActivityBase extends AsyncInitializationActivity
      * Allows tests to inject a fake/mock {@link PolicyLoadListener} into {@link
      * FirstRunActivityBase}'s constructor.
      */
-    public interface PolicyLoadListenerFactory {
-        PolicyLoadListener inject(
-                FirstRunAppRestrictionInfo appRestrictionInfo,
-                OneshotSupplier<PolicyService> policyServiceSupplier);
-    }
+    public interface PolicyLoadListenerFactory {}
 
     /**
      * Forces the {@link FirstRunActivityBase}'s constructor to use a {@link PolicyLoadListener}

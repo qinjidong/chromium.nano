@@ -65,7 +65,6 @@ public class ManifestMetadataUtil {
     @VisibleForTesting
     public static class MetadataCache {
         private final boolean mIsAppOptedOutFromMetricsCollection;
-        private final @Nullable Boolean mSafeBrowsingOptInPreference;
         private final @Nullable Integer mAppMultiProfileProfileNameTagKey;
         private final @NonNull Set<String> mXRequestedAllowList;
 
@@ -73,7 +72,6 @@ public class ManifestMetadataUtil {
             // Cache app level metadata.
             @Nullable Bundle appMetadata = getAppMetadata(context);
             mIsAppOptedOutFromMetricsCollection = isAppOptedOutFromMetricsCollection(appMetadata);
-            mSafeBrowsingOptInPreference = getSafeBrowsingAppOptInPreference(appMetadata);
 
             // Holder service metadata.
             @Nullable
@@ -122,29 +120,6 @@ public class ManifestMetadataUtil {
         } else {
             // getBoolean returns false if the key is not found, which is what we want.
             value = appMetadata.getBoolean(METRICS_OPT_OUT_METADATA_NAME);
-        }
-        return value;
-    }
-
-    /**
-     * Checks the application manifest for Safe Browsing opt-in preference.
-     *
-     * @return true if app has opted in, false if opted out, and null if no preference specified.
-     */
-    @Nullable
-    public static Boolean getSafeBrowsingAppOptInPreference() {
-        return getMetadataCache().mSafeBrowsingOptInPreference;
-    }
-
-    @VisibleForTesting
-    @Nullable
-    public static Boolean getSafeBrowsingAppOptInPreference(@Nullable Bundle appMetadata) {
-        Boolean value;
-        if (appMetadata == null || !appMetadata.containsKey(SAFE_BROWSING_OPT_IN_METADATA_NAME)) {
-            // No <meta-data> tag was found.
-            value = null;
-        } else {
-            value = appMetadata.getBoolean(SAFE_BROWSING_OPT_IN_METADATA_NAME);
         }
         return value;
     }

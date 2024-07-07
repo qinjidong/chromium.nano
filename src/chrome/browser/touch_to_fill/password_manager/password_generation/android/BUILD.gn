@@ -69,7 +69,6 @@ source_set("unit_tests") {
     "//base",
     "//chrome/browser/keyboard_accessory/test_utils/android",
     "//chrome/browser/password_manager/android:utils",
-    "//chrome/test:test_support",
     "//components/password_manager/content/browser:browser",
     "//content/test:test_support",
   ]

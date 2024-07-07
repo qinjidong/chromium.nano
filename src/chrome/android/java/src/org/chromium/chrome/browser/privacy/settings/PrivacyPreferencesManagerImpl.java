@@ -20,12 +20,9 @@ import org.chromium.base.ThreadUtils;
 import org.chromium.base.shared_preferences.SharedPreferencesManager;
 import org.chromium.base.supplier.ObservableSupplierImpl;
 import org.chromium.chrome.browser.flags.ChromeSwitches;
-import org.chromium.chrome.browser.policy.PolicyServiceFactory;
 import org.chromium.chrome.browser.preferences.ChromePreferenceKeys;
 import org.chromium.chrome.browser.preferences.ChromeSharedPreferences;
 import org.chromium.components.minidump_uploader.util.NetworkPermissionUtil;
-import org.chromium.components.policy.PolicyMap;
-import org.chromium.components.policy.PolicyService;
 
 /**
  * Manages preferences related to privacy, metrics reporting, prerendering, and network prediction.
@@ -36,8 +33,6 @@ public class PrivacyPreferencesManagerImpl implements PrivacyPreferencesManager 
 
     private final Context mContext;
     private final SharedPreferencesManager mPrefs;
-    private PolicyService mPolicyService;
-    private PolicyService.Observer mPolicyServiceObserver;
 
     // Supplier for other class to observe. Null until the supplier is requested.
     private @Nullable ObservableSupplierImpl<Boolean> mCrashUploadPermittedSupplier;
@@ -69,35 +64,6 @@ public class PrivacyPreferencesManagerImpl implements PrivacyPreferencesManager 
         if (mNativeInitialized) return;
 
         mNativeInitialized = true;
-
-        createPolicyServiceObserver();
-    }
-
-    protected void createPolicyServiceObserver() {
-        if (mPolicyService != null) {
-            return;
-        }
-
-        mPolicyService = PolicyServiceFactory.getGlobalPolicyService();
-
-        mPolicyServiceObserver =
-                new PolicyService.Observer() {
-                    @Override
-                    public void onPolicyServiceInitialized() {
-                        syncUsageAndCrashReportingPermittedByPolicy();
-                    }
-
-                    @Override
-                    public void onPolicyUpdated(PolicyMap previous, PolicyMap current) {
-                        syncUsageAndCrashReportingPermittedByPolicy();
-                    }
-                };
-
-        if (mPolicyService.isInitializationComplete()) {
-            syncUsageAndCrashReportingPermittedByPolicy();
-        }
-
-        mPolicyService.addObserver(mPolicyServiceObserver);
     }
 
     protected void migrateDeprecatedPreferences() {

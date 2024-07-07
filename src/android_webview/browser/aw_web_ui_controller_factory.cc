@@ -4,10 +4,7 @@
 
 #include "android_webview/browser/aw_web_ui_controller_factory.h"
 
-#include "android_webview/browser/safe_browsing/aw_safe_browsing_local_state_delegate_impl.h"
 #include "base/memory/ptr_util.h"
-#include "components/safe_browsing/content/browser/web_ui/safe_browsing_ui.h"
-#include "components/safe_browsing/core/common/web_ui_constants.h"
 #include "content/public/browser/web_ui.h"
 #include "url/gurl.h"
 
@@ -15,8 +12,6 @@ using content::WebUI;
 using content::WebUIController;
 
 namespace {
-
-const WebUI::TypeID kSafeBrowsingID = &kSafeBrowsingID;
 
 // A function for creating a new WebUI. The caller owns the return value, which
 // may be nullptr (for example, if the URL refers to an non-existent extension).
@@ -32,22 +27,10 @@ WebUIController* NewComponentUI(WebUI* web_ui, const GURL& url) {
 }
 
 WebUIFactoryFunctionPointer GetWebUIFactoryFunctionPointer(const GURL& url) {
-  // WebUI pages here must remain in the base module instead of being moved to
-  // the Developer UI Dynamic Feature Module (DevUI DFM). Therefore the hosts
-  // here must not appear in IsWebUiHostInDevUiDfm().
-  if (url.host() == safe_browsing::kChromeUISafeBrowsingHost) {
-    return &NewComponentUI<safe_browsing::SafeBrowsingUI,
-                           safe_browsing::AwSafeBrowsingLocalStateDelegateImpl>;
-  }
-
   return nullptr;
 }
 
 WebUI::TypeID GetWebUITypeID(const GURL& url) {
-  if (url.host() == safe_browsing::kChromeUISafeBrowsingHost) {
-    return kSafeBrowsingID;
-  }
-
   return WebUI::kNoWebUI;
 }
 

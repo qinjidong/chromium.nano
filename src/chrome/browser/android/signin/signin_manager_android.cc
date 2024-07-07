@@ -19,9 +19,6 @@
 #include "chrome/android/chrome_jni_headers/SigninManagerImpl_jni.h"
 #include "chrome/browser/browser_process.h"
 #include "chrome/browser/browsing_data/chrome_browsing_data_remover_constants.h"
-#include "chrome/browser/enterprise/util/managed_browser_utils.h"
-#include "chrome/browser/policy/cloud/user_policy_signin_service_factory.h"
-#include "chrome/browser/policy/cloud/user_policy_signin_service_mobile.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/signin/account_id_from_account_info.h"
 #include "chrome/browser/signin/identity_manager_factory.h"
@@ -29,8 +26,6 @@
 #include "chrome/common/pref_names.h"
 #include "components/google/core/common/google_util.h"
 #include "components/password_manager/core/browser/password_store/split_stores_and_local_upm.h"
-#include "components/policy/core/common/cloud/user_cloud_policy_manager.h"
-#include "components/policy/core/common/policy_switches.h"
 #include "components/prefs/pref_service.h"
 #include "components/signin/internal/identity_manager/account_tracker_service.h"
 #include "components/signin/public/base/signin_pref_names.h"
@@ -137,13 +132,6 @@ class ProfileDataRemover : public content::BrowsingDataRemover::Observer {
   raw_ptr<content::BrowsingDataRemover> remover_;
 };
 
-// Returns whether the user is a managed user or not.
-bool ShouldLoadPolicyForUser(const std::string& username) {
-  return signin::AccountManagedStatusFinder::IsEnterpriseUserBasedOnEmail(
-             username) ==
-         signin::AccountManagedStatusFinder::EmailEnterpriseStatus::kUnknown;
-}
-
 }  // namespace
 
 SigninManagerAndroid::SigninManagerAndroid(
@@ -151,14 +139,9 @@ SigninManagerAndroid::SigninManagerAndroid(
     signin::IdentityManager* identity_manager)
     : profile_(profile),
       identity_manager_(identity_manager),
-      user_cloud_policy_manager_(profile_->GetUserCloudPolicyManager()),
-      user_policy_signin_service_(
-          policy::UserPolicySigninServiceFactory::GetForProfile(profile_)),
       weak_factory_(this) {
   DCHECK(profile_);
   DCHECK(identity_manager_);
-  DCHECK(user_cloud_policy_manager_);
-  DCHECK(user_policy_signin_service_);
 
   signin_allowed_.Init(
       prefs::kSigninAllowed, profile_->GetPrefs(),
@@ -226,142 +209,42 @@ void SigninManagerAndroid::OnSigninAllowedPrefChanged() const {
       IsSigninAllowed());
 }
 
-void SigninManagerAndroid::StopApplyingCloudPolicy(JNIEnv* env) {
-  user_policy_signin_service_->ShutdownCloudPolicyManager();
-}
+void SigninManagerAndroid::StopApplyingCloudPolicy(JNIEnv* env) {}
 
 void SigninManagerAndroid::RegisterPolicyWithAccount(
     const CoreAccountInfo& account,
-    RegisterPolicyWithAccountCallback callback) {
-  if (!ShouldLoadPolicyForUser(account.email)) {
-    std::move(callback).Run(std::nullopt);
-    return;
-  }
-
-  user_policy_signin_service_->RegisterForPolicyWithAccountId(
-      account.email, account.account_id,
-      base::BindOnce(
-          [](RegisterPolicyWithAccountCallback callback,
-             const std::string& dm_token, const std::string& client_id,
-             const std::vector<std::string>& user_affiliation_ids) {
-            std::optional<ManagementCredentials> credentials;
-            if (!dm_token.empty()) {
-              credentials.emplace(dm_token, client_id, user_affiliation_ids);
-            }
-            std::move(callback).Run(credentials);
-          },
-          std::move(callback)));
-}
+    RegisterPolicyWithAccountCallback callback) {}
 
 void SigninManagerAndroid::FetchAndApplyCloudPolicy(
     JNIEnv* env,
     const base::android::JavaParamRef<jobject>& j_account_info,
-    const base::android::JavaParamRef<jobject>& j_callback) {
-  CoreAccountInfo account = ConvertFromJavaCoreAccountInfo(env, j_account_info);
-  auto callback =
-      base::BindOnce(base::android::RunRunnableAndroid,
-                     base::android::ScopedJavaGlobalRef<jobject>(j_callback));
-
-  RegisterPolicyWithAccount(
-      account,
-      base::BindOnce(&SigninManagerAndroid::OnPolicyRegisterDone,
-                     weak_factory_.GetWeakPtr(), account, std::move(callback)));
-}
+    const base::android::JavaParamRef<jobject>& j_callback) {}
 
 void SigninManagerAndroid::OnPolicyRegisterDone(
     const CoreAccountInfo& account,
     base::OnceCallback<void()> policy_callback,
-    const std::optional<ManagementCredentials>& credentials) {
-  if (credentials) {
-    FetchPolicyBeforeSignIn(account, std::move(policy_callback),
-                            credentials.value());
-  } else {
-    // User's account does not have a policy to fetch.
-    std::move(policy_callback).Run();
-  }
-}
+    const std::optional<ManagementCredentials>& credentials) {}
 
 void SigninManagerAndroid::FetchPolicyBeforeSignIn(
     const CoreAccountInfo& account,
     base::OnceCallback<void()> policy_callback,
-    const ManagementCredentials& credentials) {
-  scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory =
-      profile_->GetDefaultStoragePartition()
-          ->GetURLLoaderFactoryForBrowserProcess();
-  user_policy_signin_service_->FetchPolicyForSignedInUser(
-      AccountIdFromAccountInfo(account), credentials.dm_token,
-      credentials.client_id, credentials.user_affiliation_ids,
-      url_loader_factory,
-      base::BindOnce([](base::OnceCallback<void()> callback,
-                        bool success) { std::move(callback).Run(); },
-                     std::move(policy_callback)));
-}
+    const ManagementCredentials& credentials) {}
 
 void SigninManagerAndroid::IsAccountManaged(
     JNIEnv* env,
     const JavaParamRef<jobject>& j_account_tracker_service,
     const JavaParamRef<jobject>& j_account_info,
-    const JavaParamRef<jobject>& j_callback) {
-  base::Time start_time = base::Time::Now();
-  CoreAccountInfo account = ConvertFromJavaCoreAccountInfo(env, j_account_info);
-  base::android::ScopedJavaGlobalRef<jobject> callback(env, j_callback);
-
-  if (cached_is_account_managed_.has_value() &&
-      MatchesCachedIsAccountManagedEntry(*cached_is_account_managed_,
-                                         account)) {
-    // Cache hit, return cached value without issuing any request.
-    bool is_managed = cached_is_account_managed_->is_account_managed;
-    base::android::RunBooleanCallbackAndroid(callback, is_managed);
-    return;
-  }
-
-  if (!base::FeatureList::IsEnabled(switches::kSeedAccountsRevamp) &&
-      base::FeatureList::IsEnabled(switches::kEnterprisePolicyOnSignin)) {
-    // Force seed the account, since requesting management status would require
-    // access token, and this operation would result in a crash if done on a
-    // non seeded account. See https://crbug.com/332900316.
-    AccountTrackerService* account_tracker_service =
-        AccountTrackerService::FromAccountTrackerServiceAndroid(
-            j_account_tracker_service);
-
-    account_tracker_service->SeedAccountInfo(account.gaia, account.email);
-  }
-
-  RegisterPolicyWithAccount(
-      account,
-      base::BindOnce(
-          &SigninManagerAndroid::OnPolicyRegisterDoneForIsAccountManaged,
-          weak_factory_.GetWeakPtr(), account, std::move(callback),
-          start_time));
-}
+    const JavaParamRef<jobject>& j_callback) {}
 
 void SigninManagerAndroid::OnPolicyRegisterDoneForIsAccountManaged(
     const CoreAccountInfo& account,
     base::android::ScopedJavaGlobalRef<jobject> callback,
     base::Time start_time,
-    const std::optional<ManagementCredentials>& credentials) {
-  UMA_HISTOGRAM_MEDIUM_TIMES("Signin.Android.IsAccountManagedDuration",
-                             (base::Time::Now() - start_time));
-
-  bool is_managed = credentials.has_value();
-  // Cache result in case IsAccountManaged() is invoked again for the same user.
-  cached_is_account_managed_.emplace(
-      account.gaia, is_managed,
-      base::Time::Now() + kIsAccountManagedCacheExpirationTime);
-  base::android::RunBooleanCallbackAndroid(callback, is_managed);
-}
+    const std::optional<ManagementCredentials>& credentials) {}
 
 base::android::ScopedJavaLocalRef<jstring>
 SigninManagerAndroid::GetManagementDomain(JNIEnv* env) {
   base::android::ScopedJavaLocalRef<jstring> domain;
-
-  policy::CloudPolicyStore* store = user_cloud_policy_manager_->core()->store();
-
-  if (store && store->is_managed() && store->policy()->has_username()) {
-    domain.Reset(base::android::ConvertUTF8ToJavaString(
-        env, gaia::ExtractDomainName(store->policy()->username())));
-  }
-
   return domain;
 }
 
@@ -398,11 +281,8 @@ std::string JNI_SigninManagerImpl_ExtractDomainName(JNIEnv* env,
 
 void SigninManagerAndroid::SetUserAcceptedAccountManagement(
     JNIEnv* env,
-    jboolean acceptedAccountManagement) {
-  chrome::enterprise_util::SetUserAcceptedAccountManagement(
-      profile_, acceptedAccountManagement);
-}
+    jboolean acceptedAccountManagement) {}
 
 bool SigninManagerAndroid::GetUserAcceptedAccountManagement(JNIEnv* env) {
-  return chrome::enterprise_util::UserAcceptedAccountManagement(profile_);
+  return false;
 }

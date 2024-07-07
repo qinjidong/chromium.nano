@@ -25,8 +25,6 @@
 #include "components/download/public/common/download_item.h"
 #include "components/download/public/common/download_path_reservation_tracker.h"
 #include "components/download/public/common/download_target_info.h"
-#include "components/safe_browsing/buildflags.h"
-#include "components/safe_browsing/content/common/proto/download_file_types.pb.h"
 #include "content/public/browser/download_manager.h"
 #include "content/public/browser/download_manager_delegate.h"
 #include "extensions/buildflags/buildflags.h"
@@ -36,11 +34,6 @@
 #if BUILDFLAG(IS_ANDROID)
 #include "chrome/browser/download/android/download_dialog_bridge.h"
 #include "chrome/browser/download/android/download_message_bridge.h"
-#endif
-
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-#include "chrome/browser/safe_browsing/download_protection/download_protection_service.h"
-#include "chrome/browser/safe_browsing/download_protection/download_protection_util.h"
 #endif
 
 class DownloadPrefs;
@@ -166,31 +159,6 @@ class ChromeDownloadManagerDelegate
 
   DownloadPrefs* download_prefs() { return download_prefs_.get(); }
 
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-  // The state of a safebrowsing check.
-  class SafeBrowsingState : public DownloadCompletionBlocker {
-   public:
-    SafeBrowsingState() = default;
-
-    SafeBrowsingState(const SafeBrowsingState&) = delete;
-    SafeBrowsingState& operator=(const SafeBrowsingState&) = delete;
-
-    ~SafeBrowsingState() override;
-
-    // String pointer used for identifying safebrowsing data associated with
-    // a download item.
-    static const char kSafeBrowsingUserDataKey[];
-  };
-
-  // Callback function after the DownloadProtectionService completes.
-  void CheckClientDownloadDone(uint32_t download_id,
-                               safe_browsing::DownloadCheckResult result);
-
-  // Callback function after scanning completes for a save package.
-  void CheckSavePackageScanningDone(uint32_t download_id,
-                                    safe_browsing::DownloadCheckResult result);
-#endif  // FULL_SAFE_BROWSING
-
   base::WeakPtr<ChromeDownloadManagerDelegate> GetWeakPtr();
 
   static void ConnectToQuarantineService(
@@ -212,11 +180,6 @@ class ChromeDownloadManagerDelegate
   virtual bool IsOpenInBrowserPreferredForFile(const base::FilePath& path);
 
  protected:
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-  virtual safe_browsing::DownloadProtectionService*
-      GetDownloadProtectionService();
-#endif
-
   // Show file picker for |download|.
   virtual void ShowFilePickerForDownload(
       download::DownloadItem* download,
@@ -309,8 +272,7 @@ class ChromeDownloadManagerDelegate
   void OnDownloadTargetDetermined(
       uint32_t download_id,
       download::DownloadTargetCallback callback,
-      download::DownloadTargetInfo target_info,
-      safe_browsing::DownloadFileType::DangerLevel danger_level);
+      download::DownloadTargetInfo target_info);
 
   // Sends a download report when the dangerous download is opened. This action
   // can be performed multiple times after the warning is bypassed, so this

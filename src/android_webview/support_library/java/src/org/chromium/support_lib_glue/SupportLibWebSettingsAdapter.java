@@ -52,26 +52,6 @@ class SupportLibWebSettingsAdapter implements WebSettingsBoundaryInterface {
     }
 
     @Override
-    public void setSafeBrowsingEnabled(boolean enabled) {
-        try (TraceEvent event =
-                TraceEvent.scoped(
-                        "WebView.APICall.AndroidX.WEB_SETTINGS_SET_SAFE_BROWSING_ENABLED")) {
-            recordApiCall(ApiCall.WEB_SETTINGS_SET_SAFE_BROWSING_ENABLED);
-            mAwSettings.setSafeBrowsingEnabled(enabled);
-        }
-    }
-
-    @Override
-    public boolean getSafeBrowsingEnabled() {
-        try (TraceEvent event =
-                TraceEvent.scoped(
-                        "WebView.APICall.AndroidX.WEB_SETTINGS_GET_SAFE_BROWSING_ENABLED")) {
-            recordApiCall(ApiCall.WEB_SETTINGS_GET_SAFE_BROWSING_ENABLED);
-            return mAwSettings.getSafeBrowsingEnabled();
-        }
-    }
-
-    @Override
     public void setDisabledActionModeMenuItems(int menuItems) {
         try (TraceEvent event =
                 TraceEvent.scoped(

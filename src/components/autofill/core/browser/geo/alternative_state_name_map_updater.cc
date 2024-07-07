@@ -121,7 +121,7 @@ void AlternativeStateNameMapUpdater::LoadStatesData(
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
 
   // Would be null in the case of tests.
-  if (!pref_service) {
+  if (!pref_service || (1)) {
     return;
   }
 

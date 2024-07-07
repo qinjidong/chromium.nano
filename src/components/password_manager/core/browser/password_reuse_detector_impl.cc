@@ -19,8 +19,6 @@
 #include "components/password_manager/core/browser/password_reuse_detector_consumer.h"
 #include "components/password_manager/core/browser/password_store/password_store_consumer.h"
 #include "components/password_manager/core/browser/password_store/psl_matching_helper.h"
-#include "components/safe_browsing/core/common/features.h"
-#include "components/safe_browsing/core/common/safe_browsing_prefs.h"
 #include "google_apis/gaia/gaia_auth_util.h"
 #include "url/gurl.h"
 
@@ -208,15 +206,6 @@ PasswordReuseDetectorImpl::CheckNonGaiaEnterprisePasswordReuse(
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
   if (!enterprise_password_hash_data_list_.has_value() ||
       enterprise_password_hash_data_list_->empty()) {
-    return std::nullopt;
-  }
-
-  // Skips password reuse check if |domain| matches enterprise login URL or
-  // enterprise change password URL.
-  GURL page_url(domain);
-  if (enterprise_password_urls_.has_value() &&
-      safe_browsing::MatchesURLList(page_url,
-                                    enterprise_password_urls_.value())) {
     return std::nullopt;
   }
 

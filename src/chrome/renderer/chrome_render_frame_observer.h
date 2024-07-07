@@ -12,7 +12,6 @@
 #include "build/build_config.h"
 #include "chrome/common/chrome_render_frame.mojom.h"
 #include "chrome/renderer/companion/visual_query/visual_query_classifier_agent.h"
-#include "components/safe_browsing/buildflags.h"
 #include "content/public/renderer/render_frame_observer.h"
 #include "mojo/public/cpp/bindings/associated_receiver_set.h"
 #include "mojo/public/cpp/bindings/pending_associated_receiver.h"
@@ -27,11 +26,6 @@ class Size;
 
 namespace optimization_guide {
 class PageTextAgent;
-}
-
-namespace safe_browsing {
-class PhishingClassifierDelegate;
-class PhishingImageEmbedderDelegate;
 }
 
 namespace translate {
@@ -155,12 +149,6 @@ class ChromeRenderFrameObserver : public content::RenderFrameObserver,
   // Have the same lifetime as us.
   raw_ptr<translate::TranslateAgent> translate_agent_;
   raw_ptr<optimization_guide::PageTextAgent> page_text_agent_;
-#if BUILDFLAG(SAFE_BROWSING_AVAILABLE)
-  raw_ptr<safe_browsing::PhishingClassifierDelegate> phishing_classifier_ =
-      nullptr;
-  raw_ptr<safe_browsing::PhishingImageEmbedderDelegate>
-      phishing_image_embedder_ = nullptr;
-#endif
 
   // Owned by ChromeContentRendererClient and outlive us.
   raw_ptr<web_cache::WebCacheImpl> web_cache_impl_;

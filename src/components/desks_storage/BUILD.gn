@@ -9,8 +9,6 @@ static_library("desks_storage") {
 
   sources = [
     "core/admin_template_model.h",
-    "core/admin_template_service.cc",
-    "core/admin_template_service.h",
     "core/desk_model.cc",
     "core/desk_model.h",
     "core/desk_model_observer.h",
@@ -36,7 +34,6 @@ static_library("desks_storage") {
     "//components/account_id",
     "//components/app_constants",
     "//components/app_restore",
-    "//components/policy/core/common",
     "//components/prefs",
     "//components/sync",
     "//components/sync/model",

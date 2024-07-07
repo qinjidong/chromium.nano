@@ -9,7 +9,6 @@
 #include "chrome/browser/password_manager/android/local_passwords_migration_warning_util.h"
 #include "chrome/browser/password_manager/chrome_password_manager_client.h"
 #include "chrome/browser/profiles/profile.h"
-#include "chrome/browser/safe_browsing/chrome_password_reuse_detection_manager_client.h"
 #include "chrome/browser/ui/android/passwords/all_passwords_bottom_sheet_view.h"
 #include "chrome/browser/ui/android/passwords/all_passwords_bottom_sheet_view_impl.h"
 #include "components/device_reauth/device_authenticator.h"
@@ -25,7 +24,6 @@
 
 using autofill::mojom::FocusedFieldType;
 using password_manager::PasswordManagerClient;
-using safe_browsing::PasswordReuseDetectionManagerClient;
 
 // No-op constructor for tests.
 AllPasswordsBottomSheetController::AllPasswordsBottomSheetController(
@@ -38,8 +36,6 @@ AllPasswordsBottomSheetController::AllPasswordsBottomSheetController(
     base::OnceCallback<void()> dismissal_callback,
     FocusedFieldType focused_field_type,
     PasswordManagerClient* client,
-    PasswordReuseDetectionManagerClient*
-        password_reuse_detection_manager_client,
     ShowMigrationWarningCallback show_migration_warning_callback)
     : view_(std::move(view)),
       web_contents_(web_contents),
@@ -49,8 +45,6 @@ AllPasswordsBottomSheetController::AllPasswordsBottomSheetController(
       driver_(std::move(driver)),
       focused_field_type_(focused_field_type),
       client_(client),
-      password_reuse_detection_manager_client_(
-          password_reuse_detection_manager_client),
       show_migration_warning_callback_(
           std::move(show_migration_warning_callback)) {}
 
@@ -80,8 +74,6 @@ AllPasswordsBottomSheetController::AllPasswordsBottomSheetController(
       factory->GetDriverForFrame(focused_frame);
   driver_ = driver->AsWeakPtr();
   client_ = ChromePasswordManagerClient::FromWebContents(web_contents_);
-  password_reuse_detection_manager_client_ =
-      ChromePasswordReuseDetectionManagerClient::FromWebContents(web_contents_);
 }
 
 AllPasswordsBottomSheetController::~AllPasswordsBottomSheetController() {
@@ -202,7 +194,6 @@ void AllPasswordsBottomSheetController::FillPassword(
     return;
   }
   driver_->FillIntoFocusedField(true, password);
-  password_reuse_detection_manager_client_->OnPasswordSelected(password);
 }
 
 void AllPasswordsBottomSheetController::OnResultFromAllStoresReceived(

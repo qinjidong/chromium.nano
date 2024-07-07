@@ -21,14 +21,9 @@
 #include "base/task/single_thread_task_runner.h"
 #include "base/time/time.h"
 #include "chrome/browser/browser_process.h"
-#include "chrome/browser/enterprise/browser_management/management_service_factory.h"
-#include "chrome/browser/enterprise/util/managed_browser_utils.h"
 #include "chrome/browser/net/system_network_context_manager.h"
 #include "chrome/browser/new_tab_page/chrome_colors/generated_colors_info.h"
 #include "chrome/browser/password_manager/chrome_password_manager_client.h"
-#include "chrome/browser/policy/chrome_browser_policy_connector.h"
-#include "chrome/browser/policy/cloud/user_policy_signin_service_factory.h"
-#include "chrome/browser/policy/profile_policy_connector.h"
 #include "chrome/browser/profiles/profile_attributes_entry.h"
 #include "chrome/browser/profiles/profile_attributes_storage.h"
 #include "chrome/browser/profiles/profile_avatar_icon_util.h"
@@ -58,13 +53,6 @@
 #include "components/feature_engagement/public/feature_constants.h"
 #include "components/password_manager/core/browser/password_manager.h"
 #include "components/password_manager/core/common/password_manager_ui.h"
-#include "components/policy/core/browser/signin/profile_separation_policies.h"
-#include "components/policy/core/browser/signin/user_cloud_signin_restriction_policy_fetcher.h"
-#include "components/policy/core/common/policy_map.h"
-#include "components/policy/core/common/policy_namespace.h"
-#include "components/policy/core/common/policy_service.h"
-#include "components/policy/core/common/policy_utils.h"
-#include "components/policy/policy_constants.h"
 #include "components/pref_registry/pref_registry_syncable.h"
 #include "components/prefs/pref_service.h"
 #include "components/prefs/scoped_user_pref_update.h"
@@ -114,20 +102,6 @@ AccountInfo GetPrimaryAccountInfo(signin::IdentityManager* manager) {
   account_info.email = primary_core_account_info.email;
   account_info.account_id = primary_core_account_info.account_id;
   return account_info;
-}
-
-bool IsFirstAccount(signin::IdentityManager* manager,
-                    const std::string& email) {
-  std::vector<CoreAccountInfo> accounts_in_chrome =
-      manager->GetAccountsWithRefreshTokens();
-  // There is not guarantee that the added email/account have a refresh token
-  // yet.
-  // So we either check that no account exists, or that the only account that
-  // has a refresh token is the account we are interested in, to make sure it is
-  // the first account.
-  return accounts_in_chrome.size() == 0 ||
-         (accounts_in_chrome.size() == 1 &&
-          gaia::AreEmailsSame(email, accounts_in_chrome[0].email));
 }
 
 // Returns `ShouldShowChromeSigninBubbleWithReason::kShouldShow` if sign in
@@ -183,83 +157,6 @@ ShouldShowChromeSigninBubbleWithReason MaybeShouldShowChromeSigninBubble(
 // Returns false otherwise.
 bool IsRequiredExtendedAccountInfoAvailable(const AccountInfo& account_info) {
   return account_info.IsValid();
-}
-
-// Returns true if enterprise separation is required.
-// Returns false is enterprise separation is not required.
-// Returns no value if info is required to determine if enterprise separation
-// is required. If `profile_separation_policies` is `std::nullopt` then the
-// user cloud profile separation policies have not yet been fetched.
-std::optional<bool> EnterpriseSeparationMaybeRequired(
-    Profile* profile,
-    signin::IdentityManager* identity_manager,
-    const std::string& email,
-    bool is_new_account_interception,
-    const std::optional<policy::ProfileSeparationPolicies>&
-        intercepted_profile_separation_policies,
-    bool expects_intercepted_profile_separation_policies_for_testing) {
-  CoreAccountInfo primary_core_account_info =
-      identity_manager->GetPrimaryAccountInfo(signin::ConsentLevel::kSignin);
-
-  // Enforce separation for new accounts or re-auth of existing secondary
-  // accounts.
-  if ((is_new_account_interception ||
-       !gaia::AreEmailsSame(primary_core_account_info.email, email)) &&
-      !signin_util::IsAccountExemptedFromEnterpriseProfileSeparation(profile,
-                                                                     email)) {
-    return true;
-  }
-
-  // No enterprise separation required for consumer accounts.
-  if (signin::AccountManagedStatusFinder::IsEnterpriseUserBasedOnEmail(email) ==
-      signin::AccountManagedStatusFinder::EmailEnterpriseStatus::
-          kKnownNonEnterprise) {
-    return false;
-  }
-
-  auto intercepted_account_info =
-      identity_manager->FindExtendedAccountInfoByEmailAddress(email);
-  // If the account info is not found, we need to wait for the info to be
-  // available.
-  if (!IsRequiredExtendedAccountInfoAvailable(intercepted_account_info)) {
-    return std::nullopt;
-  }
-  // If the intercepted account is not managed, no interception required.
-  if (!intercepted_account_info.IsManaged()) {
-    return false;
-  }
-  // If `profile` requires enterprise profile separation, return true.
-  // Here we only check the legacy policy by passing an empty email since the
-  // new ProfileSeparationSetting policy is checked early in the function.
-  if (signin_util::IsProfileSeparationEnforcedByProfile(
-          profile,
-          /*intercepted_account_email=*/std::string())) {
-    return true;
-  }
-
-  if (signin_util::IsProfileSeparationEnforcedByPolicies(
-          intercepted_profile_separation_policies.value_or(
-              policy::ProfileSeparationPolicies()))) {
-    return true;
-  }
-
-  // If we still do not know if profile separation is required, the account
-  // level policies for the intercepted account must be fetched if possible.
-  // If `g_browser_process->system_network_context_manager()` is  equal to
-  // nullptr, we are probably in tests and should not try to fetch any policies.
-  // If `expects_intercepted_profile_separation_policies_for_testing`, even if
-  // we are in tests, we have a value set locally that will not require us to
-  // make a network call.
-  // Fetching the value will not be possible isf we cannot make network calls
-  // nor have a value set locally for testing.
-  if (is_new_account_interception &&
-      !intercepted_profile_separation_policies.has_value() &&
-      (g_browser_process->system_network_context_manager() ||
-       expects_intercepted_profile_separation_policies_for_testing)) {
-    return std::nullopt;
-  }
-
-  return false;
 }
 
 void RecordShouldShowChromeSigninBubbleReason(
@@ -350,110 +247,12 @@ DiceWebSigninInterceptor::GetHeuristicOutcome(
     const std::string& gaia_id,
     bool update_state,
     const ProfileAttributesEntry** entry) const {
-  bool signin_interception_enabled =
-      profile_->GetPrefs()->GetBoolean(prefs::kSigninInterceptionEnabled);
-
   if (is_sync_signin) {
     // Do not intercept signins from the Sync startup flow.
     // Note: |is_sync_signin| is an approximation, and in rare cases it may be
     // true when in fact the signin was not a sync signin. In this case the
     // interception is missed.
     return SigninInterceptionHeuristicOutcome::kAbortSyncSignin;
-  }
-
-  auto enforce_enterprise_separation = EnterpriseSeparationMaybeRequired(
-      profile_, identity_manager_, email, is_new_account,
-      /*intercepted_profile_separation_policies=*/std::nullopt,
-      /*expects_intercepted_profile_separation_policies_for_testing=*/
-      intercepted_account_profile_separation_policies_response_for_testing_
-          .has_value());
-
-  // If we do not have all the information to enforce or not enterprise profile
-  // separation, return `std::nullopt` so that we can try and get more info on
-  // the intercepted account.
-  if (!enforce_enterprise_separation.has_value()) {
-    return std::nullopt;
-  }
-
-  const ProfileAttributesEntry* switch_to_entry = ShouldShowProfileSwitchBubble(
-      email,
-      &g_browser_process->profile_manager()->GetProfileAttributesStorage());
-  if (switch_to_entry && entry) {
-    *entry = switch_to_entry;
-  }
-
-  if (enforce_enterprise_separation.value()) {
-    return switch_to_entry
-               ? SigninInterceptionHeuristicOutcome::
-                     kInterceptEnterpriseForcedProfileSwitch
-               : SigninInterceptionHeuristicOutcome::kInterceptEnterpriseForced;
-  }
-
-  CHECK(!enforce_enterprise_separation.value());
-
-  // If interception is disabled and there are no enforce enterprise
-  // profile separation policies abort.
-  if (!signin_interception_enabled) {
-    return SigninInterceptionHeuristicOutcome::kAbortInterceptionDisabled;
-  }
-
-  // Don't show profile switch for reauth.
-  if (switch_to_entry && is_new_account) {
-    return SigninInterceptionHeuristicOutcome::kInterceptProfileSwitch;
-  }
-
-  // The `gaia_id` must have a value to properly read the prefs related to the
-  // account and the Chrome Signin Bubble.
-  if (!gaia_id.empty()) {
-    // Chrome sign in bubble is shown if chrome isn't signed in.
-    ShouldShowChromeSigninBubbleWithReason should_show_chrome_signin_bubble =
-        MaybeShouldShowChromeSigninBubble(*profile_->GetPrefs(),
-                                          identity_manager_, gaia_id,
-                                          state_->access_point_);
-    if (update_state) {
-      state_->should_show_chrome_signin_bubble_ =
-          should_show_chrome_signin_bubble;
-    }
-
-    // Showing the Chrome Signin Bubble is part of the Uno Desktop project.
-    if (switches::IsExplicitBrowserSigninUIOnDesktopEnabled() &&
-        should_show_chrome_signin_bubble ==
-            ShouldShowChromeSigninBubbleWithReason::kShouldShow) {
-      return SigninInterceptionHeuristicOutcome::kInterceptChromeSignin;
-    }
-  }
-
-  // Do not intercept reauth.
-  // Reauth is subject to chrome sign in bubble which is checked earlier in this
-  // function.
-  if (!is_new_account) {
-    return SigninInterceptionHeuristicOutcome::kAbortAccountNotNew;
-  }
-
-  // From this point the remaining possible interceptions involve creating a new
-  // profile.
-  if (!profiles::IsProfileCreationAllowed()) {
-    return SigninInterceptionHeuristicOutcome::kAbortProfileCreationDisallowed;
-  }
-
-  if (IsFirstAccount(identity_manager_, email)) {
-    // Enterprise and multi-user bubbles are only shown if there are multiple
-    // accounts. The intercepted account may not be added to chrome yet.
-    return SigninInterceptionHeuristicOutcome::kAbortSingleAccount;
-  }
-
-  if (!identity_manager_->HasPrimaryAccount(signin::ConsentLevel::kSignin)) {
-    // This is not the first account in the identity manager but there is no
-    // primary account, all the accounts are in the UNO web-only state, so do
-    // not intercept.
-    DCHECK(switches::IsExplicitBrowserSigninUIOnDesktopEnabled());
-    return SigninInterceptionHeuristicOutcome::
-        kAbortNotFirstAccountButNoPrimaryAccount;
-  }
-
-  if (HasUserDeclinedProfileCreation(email)) {
-    return SigninInterceptionHeuristicOutcome::
-        kAbortUserDeclinedProfileForAccount;
   }
 
   return std::nullopt;
@@ -626,8 +425,7 @@ bool DiceWebSigninInterceptor::ShouldEnforceEnterpriseProfileSeparation(
     // Sync users are considered to have implicitly accepted management.
     // Returns true only for reauth for primary accounts without sync where
     // management hasn't been accepted.
-    return !identity_manager_->HasPrimaryAccount(signin::ConsentLevel::kSync) &&
-           !chrome::enterprise_util::UserAcceptedAccountManagement(profile_);
+    return !identity_manager_->HasPrimaryAccount(signin::ConsentLevel::kSync);
   }
 
   if (!signin_util::IsAccountExemptedFromEnterpriseProfileSeparation(
@@ -636,10 +434,7 @@ bool DiceWebSigninInterceptor::ShouldEnforceEnterpriseProfileSeparation(
   }
 
   if (!signin_util::IsProfileSeparationEnforcedByProfile(
-          profile_, intercepted_account_info.email) &&
-      !signin_util::IsProfileSeparationEnforcedByPolicies(
-          state_->intercepted_account_profile_separation_policies_.value_or(
-              policy::ProfileSeparationPolicies()))) {
+          profile_, intercepted_account_info.email)) {
     return false;
   }
 
@@ -656,19 +451,10 @@ bool DiceWebSigninInterceptor::ShouldShowEnterpriseDialog(
     return false;
   }
 
-  if (state_->intercepted_account_profile_separation_policies_
-          .value_or(policy::ProfileSeparationPolicies())
-          .profile_separation_settings()
-          .value_or(policy::ProfileSeparationSettings::SUGGESTED) !=
-      policy::ProfileSeparationSettings::SUGGESTED) {
-    return false;
-  }
-
   // Check if the intercepted account is managed.
   if (intercepted_account_info.IsManaged() &&
       IsPrimaryAccountInterception(intercepted_account_info.account_id,
-                                   identity_manager_) &&
-      !chrome::enterprise_util::UserAcceptedAccountManagement(profile_)) {
+                                   identity_manager_)) {
     return true;
   }
 
@@ -772,31 +558,13 @@ void DiceWebSigninInterceptor::ProcessInterceptionOrWait(
 
   bool have_all_extended_account_info =
       IsFullExtendedAccountInfoAvailable(info);
-  bool have_all_enterprise_info =
-      EnterpriseSeparationMaybeRequired(
-          profile_, identity_manager_, info.email,
-          state_->new_account_interception_,
-          state_->intercepted_account_profile_separation_policies_,
-          /*expects_intercepted_profile_separation_policies_for_testing=*/
-          intercepted_account_profile_separation_policies_response_for_testing_
-              .has_value())
-          .has_value();
+  bool have_all_enterprise_info = false;
 
   if (!have_all_extended_account_info) {
     // We're need more extended account info - ensure we're waiting on that.
     EnsureObservingExtendedAccountInfo();
   } else {
     account_info_update_observation_.Reset();
-  }
-
-  if (!have_all_enterprise_info) {
-    // Fetch the ManagedAccountsSigninRestriction policy value for the
-    // intercepted account with a timeout.
-    EnsureAccountLevelSigninRestrictionFetchInProgress(
-        info, base::BindOnce(
-                  &DiceWebSigninInterceptor::
-                      OnAccountLevelManagedAccountsSigninRestrictionReceived,
-                  base::Unretained(this), info));
   }
 
   if (have_all_extended_account_info && have_all_enterprise_info) {
@@ -843,12 +611,7 @@ void DiceWebSigninInterceptor::OnInterceptionReadyToBeProcessed(
           identity_manager_->GetPrimaryAccountId(signin::ConsentLevel::kSignin);
       show_link_data_option =
           (primary_account_id.empty() ||
-           primary_account_id == info.account_id) &&
-          signin_util::
-              ProfileSeparationAllowsKeepingUnmanagedBrowsingDataInManagedProfile(
-                  profile_,
-                  state_->intercepted_account_profile_separation_policies_
-                      .value_or(policy::ProfileSeparationPolicies()));
+           primary_account_id == info.account_id);
       RecordSigninInterceptionHeuristicOutcome(
           SigninInterceptionHeuristicOutcome::kInterceptEnterpriseForced);
     }
@@ -911,8 +674,7 @@ void DiceWebSigninInterceptor::OnInterceptionReadyToBeProcessed(
   bool show_managed_disclaimer =
       *interception_type !=
           WebSigninInterceptor::SigninInterceptionType::kProfileSwitch &&
-      (info.IsManaged() ||
-       policy::ManagementServiceFactory::GetForPlatform()->IsManaged());
+      info.IsManaged();
 
   WebSigninInterceptor::Delegate::BubbleParameters bubble_parameters(
       *interception_type, info, GetPrimaryAccountInfo(identity_manager_),
@@ -972,11 +734,6 @@ void DiceWebSigninInterceptor::OnExtendedAccountInfoRemoved(
 
 void DiceWebSigninInterceptor::OnInterceptionInfoFetchTimeout() {
   account_info_update_observation_.Reset();
-  if (!state_->intercepted_account_profile_separation_policies_.has_value()) {
-    state_->intercepted_account_profile_separation_policies_ =
-        policy::ProfileSeparationPolicies();
-  }
-
   AccountInfo account_info =
       identity_manager_->FindExtendedAccountInfoByAccountId(
           state_->account_id_);
@@ -1184,9 +941,6 @@ void DiceWebSigninInterceptor::OnNewSignedInProfileCreated(
     }
   }
 
-  chrome::enterprise_util::SetUserAcceptedAccountManagement(
-      new_profile, state_->intercepted_account_management_accepted_);
-
   // Work is done in this profile, the flow continues in the
   // DiceWebSigninInterceptor that is attached to the new profile.
   // We pass relevant parameters from this instance to the new one.
@@ -1204,10 +958,7 @@ void DiceWebSigninInterceptor::OnEnterpriseProfileCreationResult(
     SigninInterceptionResult create) {
   signin_util::RecordEnterpriseProfileCreationUserChoice(
       /*enforced_by_policy=*/!signin_util::IsProfileSeparationEnforcedByProfile(
-          profile_, account_info.email) &&
-          !signin_util::IsProfileSeparationEnforcedByPolicies(
-              state_->intercepted_account_profile_separation_policies_.value_or(
-                  policy::ProfileSeparationPolicies())),
+          profile_, account_info.email),
       /*created=*/create == SigninInterceptionResult::kAccepted);
 
   // Make sure existing account is a non-signed in profile.
@@ -1217,8 +968,6 @@ void DiceWebSigninInterceptor::OnEnterpriseProfileCreationResult(
     // a new profile.
     if (IsReauthPrimaryAccount(state_->new_account_interception_,
                                account_info.account_id, identity_manager_)) {
-      chrome::enterprise_util::SetUserAcceptedAccountManagement(
-          profile_, state_->intercepted_account_management_accepted_);
       Reset();
     } else {
       OnProfileCreationChoice(account_info, profile_color,
@@ -1228,8 +977,6 @@ void DiceWebSigninInterceptor::OnEnterpriseProfileCreationResult(
     state_->intercepted_account_management_accepted_ = true;
     DCHECK_EQ(GetPrimaryAccountInfo(identity_manager_).account_id,
               account_info.account_id);
-    chrome::enterprise_util::SetUserAcceptedAccountManagement(
-        profile_, state_->intercepted_account_management_accepted_);
     Reset();
   } else {
     DCHECK_EQ(SigninInterceptionResult::kDeclined, create)
@@ -1315,53 +1062,6 @@ bool DiceWebSigninInterceptor::HasUserDeclinedProfileCreation(
   constexpr int kMaxProfileCreationDeclinedCount = 2;
   return declined_count &&
          declined_count.value() >= kMaxProfileCreationDeclinedCount;
-}
-
-void DiceWebSigninInterceptor::
-    EnsureAccountLevelSigninRestrictionFetchInProgress(
-        const AccountInfo& account_info,
-        base::OnceCallback<void(const policy::ProfileSeparationPolicies&)>
-            callback) {
-  if (state_->account_level_signin_restriction_policy_fetcher_ != nullptr) {
-    // A fetch is already in progress, don't start a new one.
-    DCHECK_EQ(account_info.account_id, state_->account_id_);
-    return;
-  }
-
-  if (intercepted_account_profile_separation_policies_response_for_testing_
-          .has_value()) {
-    std::move(callback).Run(
-        intercepted_account_profile_separation_policies_response_for_testing_
-            .value());
-    return;
-  }
-
-  DCHECK(!state_->interception_info_available_timeout_.IsCancelled());
-
-  state_->account_level_signin_restriction_policy_fetcher_ =
-      std::make_unique<policy::UserCloudSigninRestrictionPolicyFetcher>(
-          g_browser_process->browser_policy_connector(),
-          g_browser_process->system_network_context_manager()
-              ->GetSharedURLLoaderFactory());
-  state_->account_level_signin_restriction_policy_fetcher_
-      ->GetManagedAccountsSigninRestriction(
-          identity_manager_, account_info.account_id, std::move(callback),
-          policy::utils::IsPolicyTestingEnabled(profile_->GetPrefs(),
-                                                chrome::GetChannel())
-              ? profile_->GetPrefs()
-                    ->GetDefaultPrefValue(
-                        prefs::kUserCloudSigninPolicyResponseFromPolicyTestPage)
-                    ->GetString()
-              : std::string());
-}
-
-void DiceWebSigninInterceptor::
-    OnAccountLevelManagedAccountsSigninRestrictionReceived(
-        const AccountInfo& account_info,
-        const policy::ProfileSeparationPolicies& profile_separation_policies) {
-  state_->intercepted_account_profile_separation_policies_ =
-      profile_separation_policies;
-  ProcessInterceptionOrWait(account_info, /*timed_out=*/false);
 }
 
 void DiceWebSigninInterceptor::RecordSigninInterceptionHeuristicOutcome(

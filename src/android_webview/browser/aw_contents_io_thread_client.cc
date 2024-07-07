@@ -32,7 +32,6 @@
 #include "components/embedder_support/android/util/features.h"
 #include "components/embedder_support/android/util/input_stream.h"
 #include "components/embedder_support/android/util/web_resource_response.h"
-#include "components/safe_browsing/core/common/features.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/render_process_host.h"
@@ -502,14 +501,6 @@ bool AwContentsIoThreadClient::ShouldAcceptThirdPartyCookies() const {
   JNIEnv* env = AttachCurrentThread();
   return Java_AwContentsIoThreadClient_shouldAcceptThirdPartyCookies(
       env, java_object_);
-}
-
-bool AwContentsIoThreadClient::GetSafeBrowsingEnabled() const {
-  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
-
-  JNIEnv* env = AttachCurrentThread();
-  return Java_AwContentsIoThreadClient_getSafeBrowsingEnabled(env,
-                                                              java_object_);
 }
 
 bool AwContentsIoThreadClient::ShouldBlockNetworkLoads() const {

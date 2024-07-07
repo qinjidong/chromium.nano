@@ -29,7 +29,6 @@
 #include "chrome/grit/generated_resources.h"
 #include "chrome/grit/inline_login_resources.h"
 #include "chrome/grit/inline_login_resources_map.h"
-#include "components/policy/core/common/policy_pref_names.h"
 #include "content/public/browser/web_ui.h"
 #include "content/public/browser/web_ui_data_source.h"
 #include "content/public/common/content_switches.h"
@@ -214,114 +213,6 @@ void CreateAndAddWebUIDataSource(Profile* profile) {
 #endif
   };
   source->AddLocalizedStrings(kLocalizedStrings);
-
-#if BUILDFLAG(IS_CHROMEOS_ASH)
-  source->AddBoolean(
-      "secondaryGoogleAccountSigninAllowed",
-      profile->GetPrefs()->GetBoolean(
-          ::account_manager::prefs::kSecondaryGoogleAccountSigninAllowed));
-  source->AddBoolean(
-      "isArcAccountRestrictionsEnabled",
-      ash::AccountAppsAvailability::IsArcAccountRestrictionsEnabled());
-  // The "Apps Settings" link points to Apps > Manage your apps.
-  source->AddString(
-      "accountManagerDialogArcToggleLabel",
-      l10n_util::GetStringFUTF16(
-          IDS_ACCOUNT_MANAGER_DIALOG_ARC_TOGGLE_LABEL,
-          base::UTF8ToUTF16(
-              chrome::GetOSSettingsUrl(
-                  chromeos::settings::mojom::kAppManagementSubpagePath)
-                  .spec())));
-  source->AddString(
-      "accountManagerDialogArcAccountPickerBody",
-      l10n_util::GetStringFUTF16(
-          IDS_ACCOUNT_MANAGER_DIALOG_ARC_ACCOUNT_PICKER_BODY,
-          base::UTF8ToUTF16(
-              chrome::GetOSSettingsUrl(
-                  chromeos::settings::mojom::kMyAccountsSubpagePath)
-                  .spec())));
-  source->AddBoolean(
-      "shouldSkipWelcomePage",
-      ash::AccountAppsAvailability::IsArcAccountRestrictionsEnabled()
-          ? false
-          : profile->GetPrefs()->GetBoolean(
-                ash::prefs::kShouldSkipInlineLoginWelcomePage));
-  if (ash::AccountAppsAvailability::IsArcAccountRestrictionsEnabled()) {
-    int message_id = IDS_ACCOUNT_MANAGER_DIALOG_WELCOME_BODY_V2_WITHOUT_GUEST;
-    // Offer browser guest mode or device guest mode, if available.
-    if (profiles::IsGuestModeEnabled()) {
-      message_id = IDS_ACCOUNT_MANAGER_DIALOG_WELCOME_BODY_V2_WITH_GUEST_MODE;
-    } else if (user_manager::UserManager::Get()->IsGuestSessionAllowed()) {
-      message_id =
-          IDS_ACCOUNT_MANAGER_DIALOG_WELCOME_BODY_V2_WITH_DEVICE_GUEST_MODE;
-    }
-
-    source->AddString(
-        "accountManagerDialogWelcomeBody",
-        l10n_util::GetStringFUTF16(
-            message_id,
-            // "add a new person" link:
-            chrome::kAddNewUserURL,
-            // Device type:
-            ui::GetChromeOSDeviceName(),
-            // Settings > Accounts link:
-            base::UTF8ToUTF16(
-                chrome::GetOSSettingsUrl(
-                    chromeos::settings::mojom::kMyAccountsSubpagePath)
-                    .spec())));
-
-    source->AddString(
-        "accountManagerDialogWelcomeBodyArc",
-        l10n_util::GetStringFUTF16(
-            IDS_ACCOUNT_MANAGER_DIALOG_WELCOME_BODY_ARC,
-            // "add a new person" link:
-            chrome::kAddNewUserURL,
-            // Device type:
-            ui::GetChromeOSDeviceName(),
-            // "Apps Settings" link:
-            base::UTF8ToUTF16(
-                chrome::GetOSSettingsUrl(
-                    chromeos::settings::mojom::kAppManagementSubpagePath)
-                    .spec())));
-  } else {
-    bool is_incognito_enabled =
-        (IncognitoModePrefs::GetAvailability(profile->GetPrefs()) !=
-         policy::IncognitoModeAvailability::kDisabled);
-    int message_id =
-        is_incognito_enabled
-            ? IDS_ACCOUNT_MANAGER_DIALOG_WELCOME_BODY
-            : IDS_ACCOUNT_MANAGER_DIALOG_WELCOME_BODY_WITHOUT_INCOGNITO;
-    source->AddString(
-        "accountManagerDialogWelcomeBody",
-        l10n_util::GetStringFUTF16(
-            message_id,
-            base::UTF8ToUTF16(
-                chrome::GetOSSettingsUrl(
-                    chromeos::settings::mojom::kMyAccountsSubpagePath)
-                    .spec()),
-            ui::GetChromeOSDeviceName()));
-  }
-
-  source->AddBoolean("isChild",
-                     user_manager::UserManager::Get()->IsLoggedInAsChildUser());
-
-  user_manager::User* user =
-      ash::ProfileHelper::Get()->GetUserByProfile(profile);
-  DCHECK(user);
-  source->AddString("userName", user->GetGivenName());
-  source->AddString("accountManagerOsSettingsUrl",
-                    chrome::GetOSSettingsUrl(
-                        chromeos::settings::mojom::kMyAccountsSubpagePath)
-                        .spec());
-
-  source->OverrideContentSecurityPolicy(
-      network::mojom::CSPDirectiveName::FrameSrc,
-      "frame-src chrome://webui-test/;");
-
-  std::u16string username =
-      ash::ProfileHelper::Get()->GetUserByProfile(profile)->GetGivenName();
-  AddEduStrings(source, username);
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
 }
 
 // Returns whether |url| can be displayed in a chrome://chrome-signin web

@@ -107,10 +107,6 @@ bool IsProfileLocked(const base::FilePath& profile_path);
 void UpdateGaiaProfileInfoIfNeeded(Profile* profile);
 #endif  // !BUILDFLAG(IS_CHROMEOS_ASH)
 
-// If the profile given by |profile_path| is loaded in the ProfileManager, use
-// a BrowsingDataRemover to delete all the Profile's data.
-void RemoveBrowsingDataForProfile(const base::FilePath& profile_path);
-
 // Returns true if the current session is a Demo session.
 bool IsDemoSession();
 

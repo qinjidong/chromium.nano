@@ -43,11 +43,7 @@
 #endif  // BUILDFLAG(IS_MAC)
 
 #if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC)
-#include "chrome/browser/enterprise/client_certificates/certificate_provisioning_service_factory.h"
 #include "chrome/browser/ui/webui/settings/settings_utils.h"
-#include "components/enterprise/client_certificates/core/certificate_provisioning_service.h"
-#include "components/enterprise/client_certificates/core/client_certificates_service.h"
-#include "components/enterprise/client_certificates/core/features.h"
 #endif
 
 namespace {
@@ -191,41 +187,6 @@ std::unique_ptr<ClientCertStoreLoader> CreatePlatformClientCertLoader() {
 #endif
 }
 
-#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC)
-// ClientCertStore implementation that always returns an empty list. The
-// CertificateProvisioningService implementation expects to wrap a platform
-// cert store, but here we only want to get results from the provisioning
-// service itself, so instead of a platform cert store we pass an
-// implementation that always returns an empty result when queried.
-class NullClientCertStore : public net::ClientCertStore {
- public:
-  ~NullClientCertStore() override = default;
-  void GetClientCerts(
-      scoped_refptr<const net::SSLCertRequestInfo> cert_request_info,
-      ClientCertListCallback callback) override {
-    std::move(callback).Run({});
-  }
-};
-
-std::unique_ptr<ClientCertStoreLoader> CreateProvisionedClientCertLoader(
-    Profile* profile) {
-  if (!profile || !client_certificates::features::
-                      IsManagedClientCertificateForUserEnabled()) {
-    return nullptr;
-  }
-  auto* provisioning_service =
-      client_certificates::CertificateProvisioningServiceFactory::GetForProfile(
-          profile);
-  if (!provisioning_service) {
-    return nullptr;
-  }
-
-  return std::make_unique<ClientCertStoreLoader>(
-      client_certificates::ClientCertificatesService::Create(
-          provisioning_service, std::make_unique<NullClientCertStore>()));
-}
-#endif
-
 void PopulateCertInfosFromCertificateList(
     CertificateManagerPageHandler::GetCertificatesCallback callback,
     const net::CertificateList& certs) {
@@ -353,39 +314,9 @@ CertificateManagerPageHandler::GetCertSource(
         source_ptr = std::make_unique<ClientCertSource>(
             CreatePlatformClientCertLoader());
         break;
-#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC)
-      case certificate_manager_v2::mojom::CertificateSource::
-          kProvisionedClientCert:
-        source_ptr = std::make_unique<ClientCertSource>(
-            CreateProvisionedClientCertLoader(profile_));
-        break;
-#endif
     }
   }
   return *source_ptr;
-}
-
-void CertificateManagerPageHandler::GetPolicyInformation(
-    GetPolicyInformationCallback callback) {
-  ProfileNetworkContextService* service =
-      ProfileNetworkContextServiceFactory::GetForContext(profile_.get());
-  ProfileNetworkContextService::CertificatePoliciesForView policies =
-      service->GetCertificatePolicyForView();
-
-  certificate_manager_v2::mojom::CertPolicyInfoPtr cert_policy_info =
-      certificate_manager_v2::mojom::CertPolicyInfo::New();
-#if !BUILDFLAG(IS_CHROMEOS)
-  cert_policy_info->include_system_trust_store =
-      policies.certificate_policies->include_system_trust_store;
-  cert_policy_info->is_include_system_trust_store_managed =
-      policies.is_include_system_trust_store_managed;
-#else
-  // TODO(crbug.com/40928765): figure out how this should be displayed for
-  // ChromeOS
-  cert_policy_info->include_system_trust_store = true;
-  cert_policy_info->system_import_policy_managed = false;
-#endif
-  std::move(callback).Run(std::move(cert_policy_info));
 }
 
 #if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC)

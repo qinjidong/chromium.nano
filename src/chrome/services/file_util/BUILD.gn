@@ -7,7 +7,6 @@ import("//build/config/chromeos/ui_mode.gni")
 import("//build/config/features.gni")
 import("//build/config/sanitizers/sanitizers.gni")
 import("//chrome/services/file_util/public/features.gni")
-import("//components/safe_browsing/buildflags.gni")
 import("//testing/test.gni")
 
 source_set("file_util") {
@@ -22,7 +21,6 @@ source_set("file_util") {
     ":buildflags",
     "//base",
     "//build:chromeos_buildflags",
-    "//components/safe_browsing:buildflags",
     "//extensions/buildflags:buildflags",
     "//mojo/public/cpp/bindings",
     "//third_party/zlib",
@@ -30,7 +28,6 @@ source_set("file_util") {
 
   public_deps = [
     "//chrome/services/file_util/public/mojom",
-    "//components/safe_browsing/core/common:common",
     "//mojo/public/cpp/bindings",
     "//mojo/public/mojom/base",
   ]
@@ -42,23 +39,6 @@ source_set("file_util") {
     ]
 
     deps += [ "//components/services/filesystem/public/mojom" ]
-  }
-
-  if (is_mac) {
-    deps += [ "//chrome/utility/safe_browsing" ]
-  }
-
-  if (safe_browsing_mode == 1) {
-    sources += [
-      "safe_archive_analyzer.cc",
-      "safe_archive_analyzer.h",
-    ]
-
-    deps += [
-      "//chrome/common/safe_browsing",
-      "//chrome/common/safe_browsing:archive_analyzer_results",
-      "//chrome/utility/safe_browsing",
-    ]
   }
 
   if (enable_extractors) {
@@ -109,7 +89,6 @@ source_set("test_support") {
     "//base",
     "//build:chromeos_buildflags",
     "//chrome/services/file_util/public/mojom:mojom",
-    "//components/safe_browsing:buildflags",
     "//extensions/buildflags:buildflags",
     "//mojo/public/cpp/bindings",
     "//testing/gmock",
@@ -132,10 +111,6 @@ if (enable_extractors) {
       ":file_util",
       "//third_party/fuzztest:fuzztest_gtest_main",
     ]
-
-    if (safe_browsing_mode == 1) {
-      deps += [ "//chrome/common:common" ]
-    }
 
     if (is_mac) {
       frameworks = [ "AppKit.framework" ]

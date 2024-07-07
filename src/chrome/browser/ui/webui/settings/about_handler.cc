@@ -28,7 +28,6 @@
 #include "build/chromeos_buildflags.h"
 #include "chrome/browser/browser_process.h"
 #include "chrome/browser/chrome_content_browser_client.h"
-#include "chrome/browser/enterprise/browser_management/management_service_factory.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/ui/browser.h"
 #include "chrome/browser/ui/browser_commands.h"
@@ -41,9 +40,6 @@
 #include "chrome/grit/branded_strings.h"
 #include "chrome/grit/generated_resources.h"
 #include "components/google/core/common/google_util.h"
-#include "components/policy/core/common/management/management_service.h"
-#include "components/policy/core/common/policy_namespace.h"
-#include "components/policy/policy_constants.h"
 #include "components/services/app_service/public/cpp/app_launch_util.h"
 #include "components/strings/grit/components_strings.h"
 #include "content/public/browser/browser_thread.h"
@@ -128,21 +124,6 @@ std::u16string GetAllowedConnectionTypesMessage() {
 
 // Returns true if current user can change channel, false otherwise.
 bool CanChangeChannel(Profile* profile) {
-  if (policy::ManagementServiceFactory::GetForPlatform()->IsManaged()) {
-    bool value = false;
-    // On a managed machine we delegate this setting to the affiliated users
-    // only if the policy value is true.
-    ash::CrosSettings::Get()->GetBoolean(ash::kReleaseChannelDelegated, &value);
-    if (!value)
-      return false;
-
-    // Get the currently logged-in user and check if it is affiliated.
-    const user_manager::User* user =
-        profile ? ash::ProfileHelper::Get()->GetUserByProfile(profile)
-                : nullptr;
-    return user && user->IsAffiliated();
-  }
-
   // On non-managed machines, only the local owner can change the channel.
   ash::OwnerSettingsServiceAsh* service =
       ash::OwnerSettingsServiceAshFactory::GetInstance()->GetForBrowserContext(
@@ -406,16 +387,6 @@ void AboutHandler::RegisterMessages() {
 void AboutHandler::OnJavascriptAllowed() {
   apply_changes_from_upgrade_observer_ = true;
   version_updater_ = VersionUpdater::Create(web_ui()->GetWebContents());
-  policy_registrar_ = std::make_unique<policy::PolicyChangeRegistrar>(
-      g_browser_process->policy_service(),
-      policy::PolicyNamespace(policy::POLICY_DOMAIN_CHROME, std::string()));
-// TODO(b/330932781): Investigate and fix mismatched BUILDFLAG and comment.
-#if BUILDFLAG(IS_CHROMEOS)
-  policy_registrar_->Observe(
-      policy::key::kDeviceAutoUpdateDisabled,
-      base::BindRepeating(&AboutHandler::OnDeviceAutoUpdatePolicyChanged,
-                          weak_factory_.GetWeakPtr()));
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
 #if BUILDFLAG(IS_CHROMEOS_ASH)
   if (ash::CrosSettings::IsInitialized()) {
     extended_updates_setting_change_subscription_ =
@@ -430,7 +401,6 @@ void AboutHandler::OnJavascriptAllowed() {
 void AboutHandler::OnJavascriptDisallowed() {
   apply_changes_from_upgrade_observer_ = false;
   version_updater_.reset();
-  policy_registrar_.reset();
   weak_factory_.InvalidateWeakPtrs();
 }
 

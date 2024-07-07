@@ -10,7 +10,6 @@
 #include "base/values.h"
 #include "build/chromeos_buildflags.h"
 #include "chrome/browser/browser_process.h"
-#include "chrome/browser/policy/profile_policy_connector.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/ui/managed_ui.h"
 #include "chrome/common/pref_names.h"
@@ -18,15 +17,6 @@
 #include "components/supervised_user/core/common/pref_names.h"
 #include "content/public/browser/web_ui.h"
 #include "content/public/browser/web_ui_data_source.h"
-
-namespace {
-
-policy::PolicyService* GetProfilePolicyService(Profile* profile) {
-  auto* profile_connector = profile->GetProfilePolicyConnector();
-  return profile_connector->policy_service();
-}
-
-}  // namespace
 
 // static
 void ManagedUIHandler::Initialize(content::WebUI* web_ui,
@@ -70,12 +60,6 @@ void ManagedUIHandler::OnJavascriptDisallowed() {
   RemoveObservers();
 }
 
-void ManagedUIHandler::OnPolicyUpdated(const policy::PolicyNamespace& ns,
-                                       const policy::PolicyMap& previous,
-                                       const policy::PolicyMap& current) {
-  NotifyIfChanged();
-}
-
 // Manually add/remove observers. ScopedObserver doesn't work with
 // PolicyService::Observer because AddObserver() takes 2 arguments.
 void ManagedUIHandler::AddObservers() {
@@ -83,12 +67,6 @@ void ManagedUIHandler::AddObservers() {
     return;
 
   has_observers_ = true;
-
-  auto* policy_service = GetProfilePolicyService(profile_);
-  for (int i = 0; i < policy::POLICY_DOMAIN_SIZE; i++) {
-    auto domain = static_cast<policy::PolicyDomain>(i);
-    policy_service->AddObserver(domain, this);
-  }
 
   pref_registrar_.Add(prefs::kSupervisedUserId,
                       base::BindRepeating(&ManagedUIHandler::NotifyIfChanged,
@@ -100,12 +78,6 @@ void ManagedUIHandler::RemoveObservers() {
     return;
 
   has_observers_ = false;
-
-  auto* policy_service = GetProfilePolicyService(profile_);
-  for (int i = 0; i < policy::POLICY_DOMAIN_SIZE; i++) {
-    auto domain = static_cast<policy::PolicyDomain>(i);
-    policy_service->RemoveObserver(domain, this);
-  }
 
   pref_registrar_.RemoveAll();
 }

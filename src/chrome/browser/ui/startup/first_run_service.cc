@@ -35,13 +35,6 @@
 #include "components/signin/public/identity_manager/identity_manager.h"
 #include "content/public/browser/browser_context.h"
 
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-#include "chrome/browser/enterprise/util/managed_browser_utils.h"
-#include "chrome/browser/ui/startup/silent_sync_enabler.h"
-#include "chromeos/crosapi/mojom/device_settings_service.mojom.h"
-#include "chromeos/startup/browser_params_proxy.h"
-#endif
-
 namespace {
 bool IsFirstRunEligibleProfile(Profile* profile) {
   if (profile->IsOffTheRecord()) {
@@ -230,27 +223,6 @@ void FirstRunService::TryMarkFirstRunAlreadyFinished(
     FinishFirstRun(FinishedReason::kProfileAlreadySetUp);
     return;
   }
-
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-  switch (policy_effect) {
-    case PolicyEffect::kDisabled:
-      if (!chrome::enterprise_util::UserAcceptedAccountManagement(
-              &profile_.get())) {
-        // Management had to be accepted to create the session. Normally this
-        // gets set during the FRE (TurnSyncOn flow), but since it is skipped,
-        // set the flag here.
-        chrome::enterprise_util::SetUserAcceptedAccountManagement(
-            &profile_.get(), true);
-      }
-      break;
-    case PolicyEffect::kSilenced:
-      StartSilentSync(scoped_closure_runner.Release());
-      break;
-    case PolicyEffect::kNone:
-      // Do nothing.
-      break;
-  }
-#endif
 
   if (policy_effect != PolicyEffect::kNone) {
     FinishFirstRun(FinishedReason::kSkippedByPolicies);

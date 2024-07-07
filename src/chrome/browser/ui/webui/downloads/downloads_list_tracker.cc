@@ -26,15 +26,12 @@
 #include "chrome/browser/download/download_item_warning_data.h"
 #include "chrome/browser/download/download_query.h"
 #include "chrome/browser/download/download_stats.h"
-#include "chrome/browser/download/download_ui_safe_browsing_util.h"
-#include "chrome/browser/enterprise/connectors/common.h"
 #include "chrome/browser/extensions/api/downloads/downloads_api.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/signin/identity_manager_factory.h"
 #include "chrome/browser/ui/webui/downloads/downloads.mojom.h"
 #include "components/download/public/common/download_danger_type.h"
 #include "components/download/public/common/download_item.h"
-#include "components/safe_browsing/core/common/features.h"
 #include "components/signin/public/identity_manager/identity_manager.h"
 #include "components/url_formatter/elide_url.h"
 #include "content/public/browser/browser_context.h"
@@ -47,10 +44,6 @@
 #include "third_party/icu/source/i18n/unicode/datefmt.h"
 #include "ui/base/l10n/time_format.h"
 #include "url/url_constants.h"
-
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-#include "components/safe_browsing/core/common/safe_browsing_prefs.h"
-#endif
 
 using content::BrowserContext;
 using content::DownloadManager;
@@ -126,23 +119,6 @@ downloads::mojom::TailoredWarningType GetTailoredWarningType(
       return downloads::mojom::TailoredWarningType::
           kNoApplicableTailoredWarningType;
   }
-}
-
-downloads::mojom::SafeBrowsingState GetSafeBrowsingState(Profile* profile) {
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-  safe_browsing::SafeBrowsingState state =
-      safe_browsing::GetSafeBrowsingState(*profile->GetPrefs());
-  switch (state) {
-    case safe_browsing::SafeBrowsingState::NO_SAFE_BROWSING:
-      return downloads::mojom::SafeBrowsingState::kNoSafeBrowsing;
-    case safe_browsing::SafeBrowsingState::STANDARD_PROTECTION:
-      return downloads::mojom::SafeBrowsingState::kStandardProtection;
-    case safe_browsing::SafeBrowsingState::ENHANCED_PROTECTION:
-      return downloads::mojom::SafeBrowsingState::kStandardProtection;
-  }
-#else
-  return downloads::mojom::SafeBrowsingState::kNoSafeBrowsing;
-#endif
 }
 
 // TODO(dbeam): if useful elsewhere, move to base/i18n/time_formatting.h?
@@ -446,11 +422,7 @@ downloads::mojom::DataPtr DownloadsListTracker::CreateDownloadData(
   file_value->tailored_warning_type = tailored_warning_type;
   file_value->is_dangerous = download_item->IsDangerous();
   file_value->is_insecure = download_item->IsInsecure();
-  file_value->is_reviewable =
-      enterprise_connectors::ShouldPromptReviewForDownload(
-          Profile::FromBrowserContext(
-              content::DownloadItemUtils::GetBrowserContext(download_item)),
-          download_item);
+  file_value->is_reviewable = false;
 
   file_value->last_reason_text = base::UTF16ToUTF8(last_reason_text);
   file_value->percent = percent;
@@ -459,14 +431,6 @@ downloads::mojom::DataPtr DownloadsListTracker::CreateDownloadData(
       base::UTF16ToUTF8(download_model.GetShowInFolderText());
   file_value->retry = retry;
   file_value->state = *state;
-
-  // Note that the safe_browsing_state is the state of the download's profile
-  // *now* whereas the presence of a verdict was determined when the download
-  // happened, so they are not necessarily related.
-  file_value->safe_browsing_state =
-      GetSafeBrowsingState(download_model.profile());
-  file_value->has_safe_browsing_verdict =
-      WasSafeBrowsingVerdictObtained(download_item);
 
   MaybeRecordDangerousDownloadWarningShown(download_model);
 

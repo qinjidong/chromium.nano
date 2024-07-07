@@ -54,13 +54,6 @@ enum State {
   kPromptForLocalPasswordScanning,
 };
 
-// This corresponds to safe_browsing::SafeBrowsingState.
-enum SafeBrowsingState {
-  kNoSafeBrowsing,
-  kStandardProtection,
-  kEnhancedProtection,
-};
-
 // This is the information associated with a download used for rendering in the
 // UI.
 struct Data {
@@ -105,9 +98,6 @@ struct Data {
   // The display string for the URL in the UI. May be truncated/elided from the
   // original URL, and IDN domains may be converted to Unicode.
   mojo_base.mojom.String16 display_url;
-  // Safe Browsing protection level of the profile in which the item was
-  // downloaded. Used to determine whether to show a special warning message.
-  SafeBrowsingState safe_browsing_state;
   // Whether the download had a Safe Browsing verdict. This is used to determine
   // whether to call a file type warning "suspicious" or "unverified".
   bool has_safe_browsing_verdict;
@@ -127,11 +117,6 @@ interface PageHandler {
   // the following four methods.
   // TODO(chlily): Remove this when cleaning up ImprovedDownloadPageWarnings.
   SaveDangerousRequiringGesture(string id);
-
-  // Called when "Download suspicious file" is clicked from the
-  // chrome://downloads overflow menu, for suspicious/unverified files. Does not
-  // show a prompt.
-  SaveSuspiciousRequiringGesture(string id);
 
   // Called when "Download dangerous file" is clicked from the
   // chrome://downloads overflow menu to open the warning bypass prompt, for

@@ -9,8 +9,6 @@ import android.content.Intent;
 
 import org.chromium.chrome.browser.preferences.Pref;
 import org.chromium.chrome.browser.profiles.Profile;
-import org.chromium.chrome.browser.safe_browsing.SafeBrowsingBridge;
-import org.chromium.chrome.browser.safe_browsing.SafeBrowsingState;
 import org.chromium.chrome.browser.signin.services.IdentityServicesProvider;
 import org.chromium.chrome.browser.signin.services.UnifiedConsentServiceBridge;
 import org.chromium.chrome.browser.sync.SyncServiceFactory;
@@ -45,10 +43,6 @@ class PrivacyGuideUtils {
 
     static boolean isSearchSuggestionsEnabled(Profile profile) {
         return UserPrefs.get(profile).getBoolean(Pref.SEARCH_SUGGEST_ENABLED);
-    }
-
-    static @SafeBrowsingState int getSafeBrowsingState(Profile profile) {
-        return new SafeBrowsingBridge(profile).getSafeBrowsingState();
     }
 
     static @CookieControlsMode int getCookieControlsMode(Profile profile) {

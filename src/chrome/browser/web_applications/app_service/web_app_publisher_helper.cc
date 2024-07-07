@@ -62,7 +62,6 @@
 #include "chrome/browser/web_applications/mojom/user_display_mode.mojom-shared.h"
 #include "chrome/browser/web_applications/os_integration/os_integration_manager.h"
 #include "chrome/browser/web_applications/os_integration/web_app_file_handler_manager.h"
-#include "chrome/browser/web_applications/policy/web_app_policy_manager.h"
 #include "chrome/browser/web_applications/scope_extension_info.h"
 #include "chrome/browser/web_applications/web_app.h"
 #include "chrome/browser/web_applications/web_app_chromeos_data.h"
@@ -1475,36 +1474,11 @@ void WebAppPublisherHelper::OnWebAppDisabledStateChanged(
   apps::AppPtr app = CreateWebApp(web_app);
   app->icon_key = apps::IconKey(GetIconEffects(web_app));
 
-  // If the disable mode is hidden, update the visibility of the new disabled
-  // app.
-  if (is_disabled && provider_->policy_manager().IsDisabledAppsModeHidden()) {
-    UpdateAppDisabledMode(*app);
-  }
-
   delegate_->PublishWebApp(std::move(app));
 }
 
 void WebAppPublisherHelper::OnWebAppsDisabledModeChanged() {
   std::vector<apps::AppPtr> apps;
-  std::vector<webapps::AppId> app_ids = registrar().GetAppIds();
-  for (const auto& id : app_ids) {
-    // We only update visibility of disabled apps in this method. When enabling
-    // previously disabled app, OnWebAppDisabledStateChanged() method will be
-    // called and this method will update visibility and readiness of the newly
-    // enabled app.
-    if (provider_->policy_manager().IsWebAppInDisabledList(id)) {
-      if (IsAppServiceShortcut(id, *provider_)) {
-        continue;
-      }
-      const WebApp* web_app = GetWebApp(id);
-      if (!web_app) {
-        continue;
-      }
-      auto app = std::make_unique<apps::App>(app_type(), web_app->app_id());
-      UpdateAppDisabledMode(*app);
-      apps.push_back(std::move(app));
-    }
-  }
   delegate_->PublishWebApps(std::move(apps));
 }
 #endif
@@ -1788,12 +1762,6 @@ std::vector<std::string> WebAppPublisherHelper::GetPolicyIds(
 
 #if BUILDFLAG(IS_CHROMEOS)
 void WebAppPublisherHelper::UpdateAppDisabledMode(apps::App& app) {
-  if (provider_->policy_manager().IsDisabledAppsModeHidden()) {
-    app.show_in_launcher = false;
-    app.show_in_search = false;
-    app.show_in_shelf = false;
-    return;
-  }
   app.show_in_launcher = true;
   app.show_in_search = true;
   app.show_in_shelf = true;

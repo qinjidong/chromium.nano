@@ -35,7 +35,6 @@
 #include "chrome/browser/extensions/external_policy_loader.h"
 #include "chrome/browser/extensions/external_pref_loader.h"
 #include "chrome/browser/extensions/forced_extensions/install_stage_tracker.h"
-#include "chrome/browser/policy/profile_policy_connector.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/profiles/profiles_state.h"
 #include "chrome/browser/web_applications/preinstalled_app_install_features.h"
@@ -69,13 +68,11 @@
 #include "chrome/browser/ash/extensions/signin_screen_extensions_external_loader.h"
 #include "chrome/browser/ash/login/demo_mode/demo_extensions_external_loader.h"
 #include "chrome/browser/ash/login/demo_mode/demo_session.h"
-#include "chrome/browser/ash/policy/core/browser_policy_connector_ash.h"
 #include "chrome/browser/ash/policy/core/device_local_account_policy_service.h"
 #include "chrome/browser/ash/profiles/profile_helper.h"
 #include "chrome/browser/chromeos/extensions/device_local_account_external_policy_loader.h"
 #else
 #include "chrome/browser/extensions/preinstalled_apps.h"
-#include "components/policy/core/common/device_local_account_type.h"
 #endif
 
 #if BUILDFLAG(IS_WIN)
@@ -615,21 +612,6 @@ bool ExternalProviderImpl::HandleDoNotInstallForEnterprise(
     const base::Value::Dict& extension,
     const std::string& extension_id,
     std::set<std::string>* unsupported_extensions) {
-  std::optional<bool> do_not_install_for_enterprise =
-      extension.FindBool(kDoNotInstallForEnterprise);
-  if (do_not_install_for_enterprise.value_or(false)) {
-    const policy::ProfilePolicyConnector* const connector =
-        profile_->GetProfilePolicyConnector();
-    if (connector->IsManaged()) {
-      unsupported_extensions->insert(extension_id);
-      InstallStageTracker::Get(profile_)->ReportFailure(
-          extension_id,
-          InstallStageTracker::FailureReason::DO_NOT_INSTALL_FOR_ENTERPRISE);
-      VLOG(1) << "Skip installing (or uninstall) external extension "
-              << extension_id << " restricted for managed user";
-      return false;
-    }
-  }
   return true;
 }
 
@@ -643,62 +625,6 @@ void ExternalProviderImpl::CreateExternalProviders(
   scoped_refptr<ExternalLoader> external_loader;
   scoped_refptr<ExternalLoader> external_recommended_loader;
   ManifestLocation crx_location = ManifestLocation::kInvalidLocation;
-
-#if BUILDFLAG(IS_CHROMEOS_ASH)
-  if (ash::ProfileHelper::IsSigninProfile(profile)) {
-    // Download extensions/apps installed by policy in the login profile.
-    // Extensions (not apps) installed through this path will have type
-    // |TYPE_LOGIN_SCREEN_EXTENSION| with limited API capabilities.
-    crx_location = ManifestLocation::kExternalPolicyDownload;
-    external_loader =
-        base::MakeRefCounted<chromeos::SigninScreenExtensionsExternalLoader>(
-            profile);
-    auto signin_profile_provider = std::make_unique<ExternalProviderImpl>(
-        service, external_loader, profile, crx_location,
-        ManifestLocation::kExternalPolicyDownload, Extension::FOR_LOGIN_SCREEN);
-    signin_profile_provider->set_auto_acknowledge(true);
-    signin_profile_provider->set_allow_updates(true);
-    provider_list->push_back(std::move(signin_profile_provider));
-    return;
-  }
-#endif
-
-#if BUILDFLAG(IS_CHROMEOS_ASH)
-  policy::BrowserPolicyConnectorAsh* const connector =
-      g_browser_process->platform_part()->browser_policy_connector_ash();
-  DCHECK(connector);
-  bool is_chrome_os_public_session = false;
-  const user_manager::User* user =
-      ash::ProfileHelper::Get()->GetUserByProfile(profile);
-  if (user && connector->IsDeviceEnterpriseManaged()) {
-    auto account_type =
-        policy::GetDeviceLocalAccountType(user->GetAccountId().GetUserEmail());
-    if (account_type.has_value()) {
-      if (account_type == policy::DeviceLocalAccountType::kPublicSession) {
-        is_chrome_os_public_session = true;
-      }
-      policy::DeviceLocalAccountPolicyBroker* broker =
-          connector->GetDeviceLocalAccountPolicyService()->GetBrokerForUser(
-              user->GetAccountId().GetUserEmail());
-      if (broker) {
-        external_loader = broker->extension_loader();
-        crx_location = ManifestLocation::kExternalPolicy;
-      } else {
-        NOTREACHED_IN_MIGRATION();
-      }
-    }
-  }
-#elif BUILDFLAG(IS_CHROMEOS_LACROS)
-  if (chromeos::IsKioskSession() || chromeos::IsManagedGuestSession()) {
-    if (DeviceLocalAccountExtensionInstallerLacros::Get()) {
-      external_loader =
-          DeviceLocalAccountExtensionInstallerLacros::Get()->extension_loader();
-      crx_location = ManifestLocation::kExternalPolicy;
-    } else {
-      CHECK_IS_TEST();
-    }
-  }
-#endif
 
   if (!external_loader.get()) {
     external_loader = base::MakeRefCounted<ExternalPolicyLoader>(

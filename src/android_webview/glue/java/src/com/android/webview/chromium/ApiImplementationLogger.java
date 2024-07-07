@@ -176,11 +176,6 @@ public final class ApiImplementationLogger {
             case "public boolean android.webkit.WebViewClient.onRenderProcessGone("
                     + "android.webkit.WebView,android.webkit.RenderProcessGoneDetail)":
                 return WebViewClientMethod.ONRENDERPROCESSGONE_WEBVIEW_RENDERPROCESSGONEDETAIL;
-            case "public void android.webkit.WebViewClient.onSafeBrowsingHit("
-                    + "android.webkit.WebView,android.webkit.WebResourceRequest,int,"
-                    + "android.webkit.SafeBrowsingResponse)":
-                return WebViewClientMethod
-                        .ONSAFEBROWSINGHIT_WEBVIEW_WEBRESOURCEREQUEST_INT_SAFEBROWSINGRESPONSE;
             default:
                 return WebViewClientMethod.UNKNOWN;
         }

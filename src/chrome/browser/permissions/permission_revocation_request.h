@@ -12,7 +12,6 @@
 #include "base/memory/weak_ptr.h"
 #include "base/time/time.h"
 #include "chrome/browser/permissions/crowd_deny_preload_data.h"
-#include "chrome/browser/permissions/crowd_deny_safe_browsing_request.h"
 #include "components/content_settings/core/common/content_settings_types.h"
 #include "url/gurl.h"
 
@@ -64,12 +63,8 @@ class PermissionRevocationRequest {
   void CheckAndRevokeIfBlocklisted();
   void OnSiteReputationReady(
       const CrowdDenyPreloadData::SiteReputation* reputation);
-  void OnSafeBrowsingVerdictReceived(
-      const CrowdDenyPreloadData::SiteReputation* reputation,
-      CrowdDenySafeBrowsingRequest::Verdict verdict);
   void NotifyCallback(Outcome outcome);
 
-  std::optional<CrowdDenySafeBrowsingRequest> safe_browsing_request_;
   raw_ptr<Profile> profile_;
   const GURL origin_;
   OutcomeCallback callback_;

@@ -118,7 +118,6 @@ import org.chromium.components.minidump_uploader.CrashFileManager;
 import org.chromium.components.module_installer.util.ModuleUtil;
 import org.chromium.components.optimization_guide.proto.HintsProto;
 import org.chromium.components.policy.CombinedPolicyProvider;
-import org.chromium.components.safe_browsing.SafeBrowsingApiBridge;
 import org.chromium.components.signin.AccountManagerFacadeImpl;
 import org.chromium.components.signin.AccountManagerFacadeProvider;
 import org.chromium.components.webapps.AppBannerManager;
@@ -247,11 +246,6 @@ public class ProcessInitializationHandler {
      */
     @CallSuper
     protected void handlePreNativeLibraryLoadInitialization() {
-        new Thread(SafeBrowsingApiBridge::ensureSafetyNetApiInitialized).start();
-        if (ChromeFeatureList.sSafeBrowsingCallNewGmsApiOnStartup.isEnabled()) {
-            new Thread(SafeBrowsingApiBridge::initSafeBrowsingApi).start();
-        }
-
         // Ensure critical files are available, so they aren't blocked on the file-system
         // behind long-running accesses in next phase.
         // Don't do any large file access here!

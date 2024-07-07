@@ -25,8 +25,6 @@
 #include "components/language/core/browser/pref_names.h"
 #include "components/proxy_config/proxy_config_dictionary.h"
 #include "components/proxy_config/proxy_config_pref_names.h"
-#include "components/safe_browsing/core/common/safe_browsing_prefs.h"
-#include "components/safe_browsing/core/common/safebrowsing_switches.h"
 #include "components/sync/base/pref_names.h"
 #include "content/public/common/content_switches.h"
 #include "net/base/port_util.h"
@@ -77,8 +75,6 @@ const CommandLinePrefStore::BooleanSwitchToPreferenceMapEntry
         {switches::kAllowCrossOriginAuthPrompt,
          prefs::kAllowCrossOriginAuthPrompt, true},
         {switches::kDisablePrintPreview, prefs::kPrintPreviewDisabled, true},
-        {safe_browsing::switches::kSbEnableEnhancedProtection,
-         prefs::kSafeBrowsingEnhanced, true},
 #if BUILDFLAG(IS_CHROMEOS_ASH)
         {ash::switches::kEnableTouchpadThreeFingerClick,
          ash::prefs::kEnableTouchpadThreeFingerClick, true},

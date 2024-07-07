@@ -24,13 +24,8 @@
 #include "build/chromeos_buildflags.h"
 #include "chrome/browser/browser_features.h"
 #include "chrome/browser/browser_process.h"
-#include "chrome/browser/component_updater/crl_set_component_installer.h"
-#include "chrome/browser/component_updater/first_party_sets_component_installer.h"
-#include "chrome/browser/component_updater/pki_metadata_component_installer.h"
 #include "chrome/browser/net/chrome_mojo_proxy_resolver_factory.h"
 #include "chrome/browser/net/convert_explicitly_allowed_network_ports_pref.h"
-#include "chrome/browser/safe_browsing/safe_browsing_service.h"
-#include "chrome/browser/ssl/sct_reporting_service.h"
 #include "chrome/browser/ssl/ssl_config_service_manager.h"
 #include "chrome/common/channel_info.h"
 #include "chrome/common/chrome_features.h"
@@ -43,9 +38,6 @@
 #include "components/net_log/net_log_proxy_source.h"
 #include "components/network_session_configurator/common/network_features.h"
 #include "components/os_crypt/sync/os_crypt.h"
-#include "components/policy/core/common/policy_namespace.h"
-#include "components/policy/core/common/policy_service.h"
-#include "components/policy/policy_constants.h"
 #include "components/prefs/pref_registry_simple.h"
 #include "components/prefs/pref_service.h"
 #include "components/variations/net/variations_http_headers.h"
@@ -91,7 +83,6 @@
 
 #if BUILDFLAG(IS_CHROMEOS_ASH)
 #include "chrome/browser/ash/net/dhcp_wpad_url_client.h"
-#include "chrome/browser/ash/policy/core/browser_policy_connector_ash.h"
 #include "chrome/browser/browser_process_platform_part.h"
 #endif  // BUILDFLAG(IS_CHROMEOS_ASH)
 
@@ -275,12 +266,6 @@ NetworkSandboxState IsNetworkSandboxEnabledInternal() {
     return NetworkSandboxState::kDisabledBecauseOfKerberos;
   }
 #endif  // BUILDFLAG(IS_CHROMEOS) || BUILDFLAG(IS_LINUX)
-
-#if BUILDFLAG(IS_WIN)
-  if (!sandbox::policy::features::IsNetworkSandboxSupported()) {
-    return NetworkSandboxState::kDisabledByPlatform;
-  }
-#endif  // BUILDFLAG(IS_WIN)
 
 #if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_LINUX)
   if (local_state &&
@@ -540,16 +525,6 @@ SystemNetworkContextManager::SystemNetworkContextManager(
       ssl_config_service_manager_(local_state_),
       proxy_config_monitor_(local_state_),
       stub_resolver_config_reader_(local_state_) {
-#if !BUILDFLAG(IS_ANDROID)
-  // QuicAllowed was not part of Android policy.
-  const base::Value* value =
-      g_browser_process->policy_service()
-          ->GetPolicies(policy::PolicyNamespace(policy::POLICY_DOMAIN_CHROME,
-                                                std::string()))
-          .GetValue(policy::key::kQuicAllowed, base::Value::Type::BOOLEAN);
-  if (value)
-    is_quic_allowed_ = value->GetBool();
-#endif  // !BUILDFLAG(IS_ANDROID)
   shared_url_loader_factory_ = new URLLoaderFactoryForSystem(this);
 
   pref_change_registrar_.Init(local_state_);
@@ -806,12 +781,6 @@ void SystemNetworkContextManager::OnNetworkServiceCreated(
     network_service->SetEncryptionKey(OSCrypt::GetRawEncryptionKey());
 #endif  // BUILDFLAG(IS_WIN)
   }
-
-  // Configure SCT Auditing in the NetworkService.
-  SCTReportingService::ReconfigureAfterNetworkRestart();
-
-  component_updater::PKIMetadataComponentInstallerService::GetInstance()
-      ->ReconfigureAfterNetworkRestart();
 
   UpdateExplicitlyAllowedNetworkPorts();
 

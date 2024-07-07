@@ -28,13 +28,9 @@
 #include "chrome/browser/download/download_item_model.h"
 #include "chrome/browser/download/download_stats.h"
 #include "chrome/browser/download/notification/download_notification_manager.h"
-#include "chrome/browser/enterprise/connectors/common.h"
-#include "chrome/browser/enterprise/connectors/connectors_service.h"
 #include "chrome/browser/notifications/notification_display_service.h"
 #include "chrome/browser/notifications/notification_display_service_factory.h"
 #include "chrome/browser/notifications/notification_handler.h"
-#include "chrome/browser/safe_browsing/advanced_protection_status_manager.h"
-#include "chrome/browser/safe_browsing/advanced_protection_status_manager_factory.h"
 #include "chrome/browser/ui/chrome_pages.h"
 #include "chrome/browser/ui/scoped_tabbed_browser_displayer.h"
 #include "chrome/browser/ui/tabs/tab_strip_model_observer.h"
@@ -48,8 +44,6 @@
 #include "components/download/public/common/download_item.h"
 #include "components/download/public/common/download_utils.h"
 #include "components/prefs/pref_service.h"
-#include "components/safe_browsing/core/common/features.h"
-#include "components/safe_browsing/core/common/safe_browsing_prefs.h"
 #include "components/strings/grit/components_strings.h"
 #include "components/url_formatter/elide_url.h"
 #include "content/public/browser/browser_context.h"
@@ -383,7 +377,6 @@ void DownloadItemNotification::Click(
         return;
       }
 
-      item_->ReviewScanningVerdict(contents);
       in_review_ = true;
       Update();
     }
@@ -727,12 +720,7 @@ DownloadItemNotification::GetExtraActions() const {
       // Only include a keep/review button if there isn't an extra review dialog
       // opened already.
       if (!in_review_) {
-        if (enterprise_connectors::ShouldPromptReviewForDownload(
-                profile(), item_->GetDownloadItem())) {
-          actions->push_back(DownloadCommands::REVIEW);
-        } else {
-          actions->push_back(DownloadCommands::KEEP);
-        }
+        actions->push_back(DownloadCommands::KEEP);
       }
     }
     return actions;
@@ -968,14 +956,8 @@ std::u16string DownloadItemNotification::GetWarningStatusString() const {
                                         elided_filename);
     }
     case download::DOWNLOAD_DANGER_TYPE_UNCOMMON_CONTENT: {
-      bool requests_ap_verdicts =
-          safe_browsing::AdvancedProtectionStatusManagerFactory::GetForProfile(
-              profile())
-              ->IsUnderAdvancedProtection();
       return l10n_util::GetStringFUTF16(
-          requests_ap_verdicts
-              ? IDS_PROMPT_UNCOMMON_DOWNLOAD_CONTENT_IN_ADVANCED_PROTECTION
-              : IDS_PROMPT_UNCOMMON_DOWNLOAD_CONTENT,
+          IDS_PROMPT_UNCOMMON_DOWNLOAD_CONTENT,
           elided_filename);
     }
     case download::DOWNLOAD_DANGER_TYPE_POTENTIALLY_UNWANTED: {
@@ -1176,12 +1158,7 @@ bool DownloadItemNotification::IsScanning() const {
 }
 
 bool DownloadItemNotification::AllowedToOpenWhileScanning() const {
-  auto* service =
-      enterprise_connectors::ConnectorsServiceFactory::GetForBrowserContext(
-          profile());
-  return !service ||
-         !service->DelayUntilVerdict(
-             enterprise_connectors::AnalysisConnector::FILE_DOWNLOADED);
+  return true;
 }
 
 Browser* DownloadItemNotification::GetBrowser() const {

@@ -25,7 +25,6 @@
 #include "chrome/browser/extensions/api/management/chrome_management_api_delegate.h"
 #include "chrome/browser/extensions/api/messaging/chrome_messaging_delegate.h"
 #include "chrome/browser/extensions/api/metrics_private/chrome_metrics_private_delegate.h"
-#include "chrome/browser/extensions/api/storage/managed_value_store_cache.h"
 #include "chrome/browser/extensions/api/storage/sync_value_store_cache.h"
 #include "chrome/browser/extensions/extension_action_runner.h"
 #include "chrome/browser/extensions/extension_tab_util.h"
@@ -110,10 +109,6 @@ void ChromeExtensionsAPIClient::AddAdditionalValueStoreCaches(
   // Add support for chrome.storage.sync.
   (*caches)[settings_namespace::SYNC] =
       new SyncValueStoreCache(factory, observer, context->GetPath());
-
-  // Add support for chrome.storage.managed.
-  (*caches)[settings_namespace::MANAGED] = new ManagedValueStoreCache(
-      *Profile::FromBrowserContext(context), factory, observer);
 }
 
 void ChromeExtensionsAPIClient::AttachWebContentsHelpers(

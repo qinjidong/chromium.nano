@@ -8,7 +8,6 @@
 #include "chrome/browser/ui/views/chrome_layout_provider.h"
 #include "chrome/browser/ui/views/chrome_typography.h"
 #include "chrome/browser/ui/views/page_info/page_info_view_factory.h"
-#include "components/safe_browsing/core/common/features.h"
 #include "components/strings/grit/components_strings.h"
 #include "ui/base/l10n/l10n_util.h"
 #include "ui/base/metadata/metadata_impl_macros.h"
@@ -40,28 +39,9 @@ void PageInfoSecurityContentView::SetIdentityInfo(
   security_description_type_ = security_description->type;
 
   if (security_description->summary_style == SecuritySummaryColor::RED) {
-    if (identity_info.safe_browsing_status ==
-            PageInfo::SAFE_BROWSING_STATUS_MALWARE ||
-        identity_info.safe_browsing_status ==
-            PageInfo::SAFE_BROWSING_STATUS_SOCIAL_ENGINEERING ||
-        identity_info.safe_browsing_status ==
-            PageInfo::SAFE_BROWSING_STATUS_UNWANTED_SOFTWARE) {
-      security_view_->SetIcon(
-          PageInfoViewFactory::GetConnectionDangerousIcon());
-    } else {
-      security_view_->SetIcon(
-          PageInfoViewFactory::GetConnectionNotSecureIcon());
-    }
+    security_view_->SetIcon(
+        PageInfoViewFactory::GetConnectionNotSecureIcon());
     security_view_->SetSummary(security_description->summary, STYLE_RED);
-  } else if (security_description->summary_style ==
-                 SecuritySummaryColor::ENTERPRISE &&
-             (identity_info.safe_browsing_status ==
-                  PageInfo::SAFE_BROWSING_STATUS_MANAGED_POLICY_WARN ||
-              identity_info.safe_browsing_status ==
-                  PageInfo::SAFE_BROWSING_STATUS_MANAGED_POLICY_BLOCK)) {
-    security_view_->SetIcon(PageInfoViewFactory::GetBusinessIcon());
-    security_view_->SetSummary(security_description->summary,
-                               views::style::STYLE_BODY_3_MEDIUM);
   } else {
     security_view_->SetIcon(PageInfoViewFactory::GetConnectionSecureIcon());
     security_view_->SetSummary(security_description->summary,

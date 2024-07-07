@@ -28,10 +28,6 @@ namespace ash {
 class SmartDimComponentIntegrationTest;
 }
 
-namespace policy {
-class ComponentUpdaterPolicyTest;
-}
-
 namespace screen_ai {
 class ScreenAIDownloaderNonChromeOS;
 }
@@ -223,7 +219,6 @@ class OnDemandUpdater {
 
  private:
   friend class OnDemandTester;
-  friend class policy::ComponentUpdaterPolicyTest;
   friend class ::ComponentsHandler;
   friend class ::PluginObserver;
   friend class SwReporterOnDemandFetcher;

@@ -49,14 +49,9 @@
 #include "components/permissions/permissions_client.h"
 #include "components/permissions/request_type.h"
 #include "components/privacy_sandbox/privacy_sandbox_features.h"
-#include "components/safe_browsing/buildflags.h"
-#include "components/safe_browsing/content/browser/password_protection/password_protection_service.h"
-#include "components/safe_browsing/core/browser/password_protection/metrics_util.h"
-#include "components/safe_browsing/core/common/proto/csd.pb.h"
 #include "components/security_interstitials/content/stateful_ssl_host_state_delegate.h"
 #include "components/ssl_errors/error_info.h"
 #include "components/strings/grit/components_strings.h"
-#include "components/subresource_filter/core/browser/subresource_filter_features.h"
 #include "components/url_formatter/elide_url.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/browser_thread.h"
@@ -87,8 +82,6 @@ using base::ASCIIToUTF16;
 using base::UTF16ToUTF8;
 using base::UTF8ToUTF16;
 using content::BrowserThread;
-using safe_browsing::LoginReputationClientResponse;
-using safe_browsing::RequestOutcome;
 
 namespace {
 
@@ -846,21 +839,9 @@ void PageInfo::OpenContentSettingsExceptions(
 #endif
 }
 
-void PageInfo::OnChangePasswordButtonPressed() {
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-  RecordPageInfoAction(page_info::PAGE_INFO_CHANGE_PASSWORD_PRESSED);
-  delegate_->OnUserActionOnPasswordUi(
-      safe_browsing::WarningAction::CHANGE_PASSWORD);
-#endif
-}
+void PageInfo::OnChangePasswordButtonPressed() {}
 
-void PageInfo::OnAllowlistPasswordReuseButtonPressed() {
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-  RecordPageInfoAction(page_info::PAGE_INFO_PASSWORD_REUSE_ALLOWED);
-  delegate_->OnUserActionOnPasswordUi(
-      safe_browsing::WarningAction::MARK_AS_LEGITIMATE);
-#endif
-}
+void PageInfo::OnAllowlistPasswordReuseButtonPressed() {}
 
 void PageInfo::OnCookiesPageOpened() {
   RecordPageInfoAction(page_info::PAGE_INFO_COOKIES_PAGE_OPENED);
@@ -1008,9 +989,6 @@ void PageInfo::ComputeUIInputs(const GURL& url) {
     identity_status_description_android_ = safe_browsing_details_;
 #endif
 
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-    bool old_show_change_pw_buttons = show_change_password_buttons_;
-#endif
     show_change_password_buttons_ =
         (visible_security_state.malicious_content_status ==
              security_state::
@@ -1023,12 +1001,6 @@ void PageInfo::ComputeUIInputs(const GURL& url) {
                  MALICIOUS_CONTENT_STATUS_ENTERPRISE_PASSWORD_REUSE ||
          visible_security_state.malicious_content_status ==
              security_state::MALICIOUS_CONTENT_STATUS_SAVED_PASSWORD_REUSE);
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-    // Only record password reuse when adding the button, not on updates.
-    if (show_change_password_buttons_ && !old_show_change_pw_buttons) {
-      RecordPasswordReuseEvent();
-    }
-#endif
   }
 
   safety_tip_info_ = visible_security_state.safety_tip_info;
@@ -1231,12 +1203,7 @@ bool PageInfo::ShouldShowPermission(
   // Note |ContentSettingsType::ADS| will show up regardless of its default
   // value when it has been activated on the current origin.
   if (info.type == ContentSettingsType::ADS) {
-    if (!base::FeatureList::IsEnabled(
-            subresource_filter::kSafeBrowsingSubresourceFilter)) {
-      return false;
-    }
-
-    return delegate_->IsSubresourceFilterActivated(site_url_);
+    return false;
   }
 
   if (info.type == ContentSettingsType::SOUND) {
@@ -1532,20 +1499,6 @@ void PageInfo::PresentAdPersonalizationData() {
   ui_->SetAdPersonalizationInfo(info);
 }
 
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-void PageInfo::RecordPasswordReuseEvent() {
-  auto* password_protection_service = delegate_->GetPasswordProtectionService();
-  if (!password_protection_service) {
-    return;
-  }
-  safe_browsing::LogWarningAction(
-      safe_browsing::WarningUIType::PAGE_INFO,
-      safe_browsing::WarningAction::SHOWN,
-      password_protection_service
-          ->reused_password_account_type_for_last_shown_warning());
-}
-#endif
-
 HostContentSettingsMap* PageInfo::GetContentSettings() const {
   return delegate_->GetContentSettings();
 }
@@ -1587,30 +1540,13 @@ void PageInfo::GetSafeBrowsingStatusByMaliciousContentStatus(
           l10n_util::GetStringUTF16(IDS_PAGE_INFO_UNWANTED_SOFTWARE_DETAILS);
       break;
     case security_state::MALICIOUS_CONTENT_STATUS_SAVED_PASSWORD_REUSE:
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-      *status = PageInfo::SAFE_BROWSING_STATUS_SAVED_PASSWORD_REUSE;
-      *details = delegate_->GetWarningDetailText();
-#endif
       break;
     case security_state::MALICIOUS_CONTENT_STATUS_SIGNED_IN_SYNC_PASSWORD_REUSE:
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-      *status = PageInfo::SAFE_BROWSING_STATUS_SIGNED_IN_SYNC_PASSWORD_REUSE;
-      *details = delegate_->GetWarningDetailText();
-#endif
       break;
     case security_state::
         MALICIOUS_CONTENT_STATUS_SIGNED_IN_NON_SYNC_PASSWORD_REUSE:
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-      *status =
-          PageInfo::SAFE_BROWSING_STATUS_SIGNED_IN_NON_SYNC_PASSWORD_REUSE;
-      *details = delegate_->GetWarningDetailText();
-#endif
       break;
     case security_state::MALICIOUS_CONTENT_STATUS_ENTERPRISE_PASSWORD_REUSE:
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-      *status = PageInfo::SAFE_BROWSING_STATUS_ENTERPRISE_PASSWORD_REUSE;
-      *details = delegate_->GetWarningDetailText();
-#endif
       break;
     case security_state::MALICIOUS_CONTENT_STATUS_BILLING:
       *status = PageInfo::SAFE_BROWSING_STATUS_BILLING;

@@ -22,8 +22,6 @@
 #include "chrome/browser/devtools/protocol/target_handler.h"
 #include "chrome/browser/extensions/extension_tab_util.h"
 #include "chrome/browser/lifetime/application_lifetime.h"
-#include "chrome/browser/policy/developer_tools_policy_handler.h"
-#include "chrome/browser/policy/profile_policy_connector.h"
 #include "chrome/browser/profiles/keep_alive/profile_keep_alive_types.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/profiles/profile_manager.h"
@@ -115,27 +113,6 @@ bool GetExtensionInfo(content::WebContents* wc,
   // Set type to other for extensions if not matched previously.
   *type = DevToolsAgentHost::kTypeOther;
   return true;
-}
-
-policy::DeveloperToolsPolicyHandler::Availability GetDevToolsAvailability(
-    Profile* profile) {
-  using Availability = policy::DeveloperToolsPolicyHandler::Availability;
-  Availability availability =
-      policy::DeveloperToolsPolicyHandler::GetEffectiveAvailability(profile);
-#if BUILDFLAG(IS_CHROMEOS)
-  // On ChromeOS disable dev tools for captive portal signin windows to prevent
-  // them from being used for general navigation.
-  if (chromeos::features::IsCaptivePortalPopupWindowEnabled() &&
-      availability != Availability::kDisallowed) {
-    const PrefService::Preference* const captive_portal_pref =
-        profile->GetPrefs()->FindPreference(
-            chromeos::prefs::kCaptivePortalSignin);
-    if (captive_portal_pref && captive_portal_pref->GetValue()->GetBool()) {
-      availability = Availability::kDisallowed;
-    }
-  }
-#endif
-  return availability;
 }
 
 ChromeDevToolsManagerDelegate* g_instance;
@@ -317,67 +294,14 @@ bool ChromeDevToolsManagerDelegate::AllowInspection(
 bool ChromeDevToolsManagerDelegate::AllowInspection(
     Profile* profile,
     const extensions::Extension* extension) {
-  using Availability = policy::DeveloperToolsPolicyHandler::Availability;
-  Availability availability;
-  if (extension) {
-    availability =
-        policy::DeveloperToolsPolicyHandler::GetEffectiveAvailability(profile);
-  } else {
-    // Perform additional checks for browser windows (extension == null).
-    availability = GetDevToolsAvailability(profile);
-  }
-  switch (availability) {
-    case Availability::kDisallowed:
-      return false;
-    case Availability::kAllowed:
-      return true;
-    case Availability::kDisallowedForForceInstalledExtensions:
-      if (!extension) {
-        return true;
-      }
-      if (extensions::Manifest::IsPolicyLocation(extension->location())) {
-        return false;
-      }
-      // We also disallow inspecting component extensions, but only for managed
-      // profiles.
-      if (extensions::Manifest::IsComponentLocation(extension->location()) &&
-          profile->GetProfilePolicyConnector()->IsManaged()) {
-        return false;
-      }
-      return true;
-    default:
-      NOTREACHED_IN_MIGRATION() << "Unknown developer tools policy";
-      return true;
-  }
+  return true;
 }
 
 // static
 bool ChromeDevToolsManagerDelegate::AllowInspection(
     Profile* profile,
     const web_app::WebApp* web_app) {
-  using Availability = policy::DeveloperToolsPolicyHandler::Availability;
-  Availability availability =
-      policy::DeveloperToolsPolicyHandler::GetEffectiveAvailability(profile);
-  switch (availability) {
-    case Availability::kDisallowed:
-      return false;
-    case Availability::kAllowed:
-      return true;
-    case Availability::kDisallowedForForceInstalledExtensions: {
-      if (!web_app) {
-        return true;
-      }
-      // DevTools should be blocked for Kiosk apps and policy-installed IWAs.
-      if (web_app->IsKioskInstalledApp() ||
-          web_app->IsIwaPolicyInstalledApp()) {
-        return false;
-      }
-      return true;
-    }
-    default:
-      NOTREACHED_IN_MIGRATION() << "Unknown developer tools policy";
-      return true;
-  }
+  return true;
 }
 
 void ChromeDevToolsManagerDelegate::ClientAttached(

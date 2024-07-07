@@ -44,7 +44,6 @@ static_library("utility") {
     "//components/mirroring/service:mirroring_service",
     "//components/paint_preview/buildflags",
     "//components/password_manager/services/csv_password:lib",
-    "//components/safe_browsing:buildflags",
     "//components/search_engines",
     "//components/services/language_detection",
     "//components/services/paint_preview_compositor",
@@ -253,13 +252,6 @@ static_library("utility") {
         "//chrome/services/ipp_parser/public/mojom",
       ]
     }
-  }
-
-  if (safe_browsing_mode == 1) {
-    deps += [
-      "//chrome/services/file_util",
-      "//chrome/utility/safe_browsing",
-    ]
   }
 
   if (is_android || enable_extensions) {

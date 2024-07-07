@@ -87,11 +87,6 @@ class PermissionsClient {
   virtual privacy_sandbox::TrackingProtectionSettings*
   GetTrackingProtectionSettings(content::BrowserContext* browser_context) = 0;
 
-  // Retrieves the subresource filter activation from browser website settings.
-  virtual bool IsSubresourceFilterActivated(
-      content::BrowserContext* browser_context,
-      const GURL& url) = 0;
-
   // Holds and mediates access to an in-memory origin-keyed map, that holds the
   // last PermissionAction and its  timestamp for each Content Setting. Used for
   // metrics collection.

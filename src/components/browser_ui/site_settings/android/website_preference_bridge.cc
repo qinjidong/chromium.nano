@@ -813,9 +813,7 @@ static jboolean JNI_WebsitePreferenceBridge_GetAdBlockingActivated(
     JNIEnv* env,
     const JavaParamRef<jobject>& jbrowser_context_handle,
     const JavaParamRef<jstring>& jorigin) {
-  GURL url(ConvertJavaStringToUTF8(env, jorigin));
-  return permissions::PermissionsClient::Get()->IsSubresourceFilterActivated(
-      unwrap(jbrowser_context_handle), url);
+  return false;
 }
 
 // On Android O+ notification channels are not stored in the Chrome profile

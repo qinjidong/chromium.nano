@@ -285,10 +285,6 @@
 #include "ipc/ipc_logging.h"
 #endif
 
-#if BUILDFLAG(USE_MINIKIN_HYPHENATION)
-#include "content/browser/hyphenation/hyphenation_impl.h"
-#endif
-
 #if BUILDFLAG(IS_OZONE)
 #include "ui/ozone/public/ozone_switches.h"
 #endif
@@ -2401,14 +2397,6 @@ void RenderProcessHostImpl::RegisterMojoInterfaces() {
       base::ThreadPool::CreateSequencedTaskRunner(
           {base::MayBlock(), base::TaskShutdownBehavior::SKIP_ON_SHUTDOWN,
            base::TaskPriority::USER_BLOCKING}));
-#if BUILDFLAG(USE_MINIKIN_HYPHENATION)
-#if !BUILDFLAG(IS_ANDROID)
-  hyphenation::HyphenationImpl::RegisterGetDictionary();
-#endif
-  registry->AddInterface(
-      base::BindRepeating(&hyphenation::HyphenationImpl::Create),
-      hyphenation::HyphenationImpl::GetTaskRunner());
-#endif
 #if BUILDFLAG(IS_ANDROID)
   if (base::FeatureList::IsEnabled(features::kFontSrcLocalMatching)) {
     registry->AddInterface(

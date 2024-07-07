@@ -51,7 +51,6 @@ source_set("test_support") {
     "//base/test:test_support",
     "//chrome/browser/push_notification:push_notification",
     "//chrome/browser/push_notification/protos:proto",
-    "//chrome/test:test_support",
     "//content/public/browser",
     "//content/test:test_support",
     "//testing/gtest",

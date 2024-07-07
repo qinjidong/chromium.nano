@@ -10,8 +10,6 @@
 #include "base/strings/string_util.h"
 #include "base/strings/stringprintf.h"
 #include "base/strings/utf_string_conversions.h"
-#include "components/safe_browsing/core/common/features.h"
-#include "components/safe_browsing/core/common/hashprefix_realtime/hash_realtime_utils.h"
 #include "extensions/common/constants.h"
 #include "extensions/common/extension_features.h"
 #include "extensions/common/extension_id.h"
@@ -139,16 +137,7 @@ bool IsBlocklistUpdateUrl(const GURL& url) {
 }
 
 bool IsSafeBrowsingUrl(const GURL& url) {
-  url::Origin origin = url::Origin::Create(url);
-  std::string_view path = url.path_piece();
-  return origin.DomainIs("sb-ssl.google.com") ||
-         origin.DomainIs("safebrowsing.googleapis.com") ||
-         (origin.DomainIs("safebrowsing.google.com") &&
-          base::StartsWith(path, "/safebrowsing",
-                           base::CompareCase::SENSITIVE)) ||
-         (safe_browsing::hash_realtime_utils::
-              IsHashRealTimeLookupEligibleInSession() &&
-          url == safe_browsing::kHashPrefixRealTimeLookupsRelayUrl.Get());
+  return false;
 }
 
 }  // namespace extension_urls

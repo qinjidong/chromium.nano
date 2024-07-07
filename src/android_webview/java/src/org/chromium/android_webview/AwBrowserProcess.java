@@ -36,9 +36,7 @@ import org.chromium.android_webview.metrics.AwMetricsLogUploader;
 import org.chromium.android_webview.metrics.AwMetricsServiceClient;
 import org.chromium.android_webview.metrics.AwNonembeddedUmaReplayer;
 import org.chromium.android_webview.metrics.MetricsFilteringDecorator;
-import org.chromium.android_webview.policy.AwPolicyProvider;
 import org.chromium.android_webview.proto.MetricsBridgeRecords.HistogramRecord;
-import org.chromium.android_webview.safe_browsing.AwSafeBrowsingConfigHelper;
 import org.chromium.base.BaseSwitches;
 import org.chromium.base.CommandLine;
 import org.chromium.base.ContextUtils;
@@ -61,7 +59,6 @@ import org.chromium.components.metrics.AndroidMetricsFeatures;
 import org.chromium.components.metrics.AndroidMetricsLogConsumer;
 import org.chromium.components.metrics.AndroidMetricsLogUploader;
 import org.chromium.components.minidump_uploader.CrashFileManager;
-import org.chromium.components.policy.CombinedPolicyProvider;
 import org.chromium.content_public.browser.BrowserStartupController;
 import org.chromium.content_public.browser.ChildProcessCreationParams;
 import org.chromium.content_public.browser.ChildProcessLauncherHelper;
@@ -217,17 +214,6 @@ public final class AwBrowserProcess {
                                                 appContext, true);
                                     });
                         }
-                        // The policies are used by browser startup, so we need to register the
-                        // policy providers before starting the browser process. This only registers
-                        // java objects and doesn't need the native library.
-                        CombinedPolicyProvider.get()
-                                .registerProvider(new AwPolicyProvider(appContext));
-
-                        // Check android settings but only when safebrowsing is enabled.
-                        try (ScopedSysTraceEvent e2 =
-                                ScopedSysTraceEvent.scoped("AwBrowserProcess.maybeEnable")) {
-                            AwSafeBrowsingConfigHelper.maybeEnableSafeBrowsingFromManifest();
-                        }
 
                         try (ScopedSysTraceEvent e2 =
                                 ScopedSysTraceEvent.scoped(
@@ -237,12 +223,6 @@ public final class AwBrowserProcess {
                                             LibraryProcessType.PROCESS_WEBVIEW,
                                             !multiProcess,
                                             /* startGpuProcess= */ false);
-                        }
-
-                        PowerMonitor.create();
-                        PlatformServiceBridge.getInstance().setSafeBrowsingHandler();
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                            AwContentsLifecycleNotifier.initialize();
                         }
                     });
         }

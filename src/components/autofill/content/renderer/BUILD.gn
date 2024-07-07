@@ -44,7 +44,6 @@ static_library("renderer") {
     "//components/autofill/content/common/mojom",
     "//components/autofill/core/common",
     "//components/password_manager/core/common:common",
-    "//components/safe_browsing:buildflags",
     "//components/strings",
     "//content/public/common",
     "//content/public/renderer",

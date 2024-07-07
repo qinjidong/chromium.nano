@@ -23,7 +23,6 @@
 #include "chrome/browser/password_manager/generated_password_leak_detection_pref.h"
 #include "chrome/browser/prefs/session_startup_pref.h"
 #include "chrome/browser/profiles/profile.h"
-#include "chrome/browser/safe_browsing/generated_safe_browsing_pref.h"
 #include "chrome/browser/ssl/generated_https_first_mode_pref.h"
 #include "chrome/common/chrome_features.h"
 #include "chrome/common/pref_names.h"
@@ -49,7 +48,6 @@
 #include "components/privacy_sandbox/privacy_sandbox_prefs.h"
 #include "components/privacy_sandbox/tracking_protection_prefs.h"
 #include "components/proxy_config/proxy_config_pref_names.h"
-#include "components/safe_browsing/core/common/safe_browsing_prefs.h"
 #include "components/search_engines/default_search_manager.h"
 #include "components/signin/public/base/signin_pref_names.h"
 #include "components/spellcheck/browser/pref_names.h"
@@ -78,7 +76,6 @@
 #include "chrome/browser/ash/ownership/owner_settings_service_ash.h"
 #include "chrome/browser/ash/ownership/owner_settings_service_ash_factory.h"
 #include "chrome/browser/ash/plugin_vm/plugin_vm_pref_names.h"
-#include "chrome/browser/ash/policy/core/browser_policy_connector_ash.h"
 #include "chrome/browser/ash/profiles/profile_helper.h"
 #include "chrome/browser/ash/settings/supervised_user_cros_settings_provider.h"
 #include "chrome/browser/ash/system/timezone_util.h"
@@ -324,20 +321,10 @@ const PrefsUtil::TypedPrefMap& PrefsUtil::GetAllowlistedKeys() {
   // Security page
   (*s_allowlist)[::kGeneratedPasswordLeakDetectionPref] =
       settings_api::PrefType::kBoolean;
-  (*s_allowlist)[::prefs::kSafeBrowsingEnabled] =
-      settings_api::PrefType::kBoolean;
-  (*s_allowlist)[::prefs::kSafeBrowsingEnhanced] =
-      settings_api::PrefType::kBoolean;
-  (*s_allowlist)[::prefs::kSafeBrowsingScoutReportingEnabled] =
-      settings_api::PrefType::kBoolean;
-  (*s_allowlist)[::safe_browsing::kGeneratedSafeBrowsingPref] =
-      settings_api::PrefType::kNumber;
   (*s_allowlist)[::prefs::kHttpsOnlyModeEnabled] =
       settings_api::PrefType::kBoolean;
   (*s_allowlist)[::kGeneratedHttpsFirstModePref] =
       settings_api::PrefType::kNumber;
-  (*s_allowlist)[::prefs::kSafeBrowsingEsbOptInWithFriendlierSettings] =
-      settings_api::PrefType::kBoolean;
 
   // Tracking protection page
   (*s_allowlist)[::prefs::kCookieControlsMode] =
@@ -1483,70 +1470,6 @@ bool PrefsUtil::RemoveFromListCrosSetting(const std::string& pref_name,
 bool PrefsUtil::IsPrefTypeURL(const std::string& pref_name) {
   return GetAllowlistedPrefType(pref_name) == settings_api::PrefType::kUrl;
 }
-
-#if BUILDFLAG(IS_CHROMEOS_ASH)
-bool PrefsUtil::IsPrefEnterpriseManaged(const std::string& pref_name) {
-  policy::BrowserPolicyConnectorAsh* connector =
-      g_browser_process->platform_part()->browser_policy_connector_ash();
-  if (!connector->IsDeviceEnterpriseManaged()) {
-    return false;
-  }
-
-  // The enterprise management of ash::kSystemTimezone and prefs::kUserTimezone
-  // is determined by the system timezone policies (kSystemTimezonePolicy and
-  // kSystemTimezoneAutomaticDetectionPolicy).
-  if (pref_name == ash::kSystemTimezone || pref_name == prefs::kUserTimezone) {
-    return ash::system::IsTimezonePrefsManaged(pref_name);
-  }
-
-  return IsPrivilegedCrosSetting(pref_name);
-}
-
-bool PrefsUtil::IsPrefOwnerControlled(const std::string& pref_name) {
-  // ash::kSystemTimezone is global display-only preference and
-  // it should appear as disabled, but not owned.
-  if (pref_name == ash::kSystemTimezone) {
-    return false;
-  }
-
-  if (IsPrivilegedCrosSetting(pref_name)) {
-    if (!ash::ProfileHelper::IsOwnerProfile(profile_)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-bool PrefsUtil::IsPrefPrimaryUserControlled(const std::string& pref_name) {
-  // ash::kSystemTimezone is read-only, but for the non-primary users
-  // it should have "primary user controlled" attribute.
-  if (pref_name == prefs::kUserTimezone || pref_name == ash::kSystemTimezone) {
-    user_manager::UserManager* user_manager = user_manager::UserManager::Get();
-    const user_manager::User* user =
-        ash::ProfileHelper::Get()->GetUserByProfile(profile_);
-    if (user && user->GetAccountId() !=
-                    user_manager->GetPrimaryUser()->GetAccountId()) {
-      return true;
-    }
-  }
-  return false;
-}
-
-bool PrefsUtil::IsHotwordDisabledForChildUser(const std::string& pref_name) {
-  const std::string& hotwordEnabledPref =
-      ash::assistant::prefs::kAssistantHotwordEnabled;
-  if (!profile_->IsChild() || pref_name != hotwordEnabledPref) {
-    return false;
-  }
-
-  PrefService* pref_service = FindServiceForPref(hotwordEnabledPref);
-  const PrefService::Preference* pref =
-      pref_service->FindPreference(hotwordEnabledPref);
-  DCHECK(pref);
-  const bool isHotwordEnabled = pref->GetValue()->GetIfBool().value_or(false);
-  return !isHotwordEnabled;
-}
-#endif
 
 bool PrefsUtil::IsPrefSupervisorControlled(const std::string& pref_name) {
   if (pref_name != prefs::kBrowserGuestModeEnabled &&

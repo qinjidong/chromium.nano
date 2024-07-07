@@ -364,47 +364,6 @@ public class SupportLibWebViewChromiumFactory implements WebViewProviderFactoryB
         }
 
         @Override
-        public void initSafeBrowsing(Context context, ValueCallback<Boolean> callback) {
-            try (TraceEvent event =
-                    TraceEvent.scoped("WebView.APICall.AndroidX.INIT_SAFE_BROWSING")) {
-                recordApiCall(ApiCall.INIT_SAFE_BROWSING);
-                mSharedStatics.initSafeBrowsing(
-                        context, CallbackConverter.fromValueCallback(callback));
-            }
-        }
-
-        @Override
-        public void setSafeBrowsingAllowlist(Set<String> hosts, ValueCallback<Boolean> callback) {
-            try (TraceEvent event =
-                    TraceEvent.scoped("WebView.APICall.AndroidX.SET_SAFE_BROWSING_ALLOWLIST")) {
-                recordApiCall(ApiCall.SET_SAFE_BROWSING_ALLOWLIST);
-                mSharedStatics.setSafeBrowsingAllowlist(
-                        new ArrayList<>(hosts), CallbackConverter.fromValueCallback(callback));
-            }
-        }
-
-        @Override
-        public void setSafeBrowsingWhitelist(List<String> hosts, ValueCallback<Boolean> callback) {
-            try (TraceEvent event =
-                    TraceEvent.scoped(
-                            "WebView.APICall.AndroidX.SET_SAFE_BROWSING_ALLOWLIST_DEPRECATED_NAME")) {
-                recordApiCall(ApiCall.SET_SAFE_BROWSING_ALLOWLIST_DEPRECATED_NAME);
-                mSharedStatics.setSafeBrowsingAllowlist(
-                        hosts, CallbackConverter.fromValueCallback(callback));
-            }
-        }
-
-        @Override
-        public Uri getSafeBrowsingPrivacyPolicyUrl() {
-            try (TraceEvent event =
-                    TraceEvent.scoped(
-                            "WebView.APICall.AndroidX.GET_SAFE_BROWSING_PRIVACY_POLICY_URL")) {
-                recordApiCall(ApiCall.GET_SAFE_BROWSING_PRIVACY_POLICY_URL);
-                return mSharedStatics.getSafeBrowsingPrivacyPolicyUrl();
-            }
-        }
-
-        @Override
         public boolean isMultiProcessEnabled() {
             try (TraceEvent event =
                     TraceEvent.scoped("WebView.APICall.AndroidX.IS_MULTI_PROCESS_ENABLED")) {

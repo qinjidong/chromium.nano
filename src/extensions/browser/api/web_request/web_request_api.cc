@@ -20,7 +20,6 @@
 #include "base/task/sequenced_task_runner.h"
 #include "base/time/time.h"
 #include "base/values.h"
-#include "components/safe_browsing/core/common/features.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/render_frame_host.h"
@@ -385,54 +384,6 @@ bool WebRequestAPI::MaybeProxyURLLoaderFactory(
     scoped_refptr<base::SequencedTaskRunner> navigation_response_task_runner,
     const url::Origin& request_initiator) {
   DCHECK_CURRENTLY_ON(BrowserThread::UI);
-  if (!MayHaveProxies()) {
-    bool use_proxy = false;
-    // There are a few internal WebUIs that use WebView tag that are allowlisted
-    // for webRequest.
-    // TODO(crbug.com/40288053): Remove the scheme check once we're sure
-    // that WebUIs with WebView run in real WebUI processes and check the
-    // context type using |IsAvailableToWebViewEmbedderFrame()| below.
-    if (WebViewGuest::IsGuest(frame)) {
-      content::RenderFrameHost* embedder =
-          frame->GetOutermostMainFrameOrEmbedder();
-      const auto& embedder_url = embedder->GetLastCommittedURL();
-      if (embedder_url.SchemeIs(content::kChromeUIScheme)) {
-        auto* feature = FeatureProvider::GetAPIFeature("webRequestInternal");
-        if (feature
-                ->IsAvailableToContext(
-                    nullptr, mojom::ContextType::kWebUi, embedder_url,
-                    util::GetBrowserContextId(browser_context),
-                    BrowserFrameContextData(frame))
-                .is_available()) {
-          use_proxy = true;
-        }
-      } else {
-        use_proxy = IsAvailableToWebViewEmbedderFrame(frame);
-      }
-    }
-
-    // Create a proxy URLLoader even when there is no CRX
-    // installed with webRequest permissions. This allows the extension
-    // requests to be intercepted for CRX telemetry service if enabled.
-    // Only proxy if the new RHC interception logic is disabled.
-    // TODO(crbug.com/40913716): Clean up collection logic here once new RHC
-    // interception logic is fully launched.
-    const std::string& request_scheme = request_initiator.scheme();
-    if (extensions::kExtensionScheme == request_scheme &&
-        ExtensionsBrowserClient::Get()->IsExtensionTelemetryServiceEnabled(
-            browser_context) &&
-        base::FeatureList::IsEnabled(
-            safe_browsing::kExtensionTelemetryReportContactedHosts) &&
-        !base::FeatureList::IsEnabled(
-            safe_browsing::
-                kExtensionTelemetryInterceptRemoteHostsContactedInRenderer)) {
-      use_proxy = true;
-    }
-    if (!use_proxy) {
-      return false;
-    }
-  }
-
   std::unique_ptr<ExtensionNavigationUIData> navigation_ui_data;
   const bool is_navigation = (type == URLLoaderFactoryType::kNavigation);
   if (is_navigation) {
@@ -571,15 +522,7 @@ bool WebRequestAPI::MayHaveWebsocketProxiesForExtensionTelemetry() const {
   // TODO(crbug.com/40913716): Clean up once new RHC interception logic is fully
   // launched.
   return ExtensionsBrowserClient::Get()->IsExtensionTelemetryServiceEnabled(
-             browser_context_) &&
-         base::FeatureList::IsEnabled(
-             safe_browsing::kExtensionTelemetryReportContactedHosts) &&
-         base::FeatureList::IsEnabled(
-             safe_browsing::
-                 kExtensionTelemetryReportHostsContactedViaWebSocket) &&
-         !base::FeatureList::IsEnabled(
-             safe_browsing::
-                 kExtensionTelemetryInterceptRemoteHostsContactedInRenderer);
+             browser_context_);
 }
 
 bool WebRequestAPI::IsAvailableToWebViewEmbedderFrame(

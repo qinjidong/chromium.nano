@@ -12,7 +12,6 @@
 #include "chrome/browser/signin/chrome_signin_helper.h"
 #include "chrome/browser/signin/identity_manager_factory.h"
 #include "chrome/browser/sync/sync_service_factory.h"
-#include "components/policy/core/common/policy_pref_names.h"
 #include "components/prefs/pref_service.h"
 #include "components/signin/public/base/signin_pref_names.h"
 #include "components/signin/public/base/signin_switches.h"
@@ -132,13 +131,10 @@ void HeaderModificationDelegateImpl::ProcessRequest(
       // Defaults to kUnknown if the account is not found.
       identity_manager->FindExtendedAccountInfo(account).is_child_account;
 
-  int incognito_mode_availability =
-      prefs->GetInteger(policy::policy_prefs::kIncognitoModeAvailability);
+  int incognito_mode_availability = 0;
 #if BUILDFLAG(IS_ANDROID)
   incognito_mode_availability =
-      incognito_enabled_
-          ? incognito_mode_availability
-          : static_cast<int>(policy::IncognitoModeAvailability::kDisabled);
+      incognito_enabled_ ? incognito_mode_availability : 1;
 #endif
 
   FixAccountConsistencyRequestHeader(

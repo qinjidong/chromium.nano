@@ -45,7 +45,6 @@
 #include "chrome/browser/browser_process_platform_part.h"
 #include "chrome/browser/chrome_browser_main.h"
 #include "chrome/browser/chrome_content_browser_client.h"
-#include "chrome/browser/component_updater/chrome_component_updater_configurator.h"
 #include "chrome/browser/controlled_frame/controlled_frame_extensions_browser_api_provider.h"
 #include "chrome/browser/defaults.h"
 #include "chrome/browser/devtools/remote_debugging_server.h"
@@ -69,14 +68,12 @@
 #include "chrome/browser/notifications/notification_platform_bridge.h"
 #include "chrome/browser/notifications/system_notification_helper.h"
 #include "chrome/browser/permissions/chrome_permissions_client.h"
-#include "chrome/browser/policy/chrome_browser_policy_connector.h"
 #include "chrome/browser/prefs/browser_prefs.h"
 #include "chrome/browser/prefs/chrome_pref_service_factory.h"
 #include "chrome/browser/printing/background_printing_manager.h"
 #include "chrome/browser/printing/print_job_manager.h"
 #include "chrome/browser/profiles/profile_manager.h"
 #include "chrome/browser/resource_coordinator/resource_coordinator_parts.h"
-#include "chrome/browser/safe_browsing/safe_browsing_service.h"
 #include "chrome/browser/shell_integration.h"
 #include "chrome/browser/site_isolation/prefs_observer.h"
 #include "chrome/browser/ssl/secure_origin_prefs_observer.h"
@@ -102,8 +99,6 @@
 #include "components/component_updater/timer_update_scheduler.h"
 #include "components/crash/core/common/crash_key.h"
 #include "components/embedder_support/origin_trials/origin_trials_settings_storage.h"
-#include "components/fingerprinting_protection_filter/browser/fingerprinting_protection_filter_constants.h"
-#include "components/fingerprinting_protection_filter/browser/fingerprinting_protection_filter_features.h"
 #include "components/gcm_driver/gcm_driver.h"
 #include "components/language/core/browser/pref_names.h"
 #include "components/metrics/metrics_pref_names.h"
@@ -113,15 +108,10 @@
 #include "components/network_time/network_time_tracker.h"
 #include "components/os_crypt/async/browser/os_crypt_async.h"
 #include "components/permissions/permissions_client.h"
-#include "components/policy/core/common/policy_service.h"
 #include "components/prefs/json_pref_store.h"
 #include "components/prefs/pref_registry_simple.h"
 #include "components/prefs/pref_service.h"
-#include "components/safe_browsing/content/browser/safe_browsing_service_interface.h"
 #include "components/sessions/core/session_id_generator.h"
-#include "components/subresource_filter/content/shared/browser/ruleset_service.h"
-#include "components/subresource_filter/core/browser/subresource_filter_constants.h"
-#include "components/subresource_filter/core/browser/subresource_filter_features.h"
 #include "components/translate/core/browser/translate_download_manager.h"
 #include "components/ukm/ukm_service.h"
 #include "components/update_client/update_query_params.h"
@@ -244,7 +234,6 @@
 #elif !BUILDFLAG(IS_ANDROID)
 #include "chrome/browser/hid/hid_status_icon.h"
 #include "chrome/browser/usb/usb_status_icon.h"
-#include "components/enterprise/browser/controller/chrome_browser_cloud_management_controller.h"
 #endif
 
 #if BUILDFLAG(IS_WIN) || (BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS_LACROS))
@@ -266,15 +255,12 @@ using content::ChildProcessSecurityPolicy;
 
 BrowserProcessImpl::BrowserProcessImpl(StartupData* startup_data)
     : startup_data_(startup_data),
-      browser_policy_connector_(startup_data->chrome_feature_list_creator()
-                                    ->TakeChromeBrowserPolicyConnector()),
       local_state_(
           startup_data->chrome_feature_list_creator()->TakePrefService()),
       platform_part_(std::make_unique<BrowserProcessPlatformPart>()) {
   CHECK(!g_browser_process);
   g_browser_process = this;
 
-  DCHECK(browser_policy_connector_);
   DCHECK(local_state_);
   DCHECK(startup_data);
   // Most work should be done in Init().
@@ -303,9 +289,6 @@ void BrowserProcessImpl::Init() {
   // Must be created after the NotificationService.
   print_job_manager_ = std::make_unique<printing::PrintJobManager>();
 #endif
-
-  ChildProcessSecurityPolicy::GetInstance()->RegisterWebSafeScheme(
-      chrome::kChromeSearchScheme);
 
 #if BUILDFLAG(IS_MAC)
   ui::InitIdleMonitor();
@@ -378,11 +361,6 @@ void BrowserProcessImpl::Init() {
       base::BindRepeating(&BrowserProcessImpl::ApplyDefaultBrowserPolicy,
                           base::Unretained(this)));
 
-  // This preference must be kept in sync with external values; update them
-  // whenever the preference or its controlling policy changes.
-  pref_change_registrar_.Add(metrics::prefs::kMetricsReportingEnabled,
-                             base::BindRepeating(&ApplyMetricsReportingPolicy));
-
   DCHECK(!webrtc_event_log_manager_);
   webrtc_event_log_manager_ = WebRtcEventLogManager::CreateSingletonInstance();
 
@@ -454,19 +432,7 @@ void BrowserProcessImpl::StartTearDown() {
 #endif
   metrics_services_manager_.reset();
   intranet_redirect_detector_.reset();
-  if (safe_browsing_service_.get())
-    safe_browsing_service()->ShutDown();
   network_time_tracker_.reset();
-
-#if !BUILDFLAG(IS_ANDROID) && !BUILDFLAG(IS_CHROMEOS)
-  // Initial cleanup for ChromeBrowserCloudManagement, shutdown components that
-  // depend on profile and notification system. For example, ProfileManager
-  // observer and KeyServices observer need to be removed before profiles.
-  auto* cloud_management_controller =
-      browser_policy_connector_->chrome_browser_cloud_management_controller();
-  if (cloud_management_controller)
-    cloud_management_controller->ShutDown();
-#endif
 
 #if !BUILDFLAG(IS_ANDROID)
   // |hid_system_tray_icon_| and |usb_system_tray_icon_| must be destroyed
@@ -528,12 +494,6 @@ void BrowserProcessImpl::StartTearDown() {
   if (message_center::MessageCenter::Get())
     message_center::MessageCenter::Shutdown();
 #endif
-
-  // The policy providers managed by |browser_policy_connector_| need to shut
-  // down while the IO and FILE threads are still alive. The monitoring
-  // framework owned by |browser_policy_connector_| relies on |gcm_driver_|, so
-  // this must be shutdown before |gcm_driver_| below.
-  browser_policy_connector_->Shutdown();
 
   // The |gcm_driver_| must shut down while the IO thread is still alive.
   if (gcm_driver_)
@@ -859,16 +819,6 @@ NotificationPlatformBridge* BrowserProcessImpl::notification_platform_bridge() {
 #endif
 }
 
-policy::ChromeBrowserPolicyConnector*
-BrowserProcessImpl::browser_policy_connector() {
-  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-  return browser_policy_connector_.get();
-}
-
-policy::PolicyService* BrowserProcessImpl::policy_service() {
-  return browser_policy_connector()->GetPolicyService();
-}
-
 IconManager* BrowserProcessImpl::icon_manager() {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
   if (!created_icon_manager_)
@@ -1134,33 +1084,6 @@ StatusTray* BrowserProcessImpl::status_tray() {
   return status_tray_.get();
 }
 
-safe_browsing::SafeBrowsingService*
-BrowserProcessImpl::safe_browsing_service() {
-  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-  if (!created_safe_browsing_service_)
-    CreateSafeBrowsingService();
-  return safe_browsing_service_.get();
-}
-
-subresource_filter::RulesetService*
-BrowserProcessImpl::subresource_filter_ruleset_service() {
-  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-  if (!created_subresource_filter_ruleset_service_)
-    CreateSubresourceFilterRulesetService();
-  return subresource_filter_ruleset_service_.get();
-}
-
-subresource_filter::RulesetService*
-BrowserProcessImpl::fingerprinting_protection_ruleset_service() {
-  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-  if (!created_fingerprinting_protection_ruleset_service_ &&
-      base::FeatureList::IsEnabled(fingerprinting_protection_filter::features::
-                                       kEnableFingerprintingProtectionFilter)) {
-    CreateFingerprintingProtectionRulesetService();
-  }
-  return fingerprinting_protection_ruleset_service_.get();
-}
-
 StartupData* BrowserProcessImpl::startup_data() {
   return startup_data_;
 }
@@ -1181,17 +1104,6 @@ BrowserProcessImpl::component_updater() {
 
   if (!BrowserThread::CurrentlyOn(BrowserThread::UI))
     return nullptr;
-
-  std::unique_ptr<component_updater::UpdateScheduler> scheduler =
-      std::make_unique<component_updater::TimerUpdateScheduler>();
-
-  std::string brand;
-  google_brand::GetBrand(&brand);
-  component_updater_ = component_updater::ComponentUpdateServiceFactory(
-      component_updater::MakeChromeComponentUpdaterConfigurator(
-          base::CommandLine::ForCurrentProcess(),
-          g_browser_process->local_state()),
-      std::move(scheduler), brand);
 
   return component_updater_.get();
 }
@@ -1227,13 +1139,6 @@ void BrowserProcessImpl::CreateProfileManager() {
 }
 
 void BrowserProcessImpl::PreCreateThreads() {
-#if BUILDFLAG(ENABLE_EXTENSIONS)
-  // chrome-extension:// URLs are safe to request anywhere, but may only
-  // commit (including in iframes) in extension processes.
-  ChildProcessSecurityPolicy::GetInstance()->RegisterWebSafeIsolatedScheme(
-      extensions::kExtensionScheme, true);
-#endif
-
   battery_metrics_ = std::make_unique<BatteryMetrics>();
 
 #if BUILDFLAG(IS_ANDROID)
@@ -1264,21 +1169,6 @@ void BrowserProcessImpl::PreMainMessageLoopRun() {
   // Initialize the SessionIdGenerator instance, providing a PrefService to
   // ensure the persistent storage of current max SessionId.
   sessions::SessionIdGenerator::GetInstance()->Init(local_state_.get());
-
-  // browser_policy_connector() is created very early because local_state()
-  // needs policy to be initialized with the managed preference values.
-  // However, policy fetches from the network and loading of disk caches
-  // requires that threads are running; this Init() call lets the connector
-  // resume its initialization now that the loops are spinning and the
-  // system request context is available for the fetchers.
-  browser_policy_connector()->Init(
-      local_state(),
-      system_network_context_manager()->GetSharedURLLoaderFactory());
-
-  if (local_state_->IsManagedPreference(prefs::kDefaultBrowserSettingEnabled))
-    ApplyDefaultBrowserPolicy();
-
-  ApplyMetricsReportingPolicy();
 
 #if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS)
   ChromeJsErrorReportProcessor::Create();
@@ -1445,58 +1335,6 @@ void BrowserProcessImpl::CreateBackgroundPrintingManager() {
 #else
   NOTIMPLEMENTED();
 #endif
-}
-
-void BrowserProcessImpl::CreateSafeBrowsingService() {
-  DCHECK(!safe_browsing_service_);
-  // Set this flag to true so that we don't retry indefinitely to
-  // create the service class if there was an error.
-  created_safe_browsing_service_ = true;
-
-  // The factory can be overridden in tests.
-  if (!safe_browsing::SafeBrowsingServiceInterface::HasFactory()) {
-    safe_browsing::SafeBrowsingServiceInterface::RegisterFactory(
-        safe_browsing::GetSafeBrowsingServiceFactory());
-  }
-
-  // TODO(crbug.com/41437292): Port consumers of the |safe_browsing_service_| to
-  // use the interface in components/safe_browsing, and remove this cast.
-  safe_browsing_service_ = static_cast<safe_browsing::SafeBrowsingService*>(
-      safe_browsing::SafeBrowsingServiceInterface::CreateSafeBrowsingService());
-  if (safe_browsing_service_)
-    safe_browsing_service_->Initialize();
-}
-
-void BrowserProcessImpl::CreateSubresourceFilterRulesetService() {
-  DCHECK(!subresource_filter_ruleset_service_);
-  created_subresource_filter_ruleset_service_ = true;
-
-  if (!base::FeatureList::IsEnabled(
-          subresource_filter::kSafeBrowsingSubresourceFilter)) {
-    return;
-  }
-
-  base::FilePath user_data_dir;
-  base::PathService::Get(chrome::DIR_USER_DATA, &user_data_dir);
-  subresource_filter_ruleset_service_ =
-      subresource_filter::RulesetService::Create(
-          subresource_filter::kSafeBrowsingRulesetConfig, local_state(),
-          user_data_dir);
-}
-
-void BrowserProcessImpl::CreateFingerprintingProtectionRulesetService() {
-  CHECK(!fingerprinting_protection_ruleset_service_);
-  // Set this to true so that we don't retry indefinitely to
-  // create the service if there was an error.
-  created_fingerprinting_protection_ruleset_service_ = true;
-
-  base::FilePath user_data_dir;
-  base::PathService::Get(chrome::DIR_USER_DATA, &user_data_dir);
-  fingerprinting_protection_ruleset_service_ =
-      subresource_filter::RulesetService::Create(
-          fingerprinting_protection_filter::
-              kFingerprintingProtectionRulesetConfig,
-          local_state(), user_data_dir);
 }
 
 #if !BUILDFLAG(IS_ANDROID)

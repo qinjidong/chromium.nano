@@ -15,8 +15,6 @@ static_library("search_engines") {
     "choice_made_location.h",
     "default_search_manager.cc",
     "default_search_manager.h",
-    "default_search_policy_handler.cc",
-    "default_search_policy_handler.h",
     "eea_countries_ids.h",
     "enterprise_site_search_manager.cc",
     "enterprise_site_search_manager.h",
@@ -81,8 +79,6 @@ static_library("search_engines") {
     "//components/lens/proto/server:proto",
     "//components/metrics",
     "//components/omnibox/common",
-    "//components/policy:generated",
-    "//components/policy/core/browser",
     "//components/pref_registry",
     "//components/search_provider_logos:switches",
     "//components/signin/public/base",
@@ -120,13 +116,6 @@ static_library("search_engines") {
       ":generate_search_engine_icons",
       "//components/resources:components_scaled_resources_grit",
       "//ui/resources",
-    ]
-  }
-
-  if (is_linux || is_win || is_mac || is_chromeos) {
-    sources += [
-      "site_search_policy_handler.cc",
-      "site_search_policy_handler.h",
     ]
   }
 
@@ -205,8 +194,6 @@ source_set("unit_tests") {
     "//components/google/core/common",
     "//components/metrics",
     "//components/omnibox/common",
-    "//components/policy/core/common",
-    "//components/policy/core/common:test_support",
     "//components/pref_registry:pref_registry",
     "//components/prefs",
     "//components/prefs:test_support",
@@ -230,11 +217,6 @@ source_set("unit_tests") {
 
   if (!is_ios) {
     sources += [ "default_search_policy_handler_unittest.cc" ]
-
-    deps += [
-      "//components/policy:generated",
-      "//components/policy/core/browser:test_support",
-    ]
   }
 
   if (is_android) {

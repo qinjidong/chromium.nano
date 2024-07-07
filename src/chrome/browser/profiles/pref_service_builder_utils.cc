@@ -16,11 +16,9 @@
 #include "base/threading/scoped_blocking_call.h"
 #include "build/chromeos_buildflags.h"
 #include "chrome/browser/browser_process.h"
-#include "chrome/browser/policy/chrome_browser_policy_connector.h"
 #include "chrome/browser/prefs/browser_prefs.h"
 #include "chrome/browser/prefs/chrome_pref_service_factory.h"
 #include "chrome/browser/prefs/profile_pref_store_manager.h"
-#include "chrome/browser/safe_browsing/safe_browsing_service.h"
 #include "chrome/browser/supervised_user/supervised_user_settings_service_factory.h"
 #include "chrome/common/buildflags.h"
 #include "chrome/common/chrome_constants.h"
@@ -28,7 +26,6 @@
 #include "components/keyed_service/content/browser_context_dependency_manager.h"
 #include "components/keyed_service/core/simple_dependency_manager.h"
 #include "components/keyed_service/core/simple_keyed_service_factory.h"
-#include "components/policy/core/common/cloud/cloud_policy_manager.h"
 #include "components/pref_registry/pref_registry_syncable.h"
 #include "components/prefs/pref_value_store.h"
 #include "components/supervised_user/core/browser/supervised_user_settings_service.h"
@@ -81,8 +78,6 @@ void RegisterProfilePrefs(bool is_signin_profile,
 std::unique_ptr<sync_preferences::PrefServiceSyncable> CreatePrefService(
     scoped_refptr<user_prefs::PrefRegistrySyncable> pref_registry,
     PrefStore* extension_pref_store,
-    policy::PolicyService* policy_service,
-    policy::ChromeBrowserPolicyConnector* browser_policy_connector,
     mojo::PendingRemote<prefs::mojom::TrackedPreferenceValidationDelegate>
         pref_validation_delegate,
     scoped_refptr<base::SequencedTaskRunner> io_task_runner,
@@ -96,8 +91,7 @@ std::unique_ptr<sync_preferences::PrefServiceSyncable> CreatePrefService(
   supervised_user_settings->Init(path, io_task_runner, !async_prefs);
   {
     return chrome_prefs::CreateProfilePrefs(
-        path, std::move(pref_validation_delegate), policy_service,
-        supervised_user_settings, extension_pref_store, pref_registry,
-        browser_policy_connector, async_prefs, io_task_runner);
+        path, std::move(pref_validation_delegate), supervised_user_settings,
+        extension_pref_store, pref_registry, async_prefs, io_task_runner);
   }
 }

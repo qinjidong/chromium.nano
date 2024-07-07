@@ -39,9 +39,6 @@
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/profiles/profile_manager.h"
 #include "chrome/browser/profiles/profile_observer.h"
-#include "chrome/browser/safe_browsing/safe_browsing_metrics_collector_factory.h"
-#include "chrome/browser/safe_browsing/safe_browsing_navigation_observer_manager_factory.h"
-#include "chrome/browser/safe_browsing/safe_browsing_service.h"
 #include "chrome/browser/signin/identity_manager_factory.h"
 #include "chrome/browser/supervised_user/supervised_user_browser_utils.h"
 #include "chrome/browser/ui/app_list/app_list_util.h"
@@ -52,8 +49,6 @@
 #include "components/crx_file/id_util.h"
 #include "components/prefs/pref_service.h"
 #include "components/prefs/scoped_user_pref_update.h"
-#include "components/safe_browsing/content/browser/safe_browsing_navigation_observer_manager.h"
-#include "components/safe_browsing/core/browser/safe_browsing_metrics_collector.h"
 #include "components/signin/public/identity_manager/identity_manager.h"
 #include "components/supervised_user/core/browser/supervised_user_preferences.h"
 #include "components/supervised_user/core/common/features.h"
@@ -74,8 +69,6 @@
 #include "net/base/load_flags.h"
 #include "ui/base/l10n/l10n_util.h"
 #include "url/gurl.h"
-
-using safe_browsing::SafeBrowsingNavigationObserverManager;
 
 namespace extensions {
 
@@ -213,9 +206,6 @@ const char kLegacyPackagedAppError[] =
 
 const char kParentBlockedExtensionInstallError[] =
     "Parent has blocked extension/app installation";
-
-// The number of user gestures to trace back for the referrer chain.
-const int kExtensionReferrerUserGestureLimit = 2;
 
 WebstorePrivateApi::Delegate* test_delegate = nullptr;
 
@@ -696,20 +686,7 @@ void WebstorePrivateBeginInstallWithManifest3Function::OnFrictionPromptDone(
 }
 
 void WebstorePrivateBeginInstallWithManifest3Function::
-    ReportFrictionAcceptedEvent() {
-  if (!profile_) {
-    return;
-  }
-  auto* metrics_collector =
-      safe_browsing::SafeBrowsingMetricsCollectorFactory::GetForProfile(
-          profile_);
-  // `metrics_collector` can be null in incognito.
-  if (metrics_collector) {
-    metrics_collector->AddSafeBrowsingEventToPref(
-        safe_browsing::SafeBrowsingMetricsCollector::EventType::
-            EXTENSION_ALLOWLIST_INSTALL_BYPASS);
-  }
-}
+    ReportFrictionAcceptedEvent() {}
 
 void WebstorePrivateBeginInstallWithManifest3Function::OnInstallPromptDone(
     ExtensionInstallPrompt::DoneCallbackPayload payload) {
@@ -1207,54 +1184,8 @@ WebstorePrivateGetReferrerChainFunction::
 
 ExtensionFunction::ResponseAction
 WebstorePrivateGetReferrerChainFunction::Run() {
-  Profile* profile = Profile::FromBrowserContext(browser_context());
-  if (!SafeBrowsingNavigationObserverManager::IsEnabledAndReady(
-          profile->GetPrefs(), g_browser_process->safe_browsing_service()))
-    return RespondNow(ArgumentList(
-        api::webstore_private::GetReferrerChain::Results::Create("")));
-
-  content::RenderFrameHost* outermost_render_frame_host =
-      render_frame_host() ? render_frame_host()->GetOutermostMainFrame()
-                          : nullptr;
-
-  if (!outermost_render_frame_host) {
-    return RespondNow(ErrorWithArguments(
-        api::webstore_private::GetReferrerChain::Results::Create(""),
-        kWebstoreUserCancelledError));
-  }
-
-  SafeBrowsingNavigationObserverManager* navigation_observer_manager =
-      safe_browsing::SafeBrowsingNavigationObserverManagerFactory::
-          GetForBrowserContext(profile);
-
-  safe_browsing::ReferrerChain referrer_chain;
-  SafeBrowsingNavigationObserverManager::AttributionResult result =
-      navigation_observer_manager->IdentifyReferrerChainByRenderFrameHost(
-          outermost_render_frame_host, kExtensionReferrerUserGestureLimit,
-          &referrer_chain);
-
-  // If the referrer chain is incomplete we'll append the most recent
-  // navigations to referrer chain for diagnostic purposes. This only happens if
-  // the user is not in incognito mode and has opted into extended reporting or
-  // Scout reporting. Otherwise, |CountOfRecentNavigationsToAppend| returns 0.
-  int recent_navigations_to_collect =
-      SafeBrowsingNavigationObserverManager::CountOfRecentNavigationsToAppend(
-          profile, profile->GetPrefs(), result);
-  if (recent_navigations_to_collect > 0) {
-    navigation_observer_manager->AppendRecentNavigations(
-        recent_navigations_to_collect, &referrer_chain);
-  }
-
-  safe_browsing::ExtensionWebStoreInstallRequest request;
-  request.mutable_referrer_chain()->Swap(&referrer_chain);
-  request.mutable_referrer_chain_options()->set_recent_navigations_to_collect(
-      recent_navigations_to_collect);
-
-  // Base64 encode the request to avoid issues with base::Value rejecting
-  // strings which are not valid UTF8.
-  return RespondNow(
-      ArgumentList(api::webstore_private::GetReferrerChain::Results::Create(
-          base::Base64Encode(request.SerializeAsString()))));
+  return RespondNow(ArgumentList(
+      api::webstore_private::GetReferrerChain::Results::Create("")));
 }
 
 WebstorePrivateGetExtensionStatusFunction::

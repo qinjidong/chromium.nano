@@ -17,7 +17,6 @@ import("//chrome/android/chrome_common_shared_library.gni")
 import("//chrome/android/chrome_public_apk_tmpl.gni")
 import("//chrome/android/expectations/expectations.gni")
 import("//chrome/android/trichrome.gni")
-import("//components/safe_browsing/buildflags.gni")
 import("//components/spellcheck/spellcheck_build_features.gni")
 import("//components/supervised_user/buildflags.gni")
 import("//device/vr/buildflags/buildflags.gni")
@@ -555,8 +554,6 @@ generate_jni("browser_jni_headers") {
     "java/src/org/chromium/android_webview/ip_protection/ExclusionUtilities.java",
     "java/src/org/chromium/android_webview/metrics/AwMetricsServiceClient.java",
     "java/src/org/chromium/android_webview/permission/AwPermissionRequest.java",
-    "java/src/org/chromium/android_webview/safe_browsing/AwSafeBrowsingConfigHelper.java",
-    "java/src/org/chromium/android_webview/safe_browsing/AwSafeBrowsingSafeModeAction.java",
     "java/src/org/chromium/android_webview/supervised_user/AwSupervisedUserUrlClassifier.java",
     "java/src/org/chromium/android_webview/variations/VariationsSeedLoader.java",
   ]
@@ -678,11 +675,6 @@ android_library("browser_java") {
     "java/src/org/chromium/android_webview/metrics/TrackExitReasonsOfInterest.java",
     "java/src/org/chromium/android_webview/permission/AwGeolocationCallback.java",
     "java/src/org/chromium/android_webview/permission/AwPermissionRequest.java",
-    "java/src/org/chromium/android_webview/policy/AwPolicyProvider.java",
-    "java/src/org/chromium/android_webview/safe_browsing/AwSafeBrowsingConfigHelper.java",
-    "java/src/org/chromium/android_webview/safe_browsing/AwSafeBrowsingConversionHelper.java",
-    "java/src/org/chromium/android_webview/safe_browsing/AwSafeBrowsingResponse.java",
-    "java/src/org/chromium/android_webview/safe_browsing/AwSafeBrowsingSafeModeAction.java",
     "java/src/org/chromium/android_webview/selection/AwSelectionActionMenuDelegate.java",
     "java/src/org/chromium/android_webview/selection/SamsungSelectionActionMenuHelper.java",
     "java/src/org/chromium/android_webview/supervised_user/AwSupervisedUserUrlClassifier.java",
@@ -716,8 +708,6 @@ android_library("browser_java") {
     "//components/embedder_support/android/metrics:java",
     "//components/minidump_uploader:minidump_uploader_java",
     "//components/navigation_interception/android:navigation_interception_java",
-    "//components/policy/android:policy_java",
-    "//components/safe_browsing/android:safe_browsing_java",
     "//components/stylus_handwriting/android:java",
     "//components/url_formatter/android:url_formatter_java",
     "//components/variations:variations_java",
@@ -757,7 +747,6 @@ android_library("browser_java") {
   srcjar_deps = [
     ":browser_jni_headers",
     "//android_webview/browser:browser_enums",
-    "//components/safe_browsing/core/browser/db:sb_threat_values",
   ]
 
   resources_package = "org.chromium.android_webview"
@@ -884,7 +873,6 @@ android_library("common_java") {
     "//components/metrics:metrics_java",
     "//components/network_session_configurator/android:network_session_configurator_java",
     "//components/permissions/android:core_java",
-    "//components/safe_browsing/android:safe_browsing_java",
     "//components/variations:variations_java",
     "//components/viz:viz_java",
     "//content/public/android:content_java",
@@ -1158,7 +1146,6 @@ grit("generate_components_resources") {
   defines = [
     "enable_pdf=$enable_pdf",
     "enable_printing=$enable_printing",
-    "safe_browsing_mode=$safe_browsing_mode",
     "enable_supervised_users=$enable_supervised_users",
     "use_blink=$use_blink",
   ]
@@ -1188,16 +1175,6 @@ grit("generate_components_resources") {
     "//components/security_interstitials/content/resources:build_ts",
     "//components/security_interstitials/core/browser/resources:bundle_js",
   ]
-
-  if (safe_browsing_mode != 0) {
-    deps += [
-      "//components/safe_browsing/content/resources:make_file_types_protobuf",
-    ]
-  }
-
-  if (safe_browsing_mode == 2) {
-    deps += [ "//components/safe_browsing/content/resources/real_time_url_checks_allowlist:make_real_time_url_allowlist_protobuf" ]
-  }
 }
 
 grit("generate_components_strings") {

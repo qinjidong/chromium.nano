@@ -33,25 +33,16 @@
 #include "chrome/browser/download/chrome_download_manager_delegate.h"
 #include "chrome/browser/download/download_stats.h"
 #include "chrome/browser/download/drag_download_item.h"
-#include "chrome/browser/enterprise/connectors/common.h"
-#include "chrome/browser/enterprise/connectors/connectors_service.h"
 #include "chrome/browser/icon_manager.h"
-#include "chrome/browser/safe_browsing/advanced_protection_status_manager.h"
-#include "chrome/browser/safe_browsing/advanced_protection_status_manager_factory.h"
-#include "chrome/browser/safe_browsing/download_protection/download_protection_service.h"
-#include "chrome/browser/safe_browsing/safe_browsing_service.h"
 #include "chrome/browser/ui/browser.h"
 #include "chrome/browser/ui/color/chrome_color_id.h"
 #include "chrome/browser/ui/tab_modal_confirm_dialog.h"
 #include "chrome/browser/ui/tabs/tab_strip_model.h"
 #include "chrome/browser/ui/views/chrome_typography.h"
 #include "chrome/browser/ui/views/download/download_shelf_view.h"
-#include "chrome/browser/ui/views/safe_browsing/deep_scanning_modal_dialog.h"
-#include "chrome/browser/ui/views/safe_browsing/prompt_for_scanning_modal_dialog.h"
 #include "chrome/grit/generated_resources.h"
 #include "components/download/public/common/download_danger_type.h"
 #include "components/download/public/common/download_item.h"
-#include "components/safe_browsing/buildflags.h"
 #include "components/url_formatter/elide_url.h"
 #include "components/vector_icons/vector_icons.h"
 #include "third_party/skia/include/core/SkColor.h"
@@ -819,11 +810,7 @@ void DownloadItemView::UpdateLabels() {
   deep_scanning_label_->SetVisible(mode_ ==
                                    download::DownloadItemMode::kDeepScanning);
   if (deep_scanning_label_->GetVisible()) {
-    const int id = (model_->GetDownloadItem() &&
-                    safe_browsing::DeepScanningRequest::ShouldUploadBinary(
-                        model_->GetDownloadItem()))
-                       ? IDS_PROMPT_DEEP_SCANNING_DOWNLOAD
-                       : IDS_PROMPT_DEEP_SCANNING_APP_DOWNLOAD;
+    const int id = IDS_PROMPT_DEEP_SCANNING_APP_DOWNLOAD;
     const std::u16string filename = ElidedFilename(*deep_scanning_label_);
     size_t filename_offset;
     deep_scanning_label_->SetText(
@@ -835,8 +822,7 @@ void DownloadItemView::UpdateLabels() {
 
 void DownloadItemView::UpdateButtons() {
   bool prompt_to_scan = false, prompt_to_discard = false;
-  bool prompt_to_review = enterprise_connectors::ShouldPromptReviewForDownload(
-      model_->profile(), model_->GetDownloadItem());
+  bool prompt_to_review = false;
   if (is_download_warning(mode_)) {
     const auto danger_type = model_->GetDangerType();
     prompt_to_scan =
@@ -847,11 +833,7 @@ void DownloadItemView::UpdateButtons() {
   }
 
   const bool allow_open_during_deep_scan =
-      (mode_ == download::DownloadItemMode::kDeepScanning) &&
-      !enterprise_connectors::ConnectorsServiceFactory::GetForBrowserContext(
-           model_->profile())
-           ->DelayUntilVerdict(
-               enterprise_connectors::AnalysisConnector::FILE_DOWNLOADED);
+      (mode_ == download::DownloadItemMode::kDeepScanning);
   open_button_->SetEnabled((mode_ == download::DownloadItemMode::kNormal) ||
                            prompt_to_scan || allow_open_during_deep_scan);
 
@@ -1019,11 +1001,7 @@ ui::ImageModel DownloadItemView::GetIcon() const {
 
   switch (danger_type) {
     case download::DOWNLOAD_DANGER_TYPE_UNCOMMON_CONTENT:
-      return safe_browsing::AdvancedProtectionStatusManagerFactory::
-                     GetForProfile(model_->profile())
-                         ->IsUnderAdvancedProtection()
-                 ? kWarning
-                 : kError;
+      return kWarning;
     case download::DOWNLOAD_DANGER_TYPE_DANGEROUS_URL:
     case download::DOWNLOAD_DANGER_TYPE_DANGEROUS_CONTENT:
     case download::DOWNLOAD_DANGER_TYPE_DANGEROUS_HOST:
@@ -1210,36 +1188,9 @@ void DownloadItemView::ReviewButtonPressed() {
   // dialog to review their sensitive data/malware violation.
   review_button_->SetEnabled(false);
   dropdown_button_->SetEnabled(false);
-
-  enterprise_connectors::ShowDownloadReviewDialog(
-      ElidedFilename(*file_name_label_), model_->profile(),
-      model_->GetDownloadItem(),
-      shelf_->browser()->tab_strip_model()->GetActiveWebContents(),
-      base::BindOnce(&DownloadItemView::ExecuteCommand, base::Unretained(this),
-                     DownloadCommands::KEEP),
-      base::BindOnce(&DownloadItemView::ExecuteCommand, base::Unretained(this),
-                     DownloadCommands::DISCARD));
 }
 
-void DownloadItemView::ShowOpenDialog(content::WebContents* web_contents) {
-  if (mode_ == download::DownloadItemMode::kDeepScanning) {
-    TabModalConfirmDialog::Create(
-        std::make_unique<safe_browsing::DeepScanningModalDialog>(
-            web_contents,
-            base::BindOnce(&DownloadItemView::OpenDownloadDuringAsyncScanning,
-                           weak_ptr_factory_.GetWeakPtr())),
-        web_contents);
-  } else {
-    safe_browsing::PromptForScanningModalDialog::ShowForWebContents(
-        web_contents, model_->GetFileNameToReportUser().LossyDisplayName(),
-        base::BindOnce(&DownloadItemView::ExecuteCommand,
-                       weak_ptr_factory_.GetWeakPtr(),
-                       DownloadCommands::DEEP_SCAN),
-        base::BindOnce(&DownloadItemView::ExecuteCommand,
-                       weak_ptr_factory_.GetWeakPtr(),
-                       DownloadCommands::BYPASS_DEEP_SCANNING_AND_OPEN));
-  }
-}
+void DownloadItemView::ShowOpenDialog(content::WebContents* web_contents) {}
 
 void DownloadItemView::ShowContextMenuImpl(const gfx::Rect& rect,
                                            ui::MenuSourceType source_type) {
@@ -1275,7 +1226,6 @@ void DownloadItemView::ShowContextMenuImpl(const gfx::Rect& rect,
 }
 
 void DownloadItemView::OpenDownloadDuringAsyncScanning() {
-  model_->CompleteSafeBrowsingScan();
   model_->SetOpenWhenComplete(true);
 }
 

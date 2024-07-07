@@ -12,7 +12,6 @@
 #include "base/metrics/histogram_functions.h"
 #include "base/scoped_observation.h"
 #include "chrome/browser/browser_process.h"
-#include "chrome/browser/component_updater/soda_language_pack_component_installer.h"
 #include "chrome/grit/generated_resources.h"
 #include "components/live_caption/pref_names.h"
 #include "components/prefs/pref_service.h"

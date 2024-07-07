@@ -7,7 +7,6 @@ package org.chromium.chrome.browser.privacy_guide;
 import org.chromium.chrome.browser.prefetch.settings.PreloadPagesSettingsBridge;
 import org.chromium.chrome.browser.prefetch.settings.PreloadPagesState;
 import org.chromium.chrome.browser.profiles.Profile;
-import org.chromium.chrome.browser.safe_browsing.SafeBrowsingState;
 import org.chromium.chrome.browser.sync.SyncServiceFactory;
 import org.chromium.components.browser_ui.site_settings.WebsitePreferenceBridge;
 import org.chromium.components.content_settings.ContentSettingsType;
@@ -26,12 +25,6 @@ class StepDisplayHandlerImpl implements StepDisplayHandler {
     public boolean shouldDisplayHistorySync() {
         SyncService syncService = SyncServiceFactory.getForProfile(mProfile);
         return syncService != null && syncService.isSyncFeatureEnabled();
-    }
-
-    @Override
-    public boolean shouldDisplaySafeBrowsing() {
-        return PrivacyGuideUtils.getSafeBrowsingState(mProfile)
-                != SafeBrowsingState.NO_SAFE_BROWSING;
     }
 
     @Override

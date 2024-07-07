@@ -12,13 +12,10 @@
 #include "base/metrics/user_metrics.h"
 #include "base/metrics/user_metrics_action.h"
 #include "chrome/browser/content_settings/cookie_settings_factory.h"
-#include "chrome/browser/policy/profile_policy_connector.h"
 #include "chrome/browser/profiles/profile.h"
 #include "components/content_settings/core/browser/cookie_settings.h"
 #include "components/content_settings/core/common/content_settings.h"
 #include "components/content_settings/core/common/pref_names.h"
-#include "components/policy/core/common/policy_service.h"
-#include "components/policy/policy_constants.h"
 #include "components/prefs/pref_service.h"
 #include "url/gurl.h"
 
@@ -38,22 +35,10 @@ void CookieControlsService::Init() {
   regular_cookie_settings_ =
       CookieSettingsFactory::GetForProfile(profile_->GetOriginalProfile());
   cookie_observations_.AddObservation(regular_cookie_settings_.get());
-
-  if (profile_->GetProfilePolicyConnector()) {
-    policy_registrar_ = std::make_unique<policy::PolicyChangeRegistrar>(
-        profile_->GetProfilePolicyConnector()->policy_service(),
-        policy::PolicyNamespace(policy::POLICY_DOMAIN_CHROME, std::string()));
-    policy_registrar_->Observe(
-        policy::key::kBlockThirdPartyCookies,
-        base::BindRepeating(
-            &CookieControlsService::OnThirdPartyCookieBlockingPolicyChanged,
-            base::Unretained(this)));
-  }
 }
 
 void CookieControlsService::Shutdown() {
   cookie_observations_.RemoveAllObservations();
-  policy_registrar_.reset();
 }
 
 void CookieControlsService::HandleCookieControlsToggleChanged(bool checked) {

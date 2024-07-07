@@ -36,8 +36,6 @@
 #include "chrome/browser/privacy_sandbox/privacy_sandbox_settings_factory.h"
 #include "chrome/browser/privacy_sandbox/tracking_protection_settings_factory.h"
 #include "chrome/browser/profiles/profile.h"
-#include "chrome/browser/ssl/sct_reporting_service.h"
-#include "chrome/browser/ssl/sct_reporting_service_factory.h"
 #include "chrome/browser/webid/federated_identity_permission_context.h"
 #include "chrome/browser/webid/federated_identity_permission_context_factory.h"
 #include "chrome/common/buildflags.h"
@@ -63,7 +61,6 @@
 #include "components/prefs/pref_registry_simple.h"
 #include "components/prefs/pref_service.h"
 #include "components/privacy_sandbox/privacy_sandbox_prefs.h"
-#include "components/safe_browsing/core/common/safe_browsing_prefs.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/first_party_sets_handler.h"
@@ -95,8 +92,6 @@
 #include "chrome/browser/certificate_provider/certificate_provider.h"
 #include "chrome/browser/certificate_provider/certificate_provider_service.h"
 #include "chrome/browser/certificate_provider/certificate_provider_service_factory.h"
-#include "chrome/browser/policy/networking/policy_cert_service.h"
-#include "chrome/browser/policy/networking/policy_cert_service_factory.h"
 #include "chromeos/components/kiosk/kiosk_utils.h"
 #include "net/cert/x509_util.h"
 #endif
@@ -105,7 +100,6 @@
 #include "ash/constants/ash_switches.h"
 #include "chrome/browser/ash/net/client_cert_store_ash.h"
 #include "chrome/browser/ash/profiles/profile_helper.h"
-#include "chrome/browser/policy/profile_policy_connector.h"
 #include "components/user_manager/user.h"
 #include "components/user_manager/user_manager.h"
 #endif
@@ -132,13 +126,6 @@
 #include "chrome/browser/lacros/cert/client_cert_store_lacros.h"
 #include "chrome/browser/profiles/incognito_helpers.h"
 #include "chromeos/startup/browser_params_proxy.h"
-#endif
-
-#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC)
-#include "chrome/browser/enterprise/client_certificates/certificate_provisioning_service_factory.h"
-#include "components/enterprise/client_certificates/core/certificate_provisioning_service.h"
-#include "components/enterprise/client_certificates/core/client_certificates_service.h"
-#include "components/enterprise/client_certificates/core/features.h"
 #endif
 
 namespace {
@@ -253,27 +240,6 @@ void UpdateCookieSettings(Profile* profile, ContentSettingsType type) {
             ->SetContentSettings(type, settings, base::NullCallback());
       });
 }
-
-#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC)
-std::unique_ptr<net::ClientCertStore> GetWrappedCertStore(
-    Profile* profile,
-    std::unique_ptr<net::ClientCertStore> platform_store) {
-  if (!profile || !client_certificates::features::
-                      IsManagedClientCertificateForUserEnabled()) {
-    return platform_store;
-  }
-
-  auto* provisioning_service =
-      client_certificates::CertificateProvisioningServiceFactory::GetForProfile(
-          profile);
-  if (!provisioning_service) {
-    return platform_store;
-  }
-
-  return client_certificates::ClientCertificatesService::Create(
-      provisioning_service, std::move(platform_store));
-}
-#endif  // BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC)
 
 }  // namespace
 
@@ -529,30 +495,6 @@ ProfileNetworkContextService::GetCertificatePolicy(
   auto* prefs = profile_->GetPrefs();
   auto additional_certificates =
       cert_verifier::mojom::AdditionalCertificates::New();
-
-#if BUILDFLAG(IS_CHROMEOS)
-  const policy::PolicyCertService* policy_cert_service =
-      policy::PolicyCertServiceFactory::GetForProfile(profile_);
-  if (policy_cert_service) {
-    net::CertificateList all_certificates;
-    net::CertificateList trust_anchors;
-    policy_cert_service->GetPolicyCertificatesForStoragePartition(
-        storage_partition_path, &all_certificates, &trust_anchors);
-
-    for (const auto& cert : all_certificates) {
-      base::span<const uint8_t> cert_bytes =
-          net::x509_util::CryptoBufferAsSpan(cert->cert_buffer());
-      additional_certificates->all_certificates.push_back(
-          std::vector<uint8_t>(cert_bytes.begin(), cert_bytes.end()));
-    }
-    for (const auto& cert : trust_anchors) {
-      base::span<const uint8_t> cert_bytes =
-          net::x509_util::CryptoBufferAsSpan(cert->cert_buffer());
-      additional_certificates->trust_anchors.push_back(
-          std::vector<uint8_t>(cert_bytes.begin(), cert_bytes.end()));
-    }
-  }
-#endif  // BUILDFLAG(IS_CHROMEOS)
 
   for (const base::Value& cert_b64 :
        prefs->GetList(prefs::kCAHintCertificates)) {
@@ -941,11 +883,9 @@ ProfileNetworkContextService::CreateClientCertStore() {
 
   return store;
 #elif BUILDFLAG(IS_WIN)
-  return GetWrappedCertStore(profile_,
-                             std::make_unique<net::ClientCertStoreWin>());
+  return std::make_unique<net::ClientCertStoreWin>();
 #elif BUILDFLAG(IS_MAC)
-  return GetWrappedCertStore(profile_,
-                             std::make_unique<net::ClientCertStoreMac>());
+  return std::make_unique<net::ClientCertStoreMac>();
 #elif BUILDFLAG(IS_ANDROID)
   // Android does not use the ClientCertStore infrastructure. On Android client
   // cert matching is done by the OS as part of the call to show the cert
@@ -1136,15 +1076,8 @@ void ProfileNetworkContextService::ConfigureNetworkContextParamsInternal(
 
   network_context_params->enable_certificate_reporting = true;
 
-  SCTReportingService* sct_reporting_service =
-      SCTReportingServiceFactory::GetForBrowserContext(profile_);
-  if (sct_reporting_service) {
-    network_context_params->sct_auditing_mode =
-        sct_reporting_service->GetReportingMode();
-  } else {
-    network_context_params->sct_auditing_mode =
-        network::mojom::SCTAuditingMode::kDisabled;
-  }
+  network_context_params->sct_auditing_mode =
+      network::mojom::SCTAuditingMode::kDisabled;
 
   network_context_params->ct_policy = GetCTPolicy();
 
@@ -1158,59 +1091,6 @@ void ProfileNetworkContextService::ConfigureNetworkContextParamsInternal(
             : !g_browser_process->local_state()->GetBoolean(
                   metrics::prefs::kMetricsReportingEnabled);
   }
-
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-  // Configure cert verifier to use the same software NSS database as Chrome is
-  // currently using (secondary profiles don't have their own databases at the
-  // moment).
-  cert_verifier_creation_params->nss_full_path.reset();
-  if (profile_->IsMainProfile()) {
-    const crosapi::mojom::DefaultPathsPtr& default_paths =
-        chromeos::BrowserParamsProxy::Get()->DefaultPaths();
-    // `default_paths` can be nullptr in tests.
-    if (default_paths && default_paths->user_nss_database.has_value()) {
-      cert_verifier_creation_params->nss_full_path =
-          default_paths->user_nss_database.value();
-    }
-  }
-
-  policy::PolicyCertServiceFactory::CreateAndStartObservingForProfile(profile_);
-#endif
-
-#if BUILDFLAG(IS_CHROMEOS_ASH)
-  bool profile_supports_policy_certs = false;
-  if (ash::ProfileHelper::IsSigninProfile(profile_) ||
-      ash::ProfileHelper::IsLockScreenProfile(profile_)) {
-    profile_supports_policy_certs = true;
-  }
-  user_manager::UserManager* user_manager = user_manager::UserManager::Get();
-  if (user_manager) {
-    const user_manager::User* user =
-        ash::ProfileHelper::Get()->GetUserByProfile(profile_);
-    // No need to initialize NSS for users with empty username hash:
-    // Getters for a user's NSS slots always return NULL slot if the user's
-    // username hash is empty, even when the NSS is not initialized for the
-    // user.
-    if (user && !user->username_hash().empty()) {
-      // Populating `username_hash` and `nss_path` will make cert verifier load
-      // and use the corresponding NSS public slot. Kiosk sessions don't have
-      // the UI that could result in interactions with the public slot. Kiosk
-      // users are also not owner users and can't have the owner key in the
-      // public slot. Leaving them empty will make cert verifier ignore the
-      // public slot.  This is done mainly because Chrome sometimes fails to
-      // load the public slot and has to crash because of that.
-      if (!chromeos::IsKioskSession()) {
-        cert_verifier_creation_params->username_hash = user->username_hash();
-        cert_verifier_creation_params->nss_path = profile_->GetPath();
-      }
-      profile_supports_policy_certs = true;
-    }
-  }
-  if (profile_supports_policy_certs) {
-    policy::PolicyCertServiceFactory::CreateAndStartObservingForProfile(
-        profile_);
-  }
-#endif
 
 #if BUILDFLAG(CHROME_CERTIFICATE_POLICIES_SUPPORTED)
   // TODO(crbug.com/40928765): check to see if IsManaged() ensures the pref

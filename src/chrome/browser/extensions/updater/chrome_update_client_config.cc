@@ -23,7 +23,6 @@
 #include "base/task/sequenced_task_runner.h"
 #include "base/time/time.h"
 #include "base/version.h"
-#include "chrome/browser/component_updater/component_updater_utils.h"
 #include "chrome/browser/extensions/updater/extension_update_client_command_line_config_policy.h"
 #include "chrome/browser/extensions/updater/extension_updater_switches.h"
 #include "chrome/browser/google/google_brand.h"
@@ -48,6 +47,10 @@
 #include "content/public/browser/storage_partition.h"
 #include "extensions/browser/extension_prefs.h"
 #include "extensions/browser/extension_prefs_observer.h"
+
+#if BUILDFLAG(IS_WIN)
+#include "chrome/installer/util/install_util.h"
+#endif  // BUILDFLAG(IS_WIN)
 
 namespace extensions {
 
@@ -317,7 +320,13 @@ update_client::PersistedData* ChromeUpdateClientConfig::GetPersistedData()
 }
 
 bool ChromeUpdateClientConfig::IsPerUserInstall() const {
-  return component_updater::IsPerUserInstall();
+#if BUILDFLAG(IS_WIN)
+  // The installer computes and caches this value in memory during the
+  // process start up.
+  return InstallUtil::IsPerUserInstall();
+#else
+  return true;
+#endif
 }
 
 std::unique_ptr<update_client::ProtocolHandlerFactory>

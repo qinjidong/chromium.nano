@@ -73,11 +73,6 @@
 #include "ui/accessibility/accessibility_features.h"
 #endif  // !BUILDFLAG(IS_ANDROID)
 
-#if BUILDFLAG(SAFE_BROWSING_AVAILABLE)
-#include "components/safe_browsing/content/renderer/phishing_classifier/phishing_classifier_delegate.h"
-#include "components/safe_browsing/content/renderer/phishing_classifier/phishing_image_embedder_delegate.h"
-#endif
-
 #if BUILDFLAG(ENABLE_OFFLINE_PAGES)
 #include "chrome/common/mhtml_page_notifier.mojom.h"
 #endif
@@ -192,10 +187,6 @@ ChromeRenderFrameObserver::ChromeRenderFrameObserver(
   // Don't do anything else for subframes.
   if (!render_frame->IsMainFrame())
     return;
-
-#if BUILDFLAG(SAFE_BROWSING_AVAILABLE)
-  SetClientSidePhishingDetection();
-#endif
 
 #if !BUILDFLAG(IS_ANDROID)
   SetVisualQueryClassifierAgent();
@@ -573,14 +564,7 @@ void ChromeRenderFrameObserver::SetSupportsDraggableRegions(
       supports_draggable_regions);
 }
 
-void ChromeRenderFrameObserver::SetClientSidePhishingDetection() {
-#if BUILDFLAG(SAFE_BROWSING_AVAILABLE)
-  phishing_classifier_ = safe_browsing::PhishingClassifierDelegate::Create(
-      render_frame(), nullptr);
-  phishing_image_embedder_ =
-      safe_browsing::PhishingImageEmbedderDelegate::Create(render_frame());
-#endif
-}
+void ChromeRenderFrameObserver::SetClientSidePhishingDetection() {}
 
 void ChromeRenderFrameObserver::SetVisualQueryClassifierAgent() {
 #if !BUILDFLAG(IS_ANDROID)
@@ -649,10 +633,6 @@ bool ChromeRenderFrameObserver::ShouldCapturePageTextForTranslateOrPhishing(
   // Phishing specific checks.
   bool should_capture_for_phishing = false;
 
-#if BUILDFLAG(SAFE_BROWSING_AVAILABLE)
-  should_capture_for_phishing = phishing_classifier_->is_ready();
-#endif
-
   return should_capture_for_translate || should_capture_for_phishing;
 }
 
@@ -692,18 +672,6 @@ void ChromeRenderFrameObserver::CapturePageText(
   if (text_callback) {
     std::move(text_callback).Run(contents);
   }
-
-#if BUILDFLAG(SAFE_BROWSING_AVAILABLE)
-  // Will swap out the string.
-  if (phishing_classifier_) {
-    phishing_classifier_->PageCaptured(
-        contents, layout_type == blink::WebMeaningfulLayout::kFinishedParsing);
-  }
-  if (phishing_image_embedder_) {
-    phishing_image_embedder_->PageCaptured(
-        layout_type == blink::WebMeaningfulLayout::kFinishedParsing);
-  }
-#endif
 }
 
 // static

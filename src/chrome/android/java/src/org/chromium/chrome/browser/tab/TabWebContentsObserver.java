@@ -30,8 +30,6 @@ import org.chromium.chrome.browser.feedback.HelpAndFeedbackLauncherImpl;
 import org.chromium.chrome.browser.flags.ChromeFeatureList;
 import org.chromium.chrome.browser.media.MediaCaptureNotificationServiceImpl;
 import org.chromium.chrome.browser.pdf.PdfUtils;
-import org.chromium.chrome.browser.policy.PolicyAuditor;
-import org.chromium.chrome.browser.policy.PolicyAuditor.AuditEvent;
 import org.chromium.chrome.browser.ui.native_page.NativePage;
 import org.chromium.chrome.browser.usb.UsbNotificationManager;
 import org.chromium.content_public.browser.GlobalRenderFrameHostId;
@@ -240,22 +238,6 @@ public class TabWebContentsObserver extends TabWebContentsUserData {
         private void recordErrorInPolicyAuditor(
                 String failingUrl, String description, int errorCode) {
             assert description != null;
-
-            PolicyAuditor auditor = AppHooks.get().getPolicyAuditor();
-            if (auditor != null) {
-                auditor.notifyAuditEvent(
-                        ContextUtils.getApplicationContext(),
-                        AuditEvent.OPEN_URL_FAILURE,
-                        failingUrl,
-                        description);
-                if (errorCode == BLOCKED_BY_ADMINISTRATOR) {
-                    auditor.notifyAuditEvent(
-                            ContextUtils.getApplicationContext(),
-                            AuditEvent.OPEN_URL_BLOCKED,
-                            failingUrl,
-                            "");
-                }
-            }
         }
 
         @Override

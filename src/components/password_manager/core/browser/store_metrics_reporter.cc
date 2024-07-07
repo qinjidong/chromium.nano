@@ -27,8 +27,6 @@
 #include "components/password_manager/core/browser/password_store/password_store_interface.h"
 #include "components/password_manager/core/browser/password_sync_util.h"
 #include "components/password_manager/core/common/password_manager_pref_names.h"
-#include "components/safe_browsing/core/common/features.h"
-#include "components/safe_browsing/core/common/safe_browsing_prefs.h"
 #include "google_apis/gaia/gaia_auth_util.h"
 #include "google_apis/gaia/gaia_urls.h"
 
@@ -443,16 +441,6 @@ void ReportPasswordIssuesMetrics(
       count_phished);
 }
 
-void ReportPasswordProtectedMetrics(
-    const std::vector<std::unique_ptr<PasswordForm>>& forms) {
-  for (const std::unique_ptr<PasswordForm>& form : forms) {
-    if (!form->blocked_by_user && form->password_value.size() > 0) {
-      metrics_util::LogIsPasswordProtected(form->password_value.size() >=
-                                           kMinPasswordLengthToCheck);
-    }
-  }
-}
-
 void ReportStoreMetrics(bool is_account_store,
                         bool custom_passphrase_enabled,
                         const std::string& sync_username,
@@ -464,9 +452,6 @@ void ReportStoreMetrics(bool is_account_store,
   ReportTimesPasswordUsedMetrics(is_account_store, custom_passphrase_enabled,
                                  results);
   ReportPasswordNotesMetrics(is_account_store, results);
-  if (is_safe_browsing_enabled) {
-    ReportPasswordProtectedMetrics(results);
-  }
 
   // The remaining metrics are not recorded for the account store:
   // - SyncingAccountState2 just doesn't make sense, since syncing users only
@@ -687,8 +672,6 @@ StoreMetricsReporter::StoreMetricsReporter(
 
   is_opted_in_account_storage_ =
       features_util::IsOptedInForAccountStorage(prefs, sync_service);
-
-  is_safe_browsing_enabled_ = safe_browsing::IsSafeBrowsingEnabled(*prefs);
 
   base::UmaHistogramEnumeration(
       base::StrCat({kPasswordManager, ".EnableState"}),

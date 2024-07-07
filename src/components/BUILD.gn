@@ -9,7 +9,6 @@ import("//build/config/features.gni")
 import("//build/config/ui.gni")
 import("//components/compose/features.gni")
 import("//components/optimization_guide/features.gni")
-import("//components/safe_browsing/buildflags.gni")
 import("//components/supervised_user/buildflags.gni")
 import("//extensions/buildflags/buildflags.gni")
 import("//media/media_options.gni")
@@ -133,7 +132,6 @@ test("components_unittests") {
       "test/data/printing/",
       "test/data/protocol_handler/",
       "test/data/resource_provider/",
-      "test/data/safe_browsing/",
       "test/data/search_engines/",
       "test/data/search_provider_logos/",
       "test/data/segmentation_platform/",
@@ -141,7 +139,6 @@ test("components_unittests") {
       "test/data/sessions/",
       "test/data/shared_highlighting/",
       "test/data/storage/",
-      "test/data/subresource_filter/",
       "test/data/translate/",
       "test/data/ui_devtools/",
       "test/data/unzip_service/",
@@ -216,8 +213,6 @@ test("components_unittests") {
     "//components/dom_distiller/core:unit_tests",
     "//components/download:unit_tests",
     "//components/encrypted_messages:unit_tests",
-    "//components/enterprise:unit_tests",
-    "//components/enterprise/common:unit_tests",
     "//components/facilitated_payments/core/metrics:unit_tests",
     "//components/facilitated_payments/core/util:unit_tests",
     "//components/favicon/core:unit_tests",
@@ -279,8 +274,6 @@ test("components_unittests") {
     "//components/payments/core:unit_tests",
     "//components/plus_addresses:unit_tests",
     "//components/plus_addresses/webdata:unit_tests",
-    "//components/policy/core/browser:unit_tests",
-    "//components/policy/core/common:unit_tests",
     "//components/power_bookmarks/core:unit_tests",
     "//components/power_bookmarks/storage:unit_tests",
     "//components/power_metrics:unit_tests",
@@ -296,16 +289,6 @@ test("components_unittests") {
     "//components/reporting/metrics:unit_tests",
     "//components/reporting/storage:unit_tests",
     "//components/reporting/util:unit_tests",
-    "//components/safe_browsing/core/browser:safe_browsing_hats_delegate_unittest",
-    "//components/safe_browsing/core/browser:safe_browsing_metrics_collector_unittest",
-    "//components/safe_browsing/core/browser:token_fetcher_unit_tests",
-    "//components/safe_browsing/core/browser/hashprefix_realtime:unit_tests",
-    "//components/safe_browsing/core/browser/password_protection:unit_tests",
-    "//components/safe_browsing/core/browser/realtime:unit_tests",
-    "//components/safe_browsing/core/browser/tailored_security_service:unit_tests",
-    "//components/safe_browsing/core/browser/utils:unit_tests",
-    "//components/safe_browsing/core/common:unit_tests",
-    "//components/safe_browsing/core/common/hashprefix_realtime:unit_tests",
     "//components/safe_search_api:unit_tests",
     "//components/saved_tab_groups:unit_tests",
     "//components/search:unit_tests",
@@ -326,9 +309,6 @@ test("components_unittests") {
     "//components/speech:unit_tests",
     "//components/sqlite_proto:unit_tests",
     "//components/ssl_errors:unit_tests",
-    "//components/subresource_filter/core/browser:unit_tests",
-    "//components/subresource_filter/core/common:unit_tests",
-    "//components/subresource_filter/tools:unit_tests",
     "//components/sync:unit_tests",
     "//components/sync_bookmarks:unit_tests",
     "//components/sync_device_info:unit_tests",
@@ -435,11 +415,9 @@ test("components_unittests") {
       "//components/drive:unit_tests",
       "//components/embedder_support:unit_tests",
       "//components/endpoint_fetcher:unit_tests",
-      "//components/enterprise/content:unit_tests",
       "//components/favicon/content:unit_tests",
       "//components/feed/core/v2:core_unit_tests",
       "//components/file_access:unit_tests",
-      "//components/fingerprinting_protection_filter/browser:unit_tests",
       "//components/gcm_driver/instance_id:unit_tests",
       "//components/heavy_ad_intervention:unit_tests",
       "//components/history/content/browser:unit_tests",
@@ -479,16 +457,12 @@ test("components_unittests") {
       "//components/payments/content/utility:unit_tests",
       "//components/pdf/common:unit_tests",
       "//components/performance_manager:unit_tests",
-      "//components/policy/content:unit_tests",
       "//components/query_tiles:unit_tests",
       "//components/reporting/resources:unit_tests",
       "//components/services/heap_profiling:unit_tests",
       "//components/services/paint_preview_compositor:unit_tests",
       "//components/services/storage:tests",
       "//components/session_proto_db:unit_tests",
-      "//components/subresource_filter/content/browser:unit_tests",
-      "//components/subresource_filter/content/renderer:unit_tests",
-      "//components/subresource_filter/content/shared/browser:unit_tests",
       "//components/tracing:unit_tests",
       "//components/translate/content/browser:unit_tests",
       "//components/translate/content/renderer:unit_tests",
@@ -514,10 +488,6 @@ test("components_unittests") {
     ]
   }
 
-  if (is_linux || is_win || is_mac || is_android || is_ios) {
-    deps += [ "//components/enterprise/idle:unit_tests" ]
-  }
-
   if (is_ios) {
     bundle_deps = [ ":components_tests_pak_bundle_data" ]
     if (use_blink) {
@@ -534,7 +504,6 @@ test("components_unittests") {
       "//components/password_manager/core/common:unit_tests",
       "//components/password_manager/ios:unit_tests",
       "//components/previous_session_info:unit_tests",
-      "//components/safe_browsing/ios/browser:unit_tests",
       "//components/security_state/ios:unit_tests",
       "//components/shared_highlighting/ios:unit_tests",
       "//components/signin/ios/browser:unit_tests",
@@ -559,13 +528,6 @@ test("components_unittests") {
       "//components/permissions/prediction_service:unit_tests",
       "//components/privacy_sandbox:unit_tests",
       "//components/privacy_sandbox/privacy_sandbox_attestations:unit_tests",
-
-      # TODO(chromium: 1169835) components / reporting / storage / resources: unit_tests
-      # can't be run on iOS until they are updated.
-      "//components/safe_browsing/content/browser/password_protection:password_protection_unittest",
-      "//components/safe_browsing/content/browser/triggers:unit_tests",
-      "//components/safe_browsing/content/browser/web_ui:unit_tests",
-      "//components/safety_check:unit_tests",
       "//components/security_interstitials/content:unit_tests",
       "//components/services/quarantine:unit_tests",
       "//components/site_engagement/content:unit_tests",
@@ -632,8 +594,6 @@ test("components_unittests") {
       "//components/paint_preview/player/android:unit_tests",
       "//components/payments/content/android",
       "//components/permissions/android:java",
-      "//components/policy/android:native_test_support_java",
-      "//components/policy/android:policy_java",
       "//components/saved_tab_groups:native_java_unittests_java",
       "//components/search_engines/android:java",
       "//components/search_engines/android:test_utils_java",
@@ -745,54 +705,6 @@ test("components_unittests") {
   }
   if (enable_print_preview) {
     deps += [ "//components/pwg_encoder:unit_tests" ]
-  }
-
-  if (safe_browsing_mode != 0) {
-    deps += [
-      "//components/safe_browsing/content/common:unit_tests",
-      "//components/safe_browsing/core/browser:safe_browsing_url_checker_unittest",
-    ]
-  }
-
-  # TODO(crbug / 1056278): Enable this on Fuchsia and merge with the above
-  # conditional.
-  if (safe_browsing_mode != 0 && !is_fuchsia) {
-    deps += [
-      "//components/safe_browsing/content/browser/download:unittests",
-      "//components/safe_browsing/content/common:file_type_policies_unittest",
-    ]
-  }
-
-  if (safe_browsing_mode != 0 && !is_ios && !is_fuchsia) {
-    deps += [ "//components/safe_browsing/content/common:file_type_policies_policy_util_unittest" ]
-  }
-
-  if (safe_browsing_mode == 1) {
-    deps += [
-      "//components/safe_browsing/content/renderer:throttles_unittest",
-      "//components/safe_browsing/core/browser:ping_manager_unittest",
-      "//components/safe_browsing/core/browser:user_population_unittest",
-      "//components/safe_browsing/core/browser:verdict_cache_manager_unittest",
-      "//components/safe_browsing/core/browser/db:unit_tests_local_db",
-      "//components/safe_browsing/core/browser/db:v4_test_util",
-      "//components/safe_browsing/core/browser/password_protection:unit_tests",
-      "//components/safe_browsing/core/browser/sync:unittests",
-      "//components/safe_browsing/core/common:unit_tests",
-    ]
-  } else if (safe_browsing_mode == 2) {
-    deps += [
-      "//components/safe_browsing/android:native_java_unittests_java",
-      "//components/safe_browsing/android:unit_tests_mobile",
-    ]
-  }
-
-  if (safe_browsing_mode == 1) {
-    deps += [
-      "//components/safe_browsing/content/browser:unit_tests",
-      "//components/safe_browsing/content/renderer/phishing_classifier:unit_tests",
-    ]
-  } else if (safe_browsing_mode == 2) {
-    deps += [ "//components/safe_browsing/content/browser:unit_tests" ]
   }
 
   if (use_dbus) {
@@ -1156,7 +1068,6 @@ if (use_blink) {
       "attribution_reporting/privacy_math_perftest.cc",
       "discardable_memory/common/discardable_shared_memory_heap_perftest.cc",
       "omnibox/browser/history_quick_provider_performance_unittest.cc",
-      "subresource_filter/core/common/perftests/indexed_ruleset_perftest.cc",
       "test/run_all_perftests.cc",
       "visitedlink/test/visitedlink_perftest.cc",
     ]
@@ -1169,8 +1080,6 @@ if (use_blink) {
       "//components/history/core/test",
       "//components/omnibox/browser",
       "//components/omnibox/browser:test_support",
-      "//components/subresource_filter/core/common",
-      "//components/subresource_filter/tools:tools_lib",
       "//components/test:test_support",
       "//components/visitedlink/browser",
       "//testing/perf",
@@ -1186,7 +1095,6 @@ if (use_blink) {
     ]
 
     data = [
-      "//components/subresource_filter/core/common/perftests/data/",
       "//third_party/subresource-filter-ruleset/data/",
     ]
 
@@ -1198,11 +1106,7 @@ if (use_blink) {
     }
 
     if (!is_android) {
-      sources += [ "safe_browsing/core/browser/db/v4_store_perftest.cc" ]
       deps += [
-        "//components/safe_browsing/core/browser/db:v4_protocol_manager_util",
-        "//components/safe_browsing/core/browser/db:v4_store",
-        "//components/safe_browsing/core/browser/db:v4_test_util",
         "//crypto",
       ]
     }
@@ -1238,13 +1142,11 @@ if (is_android) {
       "//components/messages/android/internal:junit",
       "//components/payments/content/android:junit",
       "//components/permissions/android:components_permissions_junit_tests",
-      "//components/policy/android:components_policy_junit_tests",
       "//components/prefs/android:junit",
       "//components/query_tiles:query_tiles_junit_tests",
       "//components/saved_tab_groups:components_tab_group_sync_junit_tests",
       "//components/signin/public/android:junit",
       "//components/stylus_handwriting/android:stylus_handwriting_junit_tests",
-      "//components/subresource_filter/android:junit",
       "//components/variations/android:components_variations_junit_tests",
       "//components/webapk/android/libs/client:junit",
       "//components/webapps/browser/android:junit",

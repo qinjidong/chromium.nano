@@ -11,7 +11,6 @@
 #include "base/memory/weak_ptr.h"
 #include "build/build_config.h"
 #include "chrome/browser/browser_process.h"
-#include "chrome/browser/enterprise/profile_management/profile_management_features.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/profiles/profile_avatar_icon_util.h"
 #include "chrome/browser/profiles/profile_manager.h"
@@ -199,12 +198,6 @@ SigninViewControllerDelegateViews::CreateManagedUserNoticeConfirmationWebView(
     signin::SigninChoiceCallback callback) {
   bool enable_updated_dialog = base::FeatureList::IsEnabled(
       features::kEnterpriseUpdatedProfileCreationScreen);
-#if !BUILDFLAG(IS_CHROMEOS_LACROS)
-  enable_updated_dialog |=
-      is_oidc_account &&
-      base::FeatureList::IsEnabled(
-          profile_management::features::kOidcAuthProfileManagement);
-#endif
   auto width = enable_updated_dialog
                    ? kManagedUserNoticeConfirmationUpdatedDialogWidth
                    : kManagedUserNoticeConfirmationDialogWidth;

@@ -19,8 +19,6 @@ import org.jni_zero.CalledByNativeUnchecked;
 import org.jni_zero.JNINamespace;
 import org.jni_zero.NativeMethods;
 
-import org.chromium.android_webview.safe_browsing.AwSafeBrowsingConversionHelper;
-import org.chromium.android_webview.safe_browsing.AwSafeBrowsingResponse;
 import org.chromium.base.Callback;
 import org.chromium.base.Log;
 import org.chromium.base.TraceEvent;
@@ -343,106 +341,6 @@ public class AwContentsClientBridge {
     }
 
     @CalledByNative
-    private void onReceivedError(
-            // WebResourceRequest
-            String url,
-            boolean isOutermostMainFrame,
-            boolean hasUserGesture,
-            boolean isRendererInitiated,
-            String method,
-            String[] requestHeaderNames,
-            String[] requestHeaderValues,
-            // WebResourceError
-            @NetError int errorCode,
-            String description,
-            boolean safebrowsingHit,
-            boolean shouldOmitNotificationsForSafeBrowsingHit) {
-        AwContentsClient.AwWebResourceRequest request =
-                new AwContentsClient.AwWebResourceRequest(
-                        url,
-                        isOutermostMainFrame,
-                        hasUserGesture,
-                        method,
-                        requestHeaderNames,
-                        requestHeaderValues);
-        AwContentsClient.AwWebResourceError error = new AwContentsClient.AwWebResourceError();
-        error.errorCode = ErrorCodeConversionHelper.convertErrorCode(errorCode);
-        error.description = description;
-
-        String unreachableWebDataUrl = AwContentsStatics.getUnreachableWebDataUrl();
-        boolean isErrorUrl =
-                unreachableWebDataUrl != null && unreachableWebDataUrl.equals(request.url);
-
-        if ((!isErrorUrl && errorCode != NetError.ERR_ABORTED) || safebrowsingHit) {
-            // NetError.ERR_ABORTED error code is generated for the following reasons:
-            // - WebView.stopLoading is called;
-            // - the navigation is intercepted by the embedder via shouldOverrideUrlLoading;
-            // - server returned 204 status (no content).
-            //
-            // Android WebView does not notify the embedder of these situations using
-            // this error code with the WebViewClient.onReceivedError callback.
-            if (safebrowsingHit) {
-                if (shouldOmitNotificationsForSafeBrowsingHit) {
-                    // With committed interstitials we don't fire these notifications when the
-                    // interstitial shows, we instead handle them once the interstitial is
-                    // dismissed.
-                    return;
-                } else {
-                    error.errorCode = WebviewErrorCode.ERROR_UNSAFE_RESOURCE;
-                }
-            }
-            if (request.isOutermostMainFrame
-                    && AwComputedFlags.pageStartedOnCommitEnabled(isRendererInitiated)) {
-                mClient.getCallbackHelper().postOnPageStarted(request.url);
-            }
-            mClient.getCallbackHelper().postOnReceivedError(request, error);
-            if (request.isOutermostMainFrame) {
-                // Need to call onPageFinished after onReceivedError for backwards compatibility
-                // with the classic webview. See also AwWebContentsObserver.didFailLoad which is
-                // used when we want to send onPageFinished alone.
-                mClient.getCallbackHelper().postOnPageFinished(request.url);
-            }
-        }
-    }
-
-    @CalledByNative
-    public void onSafeBrowsingHit(
-            // WebResourceRequest
-            String url,
-            boolean isOutermostMainFrame,
-            boolean hasUserGesture,
-            String method,
-            String[] requestHeaderNames,
-            String[] requestHeaderValues,
-            int threatType,
-            final int requestId) {
-        AwContentsClient.AwWebResourceRequest request =
-                new AwContentsClient.AwWebResourceRequest(
-                        url,
-                        isOutermostMainFrame,
-                        hasUserGesture,
-                        method,
-                        requestHeaderNames,
-                        requestHeaderValues);
-
-        Callback<AwSafeBrowsingResponse> callback =
-                response ->
-                        PostTask.runOrPostTask(
-                                TaskTraits.UI_DEFAULT,
-                                () ->
-                                        AwContentsClientBridgeJni.get()
-                                                .takeSafeBrowsingAction(
-                                                        mNativeContentsClientBridge,
-                                                        AwContentsClientBridge.this,
-                                                        response.action(),
-                                                        response.reporting(),
-                                                        requestId));
-
-        int webViewThreatType = AwSafeBrowsingConversionHelper.convertThreatType(threatType);
-        mClient.getCallbackHelper().postOnSafeBrowsingHit(request, webViewThreatType, callback);
-    }
-
-    @CalledByNative
     private void onReceivedHttpError(
             // WebResourceRequest
             String url,
@@ -596,13 +494,6 @@ public class AwContentsClientBridge {
 
     @NativeMethods
     interface Natives {
-        void takeSafeBrowsingAction(
-                long nativeAwContentsClientBridge,
-                AwContentsClientBridge caller,
-                int action,
-                boolean reporting,
-                int requestId);
-
         void proceedSslError(
                 long nativeAwContentsClientBridge,
                 AwContentsClientBridge caller,

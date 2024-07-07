@@ -27,10 +27,6 @@ namespace download {
 class DownloadItem;
 }
 
-namespace policy {
-class URLBlocklist;
-}
-
 namespace user_prefs {
 class PrefRegistrySyncable;
 }
@@ -175,8 +171,6 @@ class DownloadPrefs {
                    AutoOpenCompareFunctor> AutoOpenSet;
   AutoOpenSet auto_open_by_user_;
   AutoOpenSet auto_open_by_policy_;
-
-  std::unique_ptr<policy::URLBlocklist> auto_open_allowed_by_urls_;
 
 #if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS) || \
     BUILDFLAG(IS_MAC)

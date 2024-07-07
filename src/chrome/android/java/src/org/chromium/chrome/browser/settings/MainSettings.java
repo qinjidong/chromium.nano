@@ -98,7 +98,6 @@ public class MainSettings extends ChromeBaseSettingsFragment
     public static final String PREF_AUTOFILL_ADDRESSES = "autofill_addresses";
     public static final String PREF_AUTOFILL_PAYMENTS = "autofill_payment_methods";
     public static final String PREF_PLUS_ADDRESSES = "plus_addresses";
-    public static final String PREF_SAFETY_HUB = "safety_hub";
 
     private final Map<String, Preference> mAllPreferences = new HashMap<>();
 
@@ -257,14 +256,7 @@ public class MainSettings extends ChromeBaseSettingsFragment
                                     .removePreference(findPreference(PREF_TOOLBAR_SHORTCUT));
                         });
 
-        if (BuildInfo.getInstance().isAutomotive) {
-            getPreferenceScreen().removePreference(findPreference(PREF_SAFETY_CHECK));
-            getPreferenceScreen().removePreference(findPreference(PREF_SAFETY_HUB));
-        } else if (!ChromeFeatureList.sSafetyHub.isEnabled()) {
-            getPreferenceScreen().removePreference(findPreference(PREF_SAFETY_HUB));
-        } else {
-            getPreferenceScreen().removePreference(findPreference(PREF_SAFETY_CHECK));
-        }
+        getPreferenceScreen().removePreference(findPreference(PREF_SAFETY_CHECK));
     }
 
     /**

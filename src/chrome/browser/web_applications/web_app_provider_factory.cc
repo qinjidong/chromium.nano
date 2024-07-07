@@ -5,7 +5,6 @@
 #include "chrome/browser/web_applications/web_app_provider_factory.h"
 
 #include "chrome/browser/content_settings/host_content_settings_map_factory.h"
-#include "chrome/browser/enterprise/browser_management/management_service_factory.h"
 #include "chrome/browser/metrics/ukm_background_recorder_service.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/sync/model_type_store_service_factory.h"
@@ -13,7 +12,6 @@
 #include "chrome/browser/web_applications/extensions_manager.h"
 #include "chrome/browser/web_applications/install_bounce_metric.h"
 #include "chrome/browser/web_applications/os_integration/web_app_shortcut_manager.h"
-#include "chrome/browser/web_applications/policy/web_app_policy_manager.h"
 #include "chrome/browser/web_applications/preinstalled_web_app_manager.h"
 #include "chrome/browser/web_applications/user_uninstalled_preinstalled_web_app_prefs.h"
 #include "chrome/browser/web_applications/web_app_pref_guardrails.h"
@@ -54,8 +52,6 @@ WebAppProviderFactory::WebAppProviderFactory()
   // `WebAppInstallFinalizer::OnContentSettingChanged()`
   DependsOn(HostContentSettingsMapFactory::GetInstance());
   DependsOn(ExtensionsManager::GetExtensionSystemSharedFactory());
-  // Required to use different preinstalled app configs for managed devices.
-  DependsOn(policy::ManagementServiceFactory::GetInstance());
 }
 
 WebAppProviderFactory::~WebAppProviderFactory() = default;
@@ -84,7 +80,6 @@ void WebAppProviderFactory::RegisterProfilePrefs(
   UserUninstalledPreinstalledWebAppPrefs::RegisterProfilePrefs(registry);
   PreinstalledWebAppManager::RegisterProfilePrefs(registry);
   WebAppPrefGuardrails::RegisterProfilePrefs(registry);
-  WebAppPolicyManager::RegisterProfilePrefs(registry);
   registry->RegisterBooleanPref(prefs::kShouldGarbageCollectStoragePartitions,
                                 false);
   RegisterInstallBounceMetricProfilePrefs(registry);

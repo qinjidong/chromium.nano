@@ -46,7 +46,6 @@
 #include "components/compose/core/browser/compose_features.h"
 #include "components/feature_engagement/public/feature_constants.h"
 #include "components/lens/lens_features.h"
-#include "components/safe_browsing/core/common/safebrowsing_referral_methods.h"
 #include "components/strings/grit/components_strings.h"
 #include "components/user_education/common/feature_promo_handle.h"
 #include "components/user_education/common/feature_promo_registry.h"
@@ -956,36 +955,6 @@ void MaybeRegisterChromeFeaturePromos(
             .SetMetadata(120, "yuezhanggg@chromium.org",
                          "Triggered when a price tracking is enabled.")));
   }
-
-#if BUILDFLAG(GOOGLE_CHROME_BRANDING)
-  // kIPHDownloadEsbPromoFeature:
-  registry.RegisterFeature(std::move(
-      FeaturePromoSpecification::CreateForCustomAction(
-          feature_engagement::kIPHDownloadEsbPromoFeature,
-          kToolbarDownloadButtonElementId, IDS_DOWNLOAD_BUBBLE_ESB_PROMO,
-          IDS_DOWNLOAD_BUBBLE_ESB_PROMO_CUSTOM_ACTION,
-          base::BindRepeating(
-              [](ui::ElementContext ctx,
-                 user_education::FeaturePromoHandle promo_handle) {
-                auto* browser = chrome::FindBrowserWithUiElementContext(ctx);
-                if (!browser) {
-                  return;
-                }
-                chrome::ShowSafeBrowsingEnhancedProtectionWithIph(
-                    browser, safe_browsing::SafeBrowsingSettingReferralMethod::
-                                 kDownloadButtonIphPromo);
-              }))
-          .SetCustomActionIsDefault(true)
-          .SetBubbleArrow(HelpBubbleArrow::kTopRight)
-          .SetBubbleTitleText(IDS_DOWNLOAD_BUBBLE_ESB_PROMO_TITLE)
-          .SetCustomActionDismissText(IDS_DOWNLOAD_BUBBLE_ESB_PROMO_DISMISS)
-          .SetBubbleIcon(&vector_icons::kGshieldIcon)
-          .SetPromoSubtype(
-              FeaturePromoSpecification::PromoSubtype::kActionableAlert)
-          .SetMetadata(
-              122, "awado@chromium.org",
-              "Triggered when user is using standard protection mode.")));
-#endif
 
   // kIPHBackNavigationMenuFeature:
   registry.RegisterFeature(

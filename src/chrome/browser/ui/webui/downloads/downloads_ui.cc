@@ -15,10 +15,7 @@
 #include "base/values.h"
 #include "chrome/browser/browser_process.h"
 #include "chrome/browser/defaults.h"
-#include "chrome/browser/enterprise/connectors/connectors_service.h"
 #include "chrome/browser/profiles/profile.h"
-#include "chrome/browser/safe_browsing/advanced_protection_status_manager.h"
-#include "chrome/browser/safe_browsing/advanced_protection_status_manager_factory.h"
 #include "chrome/browser/ui/ui_features.h"
 #include "chrome/browser/ui/webui/downloads/downloads.mojom.h"
 #include "chrome/browser/ui/webui/downloads/downloads_dom_handler.h"
@@ -40,7 +37,6 @@
 #include "components/history/core/common/pref_names.h"
 #include "components/prefs/pref_service.h"
 #include "components/profile_metrics/browser_profile_type.h"
-#include "components/safe_browsing/core/common/features.h"
 #include "components/strings/grit/components_strings.h"
 #include "content/public/browser/download_manager.h"
 #include "content/public/browser/url_data_source.h"
@@ -69,11 +65,7 @@ content::WebUIDataSource* CreateAndAddDownloadsUIHTMLSource(Profile* profile) {
       source, base::make_span(kDownloadsResources, kDownloadsResourcesSize),
       IDR_DOWNLOADS_DOWNLOADS_HTML);
 
-  bool requests_ap_verdicts =
-      safe_browsing::AdvancedProtectionStatusManagerFactory::GetForProfile(
-          profile)
-          ->IsUnderAdvancedProtection();
-  source->AddBoolean("requestsApVerdicts", requests_ap_verdicts);
+  source->AddBoolean("requestsApVerdicts", false);
 
   static constexpr webui::LocalizedString kStrings[] = {
       {"title", IDS_DOWNLOAD_HISTORY_TITLE},
@@ -183,8 +175,7 @@ content::WebUIDataSource* CreateAndAddDownloadsUIHTMLSource(Profile* profile) {
 
   // New chrome://downloads icons, colors, strings, etc. to be consistent with
   // download bubble.
-  bool improved_download_warnings_ux = base::FeatureList::IsEnabled(
-      safe_browsing::kImprovedDownloadPageWarnings);
+  bool improved_download_warnings_ux = false;
   source->AddBoolean("improvedDownloadWarningsUX",
                      improved_download_warnings_ux);
   source->AddLocalizedString("dangerFileDesc",
@@ -207,18 +198,14 @@ content::WebUIDataSource* CreateAndAddDownloadsUIHTMLSource(Profile* profile) {
           : IDS_BLOCK_REASON_DANGEROUS_DOWNLOAD);
   source->AddLocalizedString(
       "dangerUncommonDesc",
-      requests_ap_verdicts
-          ? IDS_BLOCK_REASON_UNCOMMON_DOWNLOAD_IN_ADVANCED_PROTECTION
-          : (improved_download_warnings_ux
-                 ? IDS_BLOCK_DOWNLOAD_REASON_UNCOMMON
-                 : IDS_BLOCK_REASON_UNCOMMON_DOWNLOAD));
+      (improved_download_warnings_ux
+           ? IDS_BLOCK_DOWNLOAD_REASON_UNCOMMON
+           : IDS_BLOCK_REASON_UNCOMMON_DOWNLOAD));
   source->AddLocalizedString(
       "dangerUncommonSuspiciousArchiveDesc",
-      requests_ap_verdicts
-          ? IDS_BLOCK_REASON_UNCOMMON_DOWNLOAD_IN_ADVANCED_PROTECTION
-          : (improved_download_warnings_ux
-                 ? IDS_BLOCK_DOWNLOAD_REASON_UNCOMMON_SUSPICIOUS_ARCHIVE
-                 : IDS_BLOCK_REASON_UNCOMMON_DOWNLOAD));
+      (improved_download_warnings_ux
+           ? IDS_BLOCK_DOWNLOAD_REASON_UNCOMMON_SUSPICIOUS_ARCHIVE
+           : IDS_BLOCK_REASON_UNCOMMON_DOWNLOAD));
   source->AddLocalizedString(
       "dangerSettingsDesc", improved_download_warnings_ux
                                 ? IDS_BLOCK_DOWNLOAD_REASON_POTENTIALLY_UNWANTED

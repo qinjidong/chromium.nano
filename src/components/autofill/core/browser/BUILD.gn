@@ -655,8 +655,6 @@ static_library("browser") {
 
   if (!is_ios) {
     sources += [
-      "autofill_policy_handler.cc",
-      "autofill_policy_handler.h",
       "payments/credit_card_fido_authenticator.cc",
       "payments/credit_card_fido_authenticator.h",
       "strike_databases/payments/fido_authentication_strike_database.h",
@@ -744,8 +742,6 @@ static_library("browser") {
     "//components/optimization_guide/core",
     "//components/optimization_guide/proto:optimization_guide_proto",
     "//components/os_crypt/sync",
-    "//components/policy/core/browser",
-    "//components/policy/core/common",
     "//components/pref_registry",
     "//components/prefs",
     "//components/profile_metrics",
@@ -1333,7 +1329,6 @@ source_set("unit_tests") {
     "//components/os_crypt/sync",
     "//components/os_crypt/sync:test_support",
     "//components/plus_addresses",
-    "//components/policy/core/common",
     "//components/prefs:test_support",
     "//components/resources",
     "//components/search:search",

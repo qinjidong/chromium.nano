@@ -31,7 +31,6 @@
 #include "chrome/browser/ui/webui/signin/signin_ui_error.h"
 #include "chrome/browser/ui/webui/signin/signin_utils_desktop.h"
 #include "chrome/browser/ui/webui/signin/turn_sync_on_helper.h"
-#include "chrome/credential_provider/common/gcp_strings.h"
 #include "components/prefs/pref_service.h"
 #include "components/signin/core/browser/about_signin_internals.h"
 #include "components/signin/public/base/signin_metrics.h"
@@ -43,106 +42,11 @@ namespace signin_util {
 
 namespace {
 
-constexpr signin_metrics::AccessPoint kCredentialsProviderAccessPointWin =
-    signin_metrics::AccessPoint::ACCESS_POINT_MACHINE_LOGON;
-
 std::unique_ptr<TurnSyncOnHelper::Delegate>*
 GetTurnSyncOnHelperDelegateForTestingStorage() {
   static base::NoDestructor<std::unique_ptr<TurnSyncOnHelper::Delegate>>
       delegate;
   return delegate.get();
-}
-
-std::string DecryptRefreshToken(const std::string& cipher_text) {
-  DATA_BLOB input;
-  input.pbData =
-      const_cast<BYTE*>(reinterpret_cast<const BYTE*>(cipher_text.data()));
-  input.cbData = static_cast<DWORD>(cipher_text.length());
-  DATA_BLOB output;
-  BOOL result = ::CryptUnprotectData(&input, nullptr, nullptr, nullptr, nullptr,
-                                     CRYPTPROTECT_UI_FORBIDDEN, &output);
-
-  if (!result)
-    return std::string();
-
-  std::string refresh_token(reinterpret_cast<char*>(output.pbData),
-                            output.cbData);
-  ::LocalFree(output.pbData);
-  return refresh_token;
-}
-
-// Finish the process of import credentials.  This is either called directly
-// from ImportCredentialsFromProvider() if a browser window for the profile is
-// already available or is delayed until a browser can first be opened.
-void FinishImportCredentialsFromProvider(const CoreAccountId& account_id,
-                                         Profile* profile,
-                                         Browser* browser) {
-  if (!browser) {
-    // Chrome failed to open a browser, the sync confirmation cannot be shown.
-    base::debug::DumpWithoutCrashing();
-    return;
-  }
-  CHECK_EQ(browser->profile(), profile);
-
-  // TurnSyncOnHelper deletes itself once done.
-  if (GetTurnSyncOnHelperDelegateForTestingStorage()->get()) {
-    new TurnSyncOnHelper(
-        profile, kCredentialsProviderAccessPointWin,
-        signin_metrics::PromoAction::PROMO_ACTION_WITH_DEFAULT, account_id,
-        TurnSyncOnHelper::SigninAbortedMode::KEEP_ACCOUNT,
-        std::move(*GetTurnSyncOnHelperDelegateForTestingStorage()),
-        base::DoNothing());
-  } else {
-    new TurnSyncOnHelper(profile, browser, kCredentialsProviderAccessPointWin,
-                         signin_metrics::PromoAction::PROMO_ACTION_WITH_DEFAULT,
-                         account_id,
-                         TurnSyncOnHelper::SigninAbortedMode::KEEP_ACCOUNT);
-  }
-}
-
-// Start the process of importing credentials from the credential provider given
-// that all the required information is available.  The process depends on
-// having a browser window for the profile.  If a browser window exists the
-// profile be signed in and sync will be starting up.  If not, the profile will
-// be still be signed in but sync will be started once the browser window is
-// ready.
-void ImportCredentialsFromProvider(Profile* profile,
-                                   const std::wstring& gaia_id,
-                                   const std::wstring& email,
-                                   const std::string& refresh_token,
-                                   bool turn_on_sync) {
-  // For debugging purposes, record that the credentials for this profile
-  // came from a credential provider.
-  AboutSigninInternals* signin_internals =
-      AboutSigninInternalsFactory::GetInstance()->GetForProfile(profile);
-  signin_internals->OnAuthenticationResultReceived("Credential Provider");
-
-  CoreAccountId account_id =
-      IdentityManagerFactory::GetForProfile(profile)
-          ->GetAccountsMutator()
-          ->AddOrUpdateAccount(base::WideToUTF8(gaia_id),
-                               base::WideToUTF8(email), refresh_token,
-                               /*is_under_advanced_protection=*/false,
-                               kCredentialsProviderAccessPointWin,
-                               signin_metrics::SourceForRefreshTokenOperation::
-                                   kMachineLogon_CredentialProvider);
-
-  if (turn_on_sync) {
-    Browser* browser = chrome::FindLastActiveWithProfile(profile);
-    if (browser) {
-      FinishImportCredentialsFromProvider(account_id, profile, browser);
-    } else {
-      // If no active browser exists yet, this profile is in the process of
-      // being created.  Wait for the browser to be created before finishing the
-      // sign in.  This object deletes itself when done.
-      new profiles::BrowserAddedForProfileObserver(
-          profile, base::BindOnce(&FinishImportCredentialsFromProvider,
-                                  account_id, profile));
-    }
-  }
-
-  // Mark this profile as having been signed in with the credential provider.
-  profile->GetPrefs()->SetBoolean(prefs::kSignedInWithCredentialProvider, true);
 }
 
 // Extracts the |cred_provider_gaia_id| and |cred_provider_email| for the user
@@ -154,30 +58,6 @@ void ExtractCredentialProviderUser(std::wstring* cred_provider_gaia_id,
 
   cred_provider_gaia_id->clear();
   cred_provider_email->clear();
-
-  base::win::RegKey key;
-  if (key.Open(HKEY_CURRENT_USER, credential_provider::kRegHkcuAccountsPath,
-               KEY_READ) != ERROR_SUCCESS) {
-    return;
-  }
-
-  base::win::RegistryKeyIterator it(key.Handle(), L"");
-  if (!it.Valid() || it.SubkeyCount() != 1)
-    return;
-
-  base::win::RegKey key_account(key.Handle(), it.Name(), KEY_QUERY_VALUE);
-  if (!key_account.Valid())
-    return;
-
-  std::wstring email;
-  if (key_account.ReadValue(
-          base::UTF8ToWide(credential_provider::kKeyEmail).c_str(), &email) !=
-      ERROR_SUCCESS) {
-    return;
-  }
-
-  *cred_provider_gaia_id = it.Name();
-  *cred_provider_email = email;
 }
 
 // Attempt to sign in with a credentials from a system installed credential
@@ -187,61 +67,7 @@ void ExtractCredentialProviderUser(std::wstring* cred_provider_gaia_id,
 bool TrySigninWithCredentialProvider(Profile* profile,
                                      const std::wstring& auth_gaia_id,
                                      bool turn_on_sync) {
-  base::win::RegKey key;
-  if (key.Open(HKEY_CURRENT_USER, credential_provider::kRegHkcuAccountsPath,
-               KEY_READ) != ERROR_SUCCESS) {
-    return false;
-  }
-
-  base::win::RegistryKeyIterator it(key.Handle(), L"");
-  if (!it.Valid() || it.SubkeyCount() == 0)
-    return false;
-
-  base::win::RegKey key_account(key.Handle(), it.Name(), KEY_READ | KEY_WRITE);
-  if (!key_account.Valid())
-    return false;
-
-  std::wstring gaia_id = it.Name();
-  if (!auth_gaia_id.empty() && auth_gaia_id != gaia_id)
-    return false;
-
-  std::wstring email;
-  if (key_account.ReadValue(
-          base::UTF8ToWide(credential_provider::kKeyEmail).c_str(), &email) !=
-      ERROR_SUCCESS) {
-    return false;
-  }
-
-  // Read the encrypted refresh token.  The data is stored in binary format.
-  // No matter what happens, delete the registry entry.
-
-  std::string encrypted_refresh_token;
-  DWORD size = 0;
-  DWORD type;
-  if (key_account.ReadValue(
-          base::UTF8ToWide(credential_provider::kKeyRefreshToken).c_str(),
-          nullptr, &size, &type) != ERROR_SUCCESS) {
-    return false;
-  }
-
-  encrypted_refresh_token.resize(size);
-  bool reauth_attempted = false;
-  key_account.ReadValue(
-      base::UTF8ToWide(credential_provider::kKeyRefreshToken).c_str(),
-      const_cast<char*>(encrypted_refresh_token.c_str()), &size, &type);
-  if (!gaia_id.empty() && !email.empty() && type == REG_BINARY &&
-      !encrypted_refresh_token.empty()) {
-    std::string refresh_token = DecryptRefreshToken(encrypted_refresh_token);
-    if (!refresh_token.empty()) {
-      reauth_attempted = true;
-      ImportCredentialsFromProvider(profile, gaia_id, email, refresh_token,
-                                    turn_on_sync);
-    }
-  }
-
-  key_account.DeleteValue(
-      base::UTF8ToWide(credential_provider::kKeyRefreshToken).c_str());
-  return reauth_attempted;
+  return false;
 }
 
 }  // namespace

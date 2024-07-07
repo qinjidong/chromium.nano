@@ -10,10 +10,6 @@
 
 class Profile;
 
-namespace policy {
-class AffiliatedInvalidationServiceProviderImplTest;
-}
-
 namespace invalidation {
 
 class ProfileInvalidationProvider;
@@ -43,7 +39,6 @@ class ProfileInvalidationProviderFactory : public ProfileKeyedServiceFactory {
 
  private:
   friend class ProfileInvalidationProviderFactoryTestBase;
-  friend class policy::AffiliatedInvalidationServiceProviderImplTest;
   friend base::NoDestructor<ProfileInvalidationProviderFactory>;
 
   ProfileInvalidationProviderFactory();

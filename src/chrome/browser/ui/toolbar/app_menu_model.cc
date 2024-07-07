@@ -54,8 +54,6 @@
 #include "chrome/browser/ui/lens/lens_overlay_controller.h"
 #include "chrome/browser/ui/managed_ui.h"
 #include "chrome/browser/ui/profiles/profile_view_utils.h"
-#include "chrome/browser/ui/safety_hub/menu_notification_service_factory.h"
-#include "chrome/browser/ui/safety_hub/safety_hub_constants.h"
 #include "chrome/browser/ui/side_panel/companion/companion_utils.h"
 #include "chrome/browser/ui/startup/default_browser_prompt/default_browser_prompt_manager.h"
 #include "chrome/browser/ui/tabs/organization/tab_organization_service_factory.h"
@@ -136,8 +134,6 @@
 #endif
 
 #if BUILDFLAG(IS_CHROMEOS)
-#include "chrome/browser/policy/system_features_disable_list_policy_handler.h"
-#include "components/policy/core/common/policy_pref_names.h"
 #include "ui/display/screen.h"
 #endif
 
@@ -944,18 +940,6 @@ void AppMenuModel::SetHighlightedIdentifier(
 
 void AppMenuModel::Init() {
   Build();
-
-#if BUILDFLAG(IS_CHROMEOS)
-  PrefService* const local_state = g_browser_process->local_state();
-  if (local_state) {
-    local_state_pref_change_registrar_.Init(local_state);
-    local_state_pref_change_registrar_.Add(
-        policy::policy_prefs::kSystemFeaturesDisableList,
-        base::BindRepeating(&AppMenuModel::UpdateSettingsItemState,
-                            base::Unretained(this)));
-    UpdateSettingsItemState();
-  }
-#endif  // BUILDFLAG(IS_CHROMEOS)
 }
 
 bool AppMenuModel::DoesCommandIdDismissMenu(int command_id) const {
@@ -980,23 +964,6 @@ void AppMenuModel::ExecuteCommand(int command_id, int event_flags) {
   chrome::ExecuteCommand(browser_, command_id);
 }
 
-void AppMenuModel::LogSafetyHubInteractionMetrics(
-    safety_hub::SafetyHubModuleType sh_module,
-    int event_flags) {
-  base::UmaHistogramEnumeration("Settings.SafetyHub.Interaction",
-                                safety_hub::SafetyHubSurfaces::kThreeDotMenu);
-  base::UmaHistogramEnumeration(
-      "Settings.SafetyHub.EntryPointInteraction",
-      safety_hub::SafetyHubEntryPoint::kMenuNotifications);
-  base::UmaHistogramEnumeration("Settings.SafetyHub.MenuNotificationClicked",
-                                sh_module);
-  if (TrustSafetySentimentService* sentiment_service =
-          TrustSafetySentimentServiceFactory::GetForProfile(
-              browser_->profile())) {
-    sentiment_service->SafetyHubNotificationClicked();
-  }
-}
-
 void AppMenuModel::LogMenuMetrics(int command_id) {
   base::TimeDelta delta = timer_.Elapsed();
 
@@ -1006,9 +973,6 @@ void AppMenuModel::LogMenuMetrics(int command_id) {
       break;
     case IDC_SHOW_PASSWORD_CHECKUP:
       LogMenuAction(MENU_ACTION_SHOW_PASSWORD_CHECKUP);
-      break;
-    case IDC_OPEN_SAFETY_HUB:
-      LogMenuAction(MENU_ACTION_SHOW_SAFETY_HUB);
       break;
 #if BUILDFLAG(IS_CHROMEOS_ASH)
     case IDC_LACROS_DATA_MIGRATION:
@@ -1660,8 +1624,9 @@ void AppMenuModel::Build() {
 #endif
   }
 
-  if (AddSafetyHubMenuItem() || AddGlobalErrorMenuItems() ||
-      AddDefaultBrowserMenuItems() || need_separator) {
+  if (AddGlobalErrorMenuItems() ||
+      AddDefaultBrowserMenuItems() ||
+      need_separator) {
     AddSeparator(ui::NORMAL_SEPARATOR);
   }
 
@@ -1959,65 +1924,3 @@ bool AppMenuModel::AddDefaultBrowserMenuItems() {
 #endif
   return false;
 }
-
-bool AppMenuModel::AddSafetyHubMenuItem() {
-  // TODO(crbug.com/40267370): Remove when the service is only created when the
-  // feature is enabled.
-  if (!base::FeatureList::IsEnabled(features::kSafetyHub)) {
-    return false;
-  }
-  auto* safety_hub_menu_notification_service =
-      SafetyHubMenuNotificationServiceFactory::GetForProfile(
-          browser_->profile());
-  if (!safety_hub_menu_notification_service) {
-    return false;
-  }
-  std::optional<MenuNotificationEntry> notification =
-      safety_hub_menu_notification_service->GetNotificationToShow();
-  if (!notification.has_value()) {
-    return false;
-  }
-  base::UmaHistogramEnumeration("Settings.SafetyHub.Impression",
-                                safety_hub::SafetyHubSurfaces::kThreeDotMenu);
-  base::UmaHistogramEnumeration(
-      "Settings.SafetyHub.EntryPointImpression",
-      safety_hub::SafetyHubEntryPoint::kMenuNotifications);
-  base::UmaHistogramEnumeration("Settings.SafetyHub.MenuNotificationImpression",
-                                notification->module);
-  const auto safety_hub_icon = ui::ImageModel::FromVectorIcon(
-      kSecurityIcon, ui::kColorMenuIcon, kDefaultIconSize);
-  AddItemWithIcon(notification->command, notification->label, safety_hub_icon);
-  SetExecuteCallbackAt(
-      GetIndexOfCommandId(notification->command).value(),
-      base::BindRepeating(&AppMenuModel::LogSafetyHubInteractionMetrics,
-                          base::Unretained(this), notification->module));
-  return true;
-}
-
-#if BUILDFLAG(IS_CHROMEOS)
-void AppMenuModel::UpdateSettingsItemState() {
-  bool is_disabled =
-      policy::SystemFeaturesDisableListPolicyHandler::IsSystemFeatureDisabled(
-          policy::SystemFeature::kBrowserSettings,
-          g_browser_process->local_state());
-
-  std::optional<size_t> index = GetIndexOfCommandId(IDC_OPTIONS);
-  if (index.has_value())
-    SetEnabledAt(index.value(), !is_disabled);
-
-#if BUILDFLAG(GOOGLE_CHROME_BRANDING)
-  index = GetIndexOfCommandId(IDC_HELP_MENU);
-  if (index.has_value()) {
-    ui::SimpleMenuModel* help_menu =
-        static_cast<ui::SimpleMenuModel*>(GetSubmenuModelAt(index.value()));
-    index = help_menu->GetIndexOfCommandId(IDC_ABOUT);
-    if (index.has_value())
-      help_menu->SetEnabledAt(index.value(), !is_disabled);
-  }
-#else   // BUILDFLAG(GOOGLE_CHROME_BRANDING)
-  index = GetIndexOfCommandId(IDC_ABOUT);
-  if (index.has_value())
-    SetEnabledAt(index.value(), !is_disabled);
-#endif  // BUILDFLAG(GOOGLE_CHROME_BRANDING)
-}
-#endif  // BUILDFLAG(IS_CHROMEOS)

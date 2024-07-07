@@ -20,7 +20,6 @@
 #include "components/content_settings/core/common/content_settings_types.h"
 #include "components/content_settings/core/common/cookie_blocking_3pcd_status.h"
 #include "components/page_info/core/page_info_action.h"
-#include "components/safe_browsing/buildflags.h"
 #include "components/security_state/core/security_state.h"
 #include "content/public/browser/web_contents.h"
 #include "net/base/schemeful_site.h"
@@ -350,12 +349,6 @@ class PageInfo : private content_settings::CookieControlsObserver,
 
   // Sets (presents) the information about ad personalization in the |ui_|.
   void PresentAdPersonalizationData();
-
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-  // Records a password reuse event. If FULL_SAFE_BROWSING is defined, this
-  // function WILL record an event. Callers should check conditions beforehand.
-  void RecordPasswordReuseEvent();
-#endif
 
   // Helper function to get the |HostContentSettingsMap| associated with
   // |PageInfo|.

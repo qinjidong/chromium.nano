@@ -11,7 +11,6 @@ import android.webkit.WebViewClient;
 import androidx.annotation.RequiresApi;
 
 import org.chromium.android_webview.AwContentsClient.AwWebResourceRequest;
-import org.chromium.android_webview.safe_browsing.AwSafeBrowsingResponse;
 import org.chromium.base.Callback;
 
 /**
@@ -24,21 +23,4 @@ import org.chromium.base.Callback;
 @RequiresApi(Build.VERSION_CODES.O_MR1)
 public final class GlueApiHelperForOMR1 {
     private GlueApiHelperForOMR1() {}
-
-    /**
-     * See {@link WebViewClient#onSafeBrowsingHit(WebView, WebResourceRequest, int,
-     * SafeBrowsingResponse)}, which was added in OMR1.
-     */
-    public static void onSafeBrowsingHit(
-            WebViewClient webViewClient,
-            WebView webView,
-            AwWebResourceRequest request,
-            int threatType,
-            Callback<AwSafeBrowsingResponse> callback) {
-        webViewClient.onSafeBrowsingHit(
-                webView,
-                new WebResourceRequestAdapter(request),
-                threatType,
-                new SafeBrowsingResponseAdapter(callback));
-    }
 }

@@ -20,11 +20,6 @@ class SequencedTaskRunner;
 class Time;
 }  // namespace base
 
-namespace policy {
-class PolicyService;
-class BrowserPolicyConnector;
-}
-
 namespace sync_preferences {
 class PrefServiceSyncable;
 }
@@ -61,19 +56,15 @@ namespace chrome_prefs {
 std::unique_ptr<PrefService> CreateLocalState(
     const base::FilePath& pref_filename,
     scoped_refptr<PersistentPrefStore> pref_store,
-    policy::PolicyService* policy_service,
-    scoped_refptr<PrefRegistry> pref_registry,
-    policy::BrowserPolicyConnector* policy_connector);
+    scoped_refptr<PrefRegistry> pref_registry);
 
 std::unique_ptr<sync_preferences::PrefServiceSyncable> CreateProfilePrefs(
     const base::FilePath& pref_filename,
     mojo::PendingRemote<prefs::mojom::TrackedPreferenceValidationDelegate>
         validation_delegate,
-    policy::PolicyService* policy_service,
     supervised_user::SupervisedUserSettingsService* supervised_user_settings,
     scoped_refptr<PrefStore> extension_prefs,
     scoped_refptr<user_prefs::PrefRegistrySyncable> pref_registry,
-    policy::BrowserPolicyConnector* connector,
     bool async,
     scoped_refptr<base::SequencedTaskRunner> io_task_runner);
 

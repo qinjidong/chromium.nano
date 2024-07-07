@@ -285,9 +285,6 @@ class BackendImpl;
 class InFlightIO;
 bool CleanupDirectorySync(const base::FilePath&);
 }  // namespace disk_cache
-namespace enterprise_connectors {
-class LinuxKeyRotationCommand;
-}  // namespace enterprise_connectors
 namespace extensions {
 class InstalledLoader;
 class UnpackedInstaller;
@@ -781,7 +778,6 @@ class BASE_EXPORT [[maybe_unused, nodiscard]] ScopedAllowBaseSyncPrimitives {
   friend class content::RendererBlinkPlatformImpl;
   friend class content::ServiceWorkerContextClient;
   friend class device::UsbContext;
-  friend class enterprise_connectors::LinuxKeyRotationCommand;
   friend class history_report::HistoryReportJniBridge;
   friend class internal::TaskTracker;
   friend class leveldb::port::CondVar;

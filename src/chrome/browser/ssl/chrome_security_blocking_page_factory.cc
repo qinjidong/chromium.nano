@@ -15,9 +15,6 @@
 #include "chrome/browser/net/secure_dns_config.h"
 #include "chrome/browser/net/stub_resolver_config_reader.h"
 #include "chrome/browser/profiles/profile.h"
-#include "chrome/browser/safe_browsing/advanced_protection_status_manager.h"
-#include "chrome/browser/safe_browsing/advanced_protection_status_manager_factory.h"
-#include "chrome/browser/safe_browsing/safe_browsing_metrics_collector_factory.h"
 #include "chrome/browser/ssl/https_only_mode_controller_client.h"
 #include "chrome/browser/ssl/insecure_form/insecure_form_controller_client.h"
 #include "chrome/browser/ssl/ssl_error_controller_client.h"
@@ -25,7 +22,6 @@
 #include "chrome/browser/ui/browser_navigator.h"
 #include "chrome/common/channel_info.h"
 #include "chrome/common/chrome_features.h"
-#include "components/safe_browsing/core/browser/safe_browsing_metrics_collector.h"
 #include "components/security_interstitials/content/content_metrics_helper.h"
 #include "components/security_interstitials/content/settings_page_helper.h"
 #include "components/security_interstitials/content/ssl_blocking_page.h"
@@ -37,7 +33,6 @@
 #if BUILDFLAG(IS_WIN)
 #include "base/enterprise_util.h"
 #elif BUILDFLAG(IS_CHROMEOS_ASH)
-#include "chrome/browser/ash/policy/core/browser_policy_connector_ash.h"
 #include "chrome/browser/browser_process_platform_part.h"
 #endif
 
@@ -86,10 +81,6 @@ bool IsEnterpriseManaged() {
 
 #if BUILDFLAG(IS_WIN)
   if (base::IsManagedOrEnterpriseDevice()) {
-    return true;
-  }
-#elif BUILDFLAG(IS_CHROMEOS_ASH)
-  if (g_browser_process->platform_part()->browser_policy_connector_ash()) {
     return true;
   }
 #endif  // BUILDFLAG(IS_WIN)
@@ -145,15 +136,6 @@ CreateSettingsPageHelper() {
       CreateChromeSettingsPageHelper();
 }
 
-void LogSafeBrowsingSecuritySensitiveAction(
-    safe_browsing::SafeBrowsingMetricsCollector* metrics_collector) {
-  if (metrics_collector) {
-    metrics_collector->AddSafeBrowsingEventToPref(
-        safe_browsing::SafeBrowsingMetricsCollector::EventType::
-            SECURITY_SENSITIVE_SSL_INTERSTITIAL);
-  }
-}
-
 }  // namespace
 
 std::unique_ptr<SSLBlockingPage>
@@ -175,10 +157,6 @@ ChromeSecurityBlockingPageFactory::CreateSSLPage(
       StatefulSSLHostStateDelegateFactory::GetForProfile(
           Profile::FromBrowserContext(web_contents->GetBrowserContext()));
   state->DidDisplayErrorPage(cert_error);
-
-  LogSafeBrowsingSecuritySensitiveAction(
-      safe_browsing::SafeBrowsingMetricsCollectorFactory::GetForProfile(
-          Profile::FromBrowserContext(web_contents->GetBrowserContext())));
 
   auto controller_client = std::make_unique<SSLErrorControllerClient>(
       web_contents, ssl_info, cert_error, request_url,
@@ -242,10 +220,6 @@ ChromeSecurityBlockingPageFactory::CreateMITMSoftwareBlockingPage(
     const GURL& request_url,
     const net::SSLInfo& ssl_info,
     const std::string& mitm_software_name) {
-  LogSafeBrowsingSecuritySensitiveAction(
-      safe_browsing::SafeBrowsingMetricsCollectorFactory::GetForProfile(
-          Profile::FromBrowserContext(web_contents->GetBrowserContext())));
-
   auto page = std::make_unique<MITMSoftwareBlockingPage>(
       web_contents, cert_error, request_url,
       /*can_show_enhanced_protection_message=*/true, ssl_info,
@@ -265,10 +239,6 @@ ChromeSecurityBlockingPageFactory::CreateBlockedInterceptionBlockingPage(
     int cert_error,
     const GURL& request_url,
     const net::SSLInfo& ssl_info) {
-  LogSafeBrowsingSecuritySensitiveAction(
-      safe_browsing::SafeBrowsingMetricsCollectorFactory::GetForProfile(
-          Profile::FromBrowserContext(web_contents->GetBrowserContext())));
-
   auto page = std::make_unique<BlockedInterceptionBlockingPage>(
       web_contents, cert_error, request_url,
       /*can_show_enhanced_protection_message=*/true, ssl_info,
@@ -302,13 +272,7 @@ ChromeSecurityBlockingPageFactory::CreateHttpsOnlyModeBlockingPage(
   std::unique_ptr<HttpsOnlyModeControllerClient> client =
       std::make_unique<HttpsOnlyModeControllerClient>(web_contents,
                                                       request_url);
-  Profile* profile =
-      Profile::FromBrowserContext(web_contents->GetBrowserContext());
-  interstitial_state.enabled_by_advanced_protection =
-      profile &&
-      safe_browsing::AdvancedProtectionStatusManagerFactory::GetForProfile(
-          profile)
-          ->IsUnderAdvancedProtection();
+  interstitial_state.enabled_by_advanced_protection = false;
   // HFM interstitial with Site Engagement heuristic is only shown if the
   // feature flag is enabled, so update the relevant flag here.
   interstitial_state.enabled_by_engagement_heuristic =

@@ -704,11 +704,6 @@ public class AwContents implements SmartClipProvider {
         public boolean shouldAcceptThirdPartyCookies() {
             return mSettings.getAcceptThirdPartyCookies();
         }
-
-        @Override
-        public boolean getSafeBrowsingEnabled() {
-            return mSettings.getSafeBrowsingEnabled();
-        }
     }
 
     private class BackgroundThreadClientImpl extends AwContentsBackgroundThreadClient {
@@ -4282,14 +4277,6 @@ public class AwContents implements SmartClipProvider {
                 && percentOfScreenHeight >= MIN_SCREEN_HEIGHT_PERCENTAGE_FOR_INTERSTITIAL;
     }
 
-    /**
-     * Return the device locale in the same format we use to populate the 'hl' query parameter for
-     * Safe Browsing interstitial urls, as done in BaseUIManager::app_locale().
-     */
-    public static String getSafeBrowsingLocaleForTesting() {
-        return AwContentsJni.get().getSafeBrowsingLocaleForTesting();
-    }
-
     /** Returns the AwContents instance associated with |webContents|, or NULL */
     public static AwContents fromWebContents(WebContents webContents) {
         return AwContentsJni.get().fromWebContents(webContents);
@@ -4936,8 +4923,6 @@ public class AwContents implements SmartClipProvider {
         void setShouldDownloadFavicons();
 
         void updateDefaultLocale(String locale, String localeList);
-
-        String getSafeBrowsingLocaleForTesting();
 
         AwContents fromWebContents(WebContents webContents);
 

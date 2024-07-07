@@ -154,8 +154,6 @@
 #include "components/password_manager/core/browser/password_manager_metrics_util.h"
 #include "components/password_manager/core/browser/password_manager_util.h"
 #include "components/pdf/common/pdf_util.h"
-#include "components/policy/content/policy_blocklist_service.h"
-#include "components/policy/core/common/policy_pref_names.h"
 #include "components/prefs/pref_member.h"
 #include "components/prefs/pref_service.h"
 #include "components/search_engines/search_engines_pref_names.h"
@@ -2407,30 +2405,6 @@ void RenderViewContextMenu::AppendSearchProvider() {
           l10n_util::GetStringFUTF16(IDS_CONTENT_CONTEXT_SEARCHWEBFOR,
                                      default_provider->short_name(),
                                      printable_selection_text));
-      if (companion::IsSearchWebInCompanionSidePanelSupported(GetBrowser())) {
-        // Add an "in new tab" item performing the non-side panel behavior.
-        if (base::FeatureList::IsEnabled(
-                companion::features::
-                    kCompanionEnableSearchWebInNewTabContextMenuItem) &&
-            selection_navigation_url_ != params_.link_url &&
-            ChildProcessSecurityPolicy::GetInstance()->IsWebSafeScheme(
-                selection_navigation_url_.scheme())) {
-          menu_model_.AddItem(
-              IDC_CONTENT_CONTEXT_SEARCHWEBFORNEWTAB,
-              l10n_util::GetStringFUTF16(IDS_CONTENT_CONTEXT_SEARCHWEBFORNEWTAB,
-                                         default_provider->short_name(),
-                                         printable_selection_text));
-        }
-      }
-    }
-  } else {
-    if ((selection_navigation_url_ != params_.link_url) &&
-        ChildProcessSecurityPolicy::GetInstance()->IsWebSafeScheme(
-            selection_navigation_url_.scheme())) {
-      menu_model_.AddItem(
-          IDC_CONTENT_CONTEXT_GOTOURL,
-          l10n_util::GetStringFUTF16(IDS_CONTENT_CONTEXT_GOTOURL,
-                                     printable_selection_text));
     }
   }
 }
@@ -3633,13 +3607,6 @@ void RenderViewContextMenu::EscapeAmpersands(std::u16string* text) {
   base::ReplaceChars(*text, u"&", u"&&", text);
 }
 
-#if BUILDFLAG(IS_CHROMEOS)
-const policy::DlpRulesManager* RenderViewContextMenu::GetDlpRulesManager()
-    const {
-  return policy::DlpRulesManagerFactory::GetForPrimaryProfile();
-}
-#endif
-
 bool RenderViewContextMenu::IsSaveAsItemAllowedByPolicy() const {
   PrefService* local_state = g_browser_process->local_state();
   DCHECK(local_state);
@@ -3719,13 +3686,6 @@ bool RenderViewContextMenu::IsTranslateEnabled() const {
 
 bool RenderViewContextMenu::IsSaveLinkAsEnabled() const {
   if (!IsSaveAsItemAllowedByPolicy()) {
-    return false;
-  }
-
-  PolicyBlocklistService* service =
-      PolicyBlocklistFactory::GetForBrowserContext(browser_context_);
-  if (service->GetURLBlocklistState(params_.link_url) ==
-      policy::URLBlocklist::URLBlocklistState::URL_IN_BLOCKLIST) {
     return false;
   }
 
@@ -3813,22 +3773,7 @@ bool RenderViewContextMenu::IsPasteEnabled() const {
 }
 
 bool RenderViewContextMenu::IsOpenLinkAllowedByDlp(const GURL& link_url) const {
-#if BUILDFLAG(IS_CHROMEOS)
-  const policy::DlpRulesManager* dlp_rules_manager = GetDlpRulesManager();
-  if (!dlp_rules_manager) {
-    return true;
-  }
-  policy::DlpRulesManager::Level level =
-      dlp_rules_manager->IsRestrictedDestination(
-          params_.page_url, link_url,
-          policy::DlpRulesManager::Restriction::kClipboard,
-          /*out_source_pattern=*/nullptr, /*out_destination_pattern=*/nullptr,
-          /*out_rule_metadata=*/nullptr);
-  // TODO(crbug.com/1222057): show a warning if the level is kWarn
-  return level != policy::DlpRulesManager::Level::kBlock;
-#else
   return true;
-#endif
 }
 
 bool RenderViewContextMenu::IsPasteAndMatchStyleEnabled() const {
@@ -3989,9 +3934,7 @@ bool RenderViewContextMenu::IsOpenLinkOTREnabled() const {
     return false;
   }
 
-  policy::IncognitoModeAvailability incognito_avail =
-      IncognitoModePrefs::GetAvailability(GetPrefs(browser_context_));
-  return incognito_avail != policy::IncognitoModeAvailability::kDisabled;
+  return true;
 }
 
 void RenderViewContextMenu::ExecOpenWebApp() {

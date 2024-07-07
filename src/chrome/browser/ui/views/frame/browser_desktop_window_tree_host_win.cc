@@ -33,7 +33,6 @@
 #include "chrome/browser/win/app_icon.h"
 #include "chrome/browser/win/titlebar_config.h"
 #include "chrome/common/chrome_constants.h"
-#include "components/policy/core/common/policy_pref_names.h"
 #include "content/public/browser/browser_thread.h"
 #include "ui/base/theme_provider.h"
 #include "ui/base/win/hwnd_metrics.h"
@@ -221,13 +220,6 @@ BrowserDesktopWindowTreeHostWin::BrowserDesktopWindowTreeHostWin(
       virtual_desktop_helper_(nullptr) {
   profile_observation_.Observe(
       &g_browser_process->profile_manager()->GetProfileAttributesStorage());
-
-  // TODO(crbug.com/40118412) Make turning off this policy turn off
-  // native window occlusion on this browser win.
-  if (!g_browser_process->local_state()->GetBoolean(
-          policy::policy_prefs::kNativeWindowOcclusionEnabled)) {
-    SetNativeWindowOcclusionEnabled(false);
-  }
 }
 
 BrowserDesktopWindowTreeHostWin::~BrowserDesktopWindowTreeHostWin() {}

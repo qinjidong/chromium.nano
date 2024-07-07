@@ -143,30 +143,6 @@ void FeedbackUploaderChrome::StartDispatchingReport() {
     return;
   }
 
-#if BUILDFLAG(PLATFORM_CFM)
-  // CFM Devices may need to acquire the auth token for their robot account
-  // before they submit feedback.
-  DeviceOAuth2TokenService* deviceTokenService =
-      DeviceOAuth2TokenServiceFactory::Get();
-  DCHECK(deviceTokenService);
-  auto device_identity_provider =
-      std::make_unique<DeviceIdentityProvider>(deviceTokenService);
-
-  // Flag indicating that a device was intended to be used as a CFM.
-  bool isMeetDevice =
-      policy::EnrollmentRequisitionManager::IsRemoraRequisition();
-  if (isMeetDevice && !device_identity_provider->GetActiveAccountId().empty()) {
-    OAuth2AccessTokenManager::ScopeSet scopes;
-    scopes.insert(GaiaConstants::kSupportContentOAuth2Scope);
-    active_account_token_fetcher_ = device_identity_provider->FetchAccessToken(
-        kConsumer, scopes,
-        base::BindOnce(
-            &FeedbackUploaderChrome::ActiveAccountAccessTokenAvailable,
-            base::Unretained(this)));
-    return;
-  }
-#endif  // BUILDFLAG(PLATFORM_CFM)
-
   LOG(ERROR) << "Failed to request oauth access token. "
              << kAuthenticationErrorLogMessage;
   FeedbackUploader::StartDispatchingReport();

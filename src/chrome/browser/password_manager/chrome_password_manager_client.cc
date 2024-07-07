@@ -36,8 +36,6 @@
 #include "chrome/browser/password_manager/profile_password_store_factory.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/profiles/profile_manager.h"
-#include "chrome/browser/safe_browsing/chrome_password_protection_service.h"
-#include "chrome/browser/safe_browsing/user_interaction_observer.h"
 #include "chrome/browser/signin/identity_manager_factory.h"
 #include "chrome/browser/sync/sync_service_factory.h"
 #include "chrome/browser/translate/chrome_translate_client.h"
@@ -83,7 +81,6 @@
 #include "components/password_manager/core/common/password_manager_features.h"
 #include "components/prefs/pref_service.h"
 #include "components/profile_metrics/browser_profile_type.h"
-#include "components/safe_browsing/buildflags.h"
 #include "components/sessions/content/content_record_password_state.h"
 #include "components/signin/public/base/signin_metrics.h"
 #include "components/signin/public/identity_manager/identity_manager.h"
@@ -110,11 +107,6 @@
 #include "services/metrics/public/cpp/metrics_utils.h"
 #include "services/metrics/public/cpp/ukm_recorder.h"
 #include "services/network/public/cpp/is_potentially_trustworthy.h"
-
-#if BUILDFLAG(SAFE_BROWSING_AVAILABLE)
-#include "chrome/browser/safe_browsing/advanced_protection_status_manager.h"
-#include "chrome/browser/safe_browsing/advanced_protection_status_manager_factory.h"
-#endif
 
 #if BUILDFLAG(IS_ANDROID)
 #include "base/android/build_info.h"
@@ -144,10 +136,7 @@
 #include "components/webauthn/android/webauthn_cred_man_delegate.h"
 #include "components/webauthn/android/webauthn_cred_man_delegate_factory.h"
 #else
-#include "chrome/browser/extensions/api/safe_browsing_private/safe_browsing_private_event_router.h"
-#include "chrome/browser/extensions/api/safe_browsing_private/safe_browsing_private_event_router_factory.h"
 #include "chrome/browser/ui/browser_finder.h"
-#include "components/policy/core/common/features.h"
 #endif
 
 #if BUILDFLAG(ENABLE_EXTENSIONS)
@@ -185,10 +174,6 @@ using sessions::SerializedNavigationEntry;
 typedef autofill::SavePasswordProgressLogger Logger;
 
 namespace {
-
-#if !BUILDFLAG(IS_ANDROID)
-static const char kPasswordBreachEntryTrigger[] = "PASSWORD_ENTRY";
-#endif
 
 #if BUILDFLAG(IS_ANDROID)
 // TODO(crbug.com/41485955): Get rid of DeprecatedGetOriginAsURL().
@@ -976,24 +961,10 @@ autofill::LanguageCode ChromePasswordManagerClient::GetPageLanguage() const {
   return autofill::LanguageCode();
 }
 
-safe_browsing::PasswordProtectionService*
-ChromePasswordManagerClient::GetPasswordProtectionService() const {
-  return safe_browsing::ChromePasswordProtectionService::
-      GetPasswordProtectionService(profile_);
-}
-
 #if defined(ON_FOCUS_PING_ENABLED)
 void ChromePasswordManagerClient::CheckSafeBrowsingReputation(
     const GURL& form_action,
-    const GURL& frame_url) {
-  safe_browsing::PasswordProtectionService* pps =
-      GetPasswordProtectionService();
-  if (pps) {
-    pps->MaybeStartPasswordFieldOnFocusRequest(
-        web_contents(), web_contents()->GetLastCommittedURL(), form_action,
-        frame_url, pps->GetAccountInfo().hosted_domain);
-  }
-}
+    const GURL& frame_url) {}
 #endif  // defined(ON_FOCUS_PING_ENABLED)
 
 #if !BUILDFLAG(IS_ANDROID)
@@ -1001,32 +972,10 @@ void ChromePasswordManagerClient::MaybeReportEnterpriseLoginEvent(
     const GURL& url,
     bool is_federated,
     const url::Origin& federated_origin,
-    const std::u16string& login_user_name) const {
-  extensions::SafeBrowsingPrivateEventRouter* router =
-      extensions::SafeBrowsingPrivateEventRouterFactory::GetForProfile(
-          profile_);
-  if (!router) {
-    return;
-  }
-
-  // The router is responsible for checking if the reporting of this event type
-  // is enabled by the admin.
-  router->OnLoginEvent(url, is_federated, federated_origin, login_user_name);
-}
+    const std::u16string& login_user_name) const {}
 
 void ChromePasswordManagerClient::MaybeReportEnterprisePasswordBreachEvent(
-    const std::vector<std::pair<GURL, std::u16string>>& identities) const {
-  extensions::SafeBrowsingPrivateEventRouter* router =
-      extensions::SafeBrowsingPrivateEventRouterFactory::GetForProfile(
-          profile_);
-  if (!router) {
-    return;
-  }
-
-  // The router is responsible for checking if the reporting of this event type
-  // is enabled by the admin.
-  router->OnPasswordBreach(kPasswordBreachEntryTrigger, identities);
-}
+    const std::vector<std::pair<GURL, std::u16string>>& identities) const {}
 #endif
 
 ukm::SourceId ChromePasswordManagerClient::GetUkmSourceId() {
@@ -1702,17 +1651,6 @@ bool ChromePasswordManagerClient::IsPasswordManagementEnabledForCurrentPage(
   // The password manager is disabled on Google Password Manager page.
   if (url.DeprecatedGetOriginAsURL() ==
       GURL(password_manager::kPasswordManagerAccountDashboardURL)) {
-    is_enabled = false;
-  }
-
-  // SafeBrowsing Delayed Warnings experiment can delay some SafeBrowsing
-  // warnings until user interaction. If the current page has a delayed warning,
-  // it'll have a user interaction observer attached. Disable password
-  // management in that case.
-  if (auto* observer =
-          safe_browsing::SafeBrowsingUserInteractionObserver::FromWebContents(
-              web_contents())) {
-    observer->OnPasswordSaveOrAutofillDenied();
     is_enabled = false;
   }
 

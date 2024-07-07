@@ -74,18 +74,6 @@ SigninUIError SigninUIError::FromGoogleServiceAuthError(
                        base::UTF8ToUTF16(error.ToString()));
 }
 
-#if BUILDFLAG(IS_WIN)
-// static
-SigninUIError SigninUIError::FromCredentialProviderUiExitCode(
-    const std::string& email,
-    credential_provider::UiExitCodes exit_code) {
-  SigninUIError error(Type::kFromCredentialProviderUiExitCode, email,
-                      base::NumberToString16(exit_code));
-  error.credential_provider_exit_code_ = exit_code;
-  return error;
-}
-#endif
-
 // static
 SigninUIError SigninUIError::ProfileIsBlocked() {
   return SigninUIError(Type::kProfileIsBlocked, /*email=*/std::string(),
@@ -116,22 +104,10 @@ const base::FilePath& SigninUIError::another_profile_path() const {
   return another_profile_path_;
 }
 
-#if BUILDFLAG(IS_WIN)
-credential_provider::UiExitCodes SigninUIError::credential_provider_exit_code()
-    const {
-  DCHECK(type() == Type::kFromCredentialProviderUiExitCode);
-  return credential_provider_exit_code_;
-}
-#endif
-
 bool SigninUIError::operator==(const SigninUIError& other) const {
   bool result = std::tie(type_, email_, message_, another_profile_path_) ==
                 std::tie(other.type_, other.email_, other.message_,
                          other.another_profile_path_);
-#if BUILDFLAG(IS_WIN)
-  result = result && credential_provider_exit_code_ ==
-                         other.credential_provider_exit_code_;
-#endif
   return result;
 }
 

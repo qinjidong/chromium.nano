@@ -77,7 +77,6 @@
 #include "components/autofill/core/common/autofill_features.h"
 #include "components/js_injection/browser/js_communication_host.h"
 #include "components/navigation_interception/intercept_navigation_delegate.h"
-#include "components/safe_browsing/core/common/features.h"
 #include "components/security_interstitials/content/security_interstitial_tab_helper.h"
 #include "components/viz/common/surfaces/frame_sink_id.h"
 #include "content/public/browser/android/child_process_importance.h"
@@ -221,13 +220,6 @@ AwBrowserPermissionRequestDelegate* AwBrowserPermissionRequestDelegate::FromID(
 }
 
 // static
-AwSafeBrowsingUIManager::UIManagerClient*
-AwSafeBrowsingUIManager::UIManagerClient::FromWebContents(
-    WebContents* web_contents) {
-  return AwContents::FromWebContents(web_contents);
-}
-
-// static
 AwRenderProcessGoneDelegate* AwRenderProcessGoneDelegate::FromWebContents(
     content::WebContents* web_contents) {
   return AwContents::FromWebContents(web_contents);
@@ -235,8 +227,6 @@ AwRenderProcessGoneDelegate* AwRenderProcessGoneDelegate::FromWebContents(
 
 AwContents::AwContents(std::unique_ptr<WebContents> web_contents)
     : content::WebContentsObserver(web_contents.get()),
-      AwSafeBrowsingAllowlistSetObserver(
-          AwBrowserProcess::GetInstance()->GetSafeBrowsingAllowlistManager()),
       browser_view_renderer_(this,
                              content::GetUIThreadTaskRunner({}),
                              content::GetIOThreadTaskRunner({})),
@@ -452,14 +442,6 @@ static void JNI_AwContents_UpdateScreenCoverage(
 // static
 jint JNI_AwContents_GetNativeInstanceCount(JNIEnv* env) {
   return base::subtle::NoBarrier_Load(&g_instance_count);
-}
-
-// static
-ScopedJavaLocalRef<jstring> JNI_AwContents_GetSafeBrowsingLocaleForTesting(
-    JNIEnv* env) {
-  ScopedJavaLocalRef<jstring> locale =
-      ConvertUTF8ToJavaString(env, base::i18n::GetConfiguredLocale());
-  return locale;
 }
 
 static ScopedJavaLocalRef<jobject> JNI_AwContents_FromWebContents(
@@ -1551,22 +1533,6 @@ void AwContents::RenderViewReady() {
       web_contents_->GetPrimaryMainFrame()->GetProcess());
 }
 
-bool AwContents::CanShowInterstitial() {
-  JNIEnv* env = AttachCurrentThread();
-  const ScopedJavaLocalRef<jobject> obj = java_ref_.get(env);
-  if (!obj)
-    return false;
-  return Java_AwContents_canShowInterstitial(env, obj);
-}
-
-int AwContents::GetErrorUiType() {
-  JNIEnv* env = AttachCurrentThread();
-  const ScopedJavaLocalRef<jobject> obj = java_ref_.get(env);
-  if (!obj)
-    return false;
-  return Java_AwContents_getErrorUiType(env, obj);
-}
-
 VisibilityMetricsLogger::VisibilityInfo AwContents::GetVisibilityInfo() {
   return VisibilityMetricsLogger::VisibilityInfo{
       browser_view_renderer_.attached_to_window(),
@@ -1620,10 +1586,6 @@ AwContents::RenderProcessGoneResult AwContents::OnRenderProcessGone(
 
   return result ? RenderProcessGoneResult::kHandled
                 : RenderProcessGoneResult::kUnhandled;
-}
-
-void AwContents::OnSafeBrowsingAllowListSet() {
-  web_contents()->GetController().GetBackForwardCache().Flush();
 }
 
 }  // namespace android_webview

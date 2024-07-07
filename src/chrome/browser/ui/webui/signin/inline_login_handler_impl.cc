@@ -25,7 +25,6 @@
 #include "base/values.h"
 #include "build/build_config.h"
 #include "chrome/browser/browser_process.h"
-#include "chrome/browser/enterprise/util/managed_browser_utils.h"
 #include "chrome/browser/new_tab_page/chrome_colors/selected_colors_info.h"
 #include "chrome/browser/password_manager/password_reuse_manager_factory.h"
 #include "chrome/browser/profiles/profile.h"
@@ -60,7 +59,6 @@
 #include "chrome/browser/ui/webui/signin/signin_utils.h"
 #include "chrome/browser/ui/webui/signin/signin_utils_desktop.h"
 #include "chrome/browser/ui/webui/signin/turn_sync_on_helper.h"
-#include "chrome/browser/ui/webui/signin/turn_sync_on_helper_delegate_impl.h"
 #include "chrome/common/pref_names.h"
 #include "chrome/common/url_constants.h"
 #include "chrome/grit/branded_strings.h"
@@ -84,7 +82,6 @@
 
 #if BUILDFLAG(IS_WIN)
 #include "base/strings/string_split.h"
-#include "chrome/credential_provider/common/gcp_strings.h"
 #endif  // BUILDFLAG(IS_WIN)
 
 namespace {
@@ -115,72 +112,6 @@ HandlerSigninReason GetHandlerSigninReason(const GURL& url) {
   }
 }
 
-// Specific implementation of TurnSyncOnHelper::Delegate for forced
-// signin flows. Some confirmation prompts are skipped.
-class ForcedSigninTurnSyncOnHelperDelegate
-    : public TurnSyncOnHelperDelegateImpl {
- public:
-  explicit ForcedSigninTurnSyncOnHelperDelegate(Browser* browser)
-      : TurnSyncOnHelperDelegateImpl(browser) {}
-
- protected:
-  void ShouldEnterpriseConfirmationPromptForNewProfile(
-      Profile* profile,
-      base::OnceCallback<void(bool)> callback) override {
-    std::move(callback).Run(/*prompt_for_new_profile=*/false);
-  }
-
- private:
-  void ShowMergeSyncDataConfirmation(
-      const std::string& previous_email,
-      const std::string& new_email,
-      signin::SigninChoiceCallback callback) override {
-    NOTREACHED_IN_MIGRATION();
-  }
-};
-
-#if BUILDFLAG(IS_WIN)
-
-// Returns a list of valid signin domains that were passed in
-// |email_domains_parameter| as an argument to the gcpw signin dialog.
-
-std::vector<std::string> GetEmailDomainsFromParameter(
-    const std::string& email_domains_parameter) {
-  return base::SplitString(base::ToLowerASCII(email_domains_parameter),
-                           credential_provider::kEmailDomainsSeparator,
-                           base::WhitespaceHandling::TRIM_WHITESPACE,
-                           base::SplitResult::SPLIT_WANT_NONEMPTY);
-}
-
-// Validates that the |signin_gaia_id| that the user signed in with matches
-// the |gaia_id_parameter| passed to the gcpw signin dialog. Also ensures
-// that the |signin_email| is in a domain listed in |email_domains_parameter|.
-// Returns kUiecSuccess on success.
-// Returns the appropriate error code on failure.
-credential_provider::UiExitCodes ValidateSigninEmail(
-    const std::string& gaia_id_parameter,
-    const std::string& email_domains_parameter,
-    const std::string& signin_email,
-    const std::string& signin_gaia_id) {
-  if (!gaia_id_parameter.empty() &&
-      !base::EqualsCaseInsensitiveASCII(gaia_id_parameter, signin_gaia_id)) {
-    return credential_provider::kUiecEMailMissmatch;
-  }
-
-  if (email_domains_parameter.empty())
-    return credential_provider::kUiecSuccess;
-
-  std::vector<std::string> all_email_domains =
-      GetEmailDomainsFromParameter(email_domains_parameter);
-  std::string email_domain = gaia::ExtractDomainName(signin_email);
-
-  return base::Contains(all_email_domains, email_domain)
-             ? credential_provider::kUiecSuccess
-             : credential_provider::kUiecInvalidEmailDomain;
-}
-
-#endif
-
 void SetProfileLocked(const base::FilePath profile_path, bool locked) {
   if (profile_path.empty())
     return;
@@ -210,80 +141,6 @@ void LockProfileAndShowUserManager(const base::FilePath& profile_path) {
   SetProfileLocked(profile_path, true);
   ProfilePicker::Show(ProfilePicker::Params::FromEntryPoint(
       ProfilePicker::EntryPoint::kProfileLocked));
-}
-
-// Callback for DiceTurnOnSyncHelper.
-void OnSigninComplete(Profile* profile,
-                      const std::string& username,
-                      const std::string& password,
-                      bool is_force_sign_in_with_usermanager) {
-  DCHECK(signin_util::IsForceSigninEnabled());
-  signin::IdentityManager* identity_manager =
-      IdentityManagerFactory::GetForProfile(profile);
-  bool can_be_managed = chrome::enterprise_util::ProfileCanBeManaged(profile);
-  if (can_be_managed && !password.empty()) {
-    password_manager::PasswordReuseManager* reuse_manager =
-        PasswordReuseManagerFactory::GetForProfile(profile);
-    if (reuse_manager) {
-      reuse_manager->SaveGaiaPasswordHash(
-          username, base::UTF8ToUTF16(password),
-          /*is_sync_password_for_metrics=*/true,
-          password_manager::metrics_util::GaiaPasswordHashChange::
-              SAVED_ON_CHROME_SIGNIN);
-    }
-  }
-
-  if (can_be_managed && is_force_sign_in_with_usermanager) {
-    CoreAccountInfo primary_account =
-        identity_manager->GetPrimaryAccountInfo(signin::ConsentLevel::kSignin);
-    AccountInfo primary_account_info =
-        identity_manager->FindExtendedAccountInfo(primary_account);
-    std::u16string profile_name;
-    if (!primary_account_info.IsEmpty()) {
-      profile_name =
-          profiles::GetDefaultNameForNewSignedInProfile(primary_account_info);
-    } else {
-      profile_name =
-          profiles::GetDefaultNameForNewSignedInProfileWithIncompleteInfo(
-              primary_account);
-    }
-    ProfileAttributesEntry* entry =
-        g_browser_process->profile_manager()
-            ->GetProfileAttributesStorage()
-            .GetProfileAttributesWithPath(profile->GetPath());
-    if (entry) {
-      entry->SetLocalProfileName(profile_name, /*is_default_name=*/false);
-      // TODO(crbug.com/40172714): move the following code into a new
-      // `Profile::SetIsHidden()` method.
-      entry->SetIsOmitted(false);
-      if (!profile->GetPrefs()->GetBoolean(prefs::kForceEphemeralProfiles)) {
-        // Unmark this profile ephemeral so that it isn't deleted upon next
-        // startup. Profiles should never be made non-ephemeral if ephemeral
-        // mode is forced by policy.
-        entry->SetIsEphemeral(false);
-      }
-    } else {
-      DVLOG(1) << "ProfileAttributesEntry not found for profile:"
-               << profile->GetPath();
-    }
-
-    Browser* browser = chrome::FindBrowserWithProfile(profile);
-
-    // Don't show the customization bubble if a valid policy theme is set.
-    if (browser &&
-        !ThemeServiceFactory::GetForProfile(profile)->UsingPolicyTheme()) {
-      ApplyProfileColorAndShowCustomizationBubbleWhenNoValueSynced(
-          browser, GenerateNewProfileColor().color);
-    }
-  }
-
-  if (!can_be_managed) {
-    BrowserList::CloseAllBrowsersWithProfile(
-        profile, base::BindRepeating(&LockProfileAndShowUserManager),
-        // Cannot be called because skip_beforeunload is true.
-        BrowserList::CloseCallback(),
-        /*skip_beforeunload=*/true);
-  }
 }
 
 }  // namespace
@@ -347,14 +204,6 @@ void InlineSigninHelper::OnClientOAuthSuccessAndBrowserOpened(
 #if BUILDFLAG(IS_WIN)
     std::string json_retval;
     base::Value::Dict args;
-    args.Set(credential_provider::kKeyEmail, base::Value(email_));
-    args.Set(credential_provider::kKeyPassword, base::Value(password_));
-    args.Set(credential_provider::kKeyId, base::Value(gaia_id_));
-    args.Set(credential_provider::kKeyRefreshToken,
-             base::Value(result.refresh_token));
-    args.Set(credential_provider::kKeyAccessToken,
-             base::Value(result.access_token));
-
     handler_->SendLSTFetchResultsMessage(base::Value(std::move(args)));
 #else
     NOTREACHED_IN_MIGRATION()
@@ -389,8 +238,7 @@ void InlineSigninHelper::OnClientOAuthSuccessAndBrowserOpened(
   }
 
   if (reason == HandlerSigninReason::kReauthentication) {
-    DCHECK(identity_manager->HasPrimaryAccount(signin::ConsentLevel::kSignin) &&
-           chrome::enterprise_util::UserAcceptedAccountManagement(profile_));
+    DCHECK(identity_manager->HasPrimaryAccount(signin::ConsentLevel::kSignin));
     // TODO(b/278545484): support LST binding for refresh tokens created by
     // InlineSigninHelper.
     identity_manager->GetAccountsMutator()->AddOrUpdateAccount(
@@ -439,33 +287,6 @@ void InlineSigninHelper::UntrustedSigninConfirmed(
 
 void InlineSigninHelper::CreateSyncStarter(const std::string& refresh_token) {
   DCHECK(signin_util::IsForceSigninEnabled());
-  signin::IdentityManager* identity_manager =
-      IdentityManagerFactory::GetForProfile(profile_);
-  if (identity_manager->HasPrimaryAccount(signin::ConsentLevel::kSync)) {
-    // Already signed in, nothing to do.
-    return;
-  }
-
-  Browser* browser = chrome::FindLastActiveWithProfile(profile_);
-  // TODO(b/278545484): support LST binding for refresh tokens created by
-  // InlineSigninHelper.
-  CoreAccountId account_id =
-      identity_manager->GetAccountsMutator()->AddOrUpdateAccount(
-          gaia_id_, email_, refresh_token,
-          /*is_under_advanced_protection=*/false,
-          signin_metrics::AccessPoint::ACCESS_POINT_FORCED_SIGNIN,
-          signin_metrics::SourceForRefreshTokenOperation::
-              kInlineLoginHandler_Signin);
-
-  std::unique_ptr<TurnSyncOnHelper::Delegate> delegate =
-      std::make_unique<ForcedSigninTurnSyncOnHelperDelegate>(browser);
-
-  new TurnSyncOnHelper(
-      profile_, signin::GetAccessPointForEmbeddedPromoURL(current_url_),
-      signin_metrics::PromoAction::PROMO_ACTION_NO_SIGNIN_PROMO, account_id,
-      TurnSyncOnHelper::SigninAbortedMode::REMOVE_ACCOUNT, std::move(delegate),
-      base::BindOnce(&OnSigninComplete, profile_, email_, password_,
-                     is_force_sign_in_with_usermanager_));
 }
 
 void InlineSigninHelper::OnClientOAuthFailure(
@@ -508,47 +329,6 @@ void InlineLoginHandlerImpl::SetExtraInitParams(base::Value::Dict& params) {
   params.Set("clientId", GaiaUrls::GetInstance()->oauth2_chrome_client_id());
   params.Set("gaiaPath", url.path().substr(1));
 
-#if BUILDFLAG(IS_WIN)
-  if (reason == HandlerSigninReason::kFetchLstOnly) {
-    std::string email_domains;
-    if (net::GetValueForKeyInQuery(
-            current_url, credential_provider::kEmailDomainsSigninPromoParameter,
-            &email_domains)) {
-      std::vector<std::string> all_email_domains =
-          GetEmailDomainsFromParameter(email_domains);
-      if (all_email_domains.size() == 1)
-        params.Set("emailDomain", all_email_domains[0]);
-    }
-
-    std::string show_tos;
-    if (net::GetValueForKeyInQuery(
-            current_url, credential_provider::kShowTosSwitch, &show_tos)) {
-      if (!show_tos.empty())
-        params.Set("showTos", show_tos);
-    }
-
-    // Prevent opening a new window if the embedded page fails to load.
-    // This will keep the user from being able to access a fully functional
-    // Chrome window in incognito mode.
-    params.Set("dontResizeNonEmbeddedPages", true);
-
-    // Scrape the SAML password if possible.
-    params.Set("extractSamlPasswordAttributes", true);
-
-    GURL windows_url = GaiaUrls::GetInstance()->embedded_setup_windows_url();
-    // Redirect to specified gaia endpoint path for GCPW:
-    std::string windows_endpoint_path = windows_url.path().substr(1);
-    // Redirect to specified gaia endpoint path for GCPW:
-    std::string gcpw_endpoint_path;
-    if (net::GetValueForKeyInQuery(
-            current_url, credential_provider::kGcpwEndpointPathPromoParameter,
-            &gcpw_endpoint_path)) {
-      windows_endpoint_path = gcpw_endpoint_path;
-    }
-    params.Set("gaiaPath", windows_endpoint_path);
-  }
-#endif
-
   std::string flow;
   switch (reason) {
     case HandlerSigninReason::kReauthentication:
@@ -557,24 +337,9 @@ void InlineLoginHandlerImpl::SetExtraInitParams(base::Value::Dict& params) {
     case HandlerSigninReason::kForcedSigninPrimaryAccount:
       flow = "enterprisefsi";
       break;
-    case HandlerSigninReason::kFetchLstOnly: {
-#if BUILDFLAG(IS_WIN)
-      // Treat a sign in request that specifies a gaia id that must be validated
-      // as a reauth request. We only get a gaia id from GCPW when trying to
-      // reauth an existing user on the system.
-      std::string validate_gaia_id;
-      net::GetValueForKeyInQuery(
-          current_url, credential_provider::kValidateGaiaIdSigninPromoParameter,
-          &validate_gaia_id);
-      if (validate_gaia_id.empty()) {
-        flow = "signin";
-      } else {
-        flow = "reauth";
-      }
-#else
+    case HandlerSigninReason::kFetchLstOnly:
       flow = "signin";
-#endif
-    } break;
+      break;
   }
   params.Set("flow", flow);
 }
@@ -662,33 +427,6 @@ void InlineLoginHandlerImpl::FinishCompleteLogin(
   std::string validate_email;
   net::GetValueForKeyInQuery(params.url, "validateEmail", &validate_email);
 
-#if BUILDFLAG(IS_WIN)
-  if (reason == HandlerSigninReason::kFetchLstOnly) {
-    std::string validate_gaia_id;
-    net::GetValueForKeyInQuery(
-        params.url, credential_provider::kValidateGaiaIdSigninPromoParameter,
-        &validate_gaia_id);
-    std::string email_domains;
-    net::GetValueForKeyInQuery(
-        params.url, credential_provider::kEmailDomainsSigninPromoParameter,
-        &email_domains);
-    credential_provider::UiExitCodes exit_code = ValidateSigninEmail(
-        validate_gaia_id, email_domains, params.email, params.gaia_id);
-    if (exit_code != credential_provider::kUiecSuccess) {
-      params.handler->HandleLoginError(
-          SigninUIError::FromCredentialProviderUiExitCode(params.email,
-                                                          exit_code));
-      return;
-    } else {
-      // Validation has already been done for GCPW, so clear the validate
-      // argument so it doesn't validate again. GCPW validation allows the
-      // signin email to not match the email given in the request url if the
-      // gaia id of the signin email matches the one given in the request url.
-      validate_email.clear();
-    }
-  }
-#endif
-
   // When doing a SAML sign in, this email check may result in a false positive.
   // This happens when the user types one email address in the gaia sign in
   // page, but signs in to a different account in the SAML sign in page.
@@ -747,15 +485,6 @@ void InlineLoginHandlerImpl::HandleLoginError(const SigninUIError& error) {
 
   if (reason == HandlerSigninReason::kFetchLstOnly) {
     base::Value::Dict error_value;
-#if BUILDFLAG(IS_WIN)
-    // If the error contains an integer error code, send it as part of the
-    // result.
-    if (error.type() ==
-        SigninUIError::Type::kFromCredentialProviderUiExitCode) {
-      error_value.Set(credential_provider::kKeyExitCode,
-                      base::Value(error.credential_provider_exit_code()));
-    }
-#endif
     SendLSTFetchResultsMessage(base::Value(std::move(error_value)));
     return;
   }

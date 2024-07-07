@@ -19,7 +19,6 @@
 #include "chrome/browser/notifications/notification_display_service_factory.h"
 #include "chrome/browser/notifications/notification_handler.h"
 #include "chrome/browser/permissions/permission_decision_auto_blocker_factory.h"
-#include "chrome/browser/policy/policy_util.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/ui/web_applications/sub_apps_install_dialog_controller.h"
 #include "chrome/browser/web_applications/web_app.h"
@@ -172,23 +171,7 @@ bool CanAccessSubAppsApi(content::RenderFrameHost& render_frame_host) {
 }
 
 bool ShouldSkipUserConfirmation(content::RenderFrameHost& frame) {
-#if BUILDFLAG(IS_CHROMEOS)
-  auto const* profile = Profile::FromBrowserContext(frame.GetBrowserContext());
-  if (!profile) {
-    return false;
-  }
-
-  auto const* prefs = profile->GetPrefs();
-  if (!prefs) {
-    return false;
-  }
-
-  return policy::IsOriginInAllowlist(
-      frame.GetLastCommittedURL(), prefs,
-      prefs::kSubAppsAPIsAllowedWithoutGestureAndAuthorizationForOrigins);
-#else   // BUILDFLAG(IS_CHROMEOS)
   return false;
-#endif  // BUILDFLAG(IS_CHROMEOS)
 }
 
 }  // namespace

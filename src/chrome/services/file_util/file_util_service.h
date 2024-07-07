@@ -9,7 +9,6 @@
 #include "build/chromeos_buildflags.h"
 #include "chrome/services/file_util/buildflags.h"
 #include "chrome/services/file_util/public/mojom/file_util_service.mojom.h"
-#include "components/safe_browsing/buildflags.h"
 #include "mojo/public/cpp/bindings/pending_receiver.h"
 #include "mojo/public/cpp/bindings/receiver.h"
 
@@ -28,12 +27,6 @@ class FileUtilService : public chrome::mojom::FileUtilService {
 #if BUILDFLAG(IS_CHROMEOS_ASH)
   void BindZipFileCreator(
       mojo::PendingReceiver<chrome::mojom::ZipFileCreator> receiver) override;
-#endif
-
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-  void BindSafeArchiveAnalyzer(
-      mojo::PendingReceiver<chrome::mojom::SafeArchiveAnalyzer> receiver)
-      override;
 #endif
 
 #if BUILDFLAG(ENABLE_EXTRACTORS)

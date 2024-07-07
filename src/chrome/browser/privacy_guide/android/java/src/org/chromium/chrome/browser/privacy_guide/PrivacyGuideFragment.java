@@ -269,11 +269,6 @@ public class PrivacyGuideFragment extends Fragment
         if (childFragment instanceof ProfileDependentSetting) {
             ((ProfileDependentSetting) childFragment).setProfile(mProfile);
         }
-
-        if (childFragment instanceof SafeBrowsingFragment) {
-            ((SafeBrowsingFragment) childFragment)
-                    .setBottomSheetControllerSupplier(mBottomSheetControllerSupplier);
-        }
         if (childFragment instanceof PreloadFragment) {
             ((PreloadFragment) childFragment)
                     .setBottomSheetControllerSupplier(mBottomSheetControllerSupplier);

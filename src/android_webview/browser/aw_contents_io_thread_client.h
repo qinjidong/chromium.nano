@@ -135,9 +135,6 @@ class AwContentsIoThreadClient {
   // Retrieve the AcceptThirdPartyCookies setting value of this AwContents.
   bool ShouldAcceptThirdPartyCookies() const;
 
-  // Retrieve the SafeBrowsingEnabled setting value of this AwContents.
-  bool GetSafeBrowsingEnabled() const;
-
  private:
   base::android::ScopedJavaGlobalRef<jobject> java_object_;
   base::android::ScopedJavaGlobalRef<jobject> bg_thread_client_object_;

@@ -13,7 +13,6 @@
 #include "base/scoped_observation.h"
 #include "chrome/browser/extensions/extension_management.h"
 #include "chrome/browser/extensions/forced_extensions/install_stage_tracker.h"
-#include "components/policy/core/common/policy_service.h"
 #include "components/prefs/pref_change_registrar.h"
 #include "extensions/browser/extension_registry.h"
 #include "extensions/browser/extension_registry_observer.h"
@@ -33,8 +32,7 @@ namespace extensions {
 // successfully loaded, failed to install, or neither happened yet.
 // ExtensionService owns this class and outlives it.
 class ForceInstalledTracker : public ExtensionRegistryObserver,
-                              public InstallStageTracker::Observer,
-                              public policy::PolicyService::Observer {
+                              public InstallStageTracker::Observer {
  public:
   class Observer : public base::CheckedObserver {
    public:
@@ -102,13 +100,6 @@ class ForceInstalledTracker : public ExtensionRegistryObserver,
       const ExtensionId& id,
       ExtensionDownloaderDelegate::CacheStatus cache_status) override;
 
-  // policy::PolicyService::Observer overrides:
-  void OnPolicyUpdated(const policy::PolicyNamespace& ns,
-                       const policy::PolicyMap& previous,
-                       const policy::PolicyMap& current) override;
-
-  void OnPolicyServiceInitialized(policy::PolicyDomain domain) override;
-
   enum class ExtensionStatus {
     // Extension appears in force-install list, but it not installed yet.
     kPending,
@@ -149,8 +140,6 @@ class ForceInstalledTracker : public ExtensionRegistryObserver,
       const std::optional<ExtensionDownloaderDelegate::CacheStatus>& status);
 
  private:
-  policy::PolicyService* policy_service();
-
   // Fires OnForceInstallationFinished() on observers, then changes `status_` to
   // kComplete.
   void MaybeNotifyObservers();

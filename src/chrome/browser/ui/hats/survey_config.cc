@@ -18,8 +18,6 @@
 #include "components/password_manager/core/browser/features/password_features.h"  // nogncheck
 #include "components/performance_manager/public/features.h"         // nogncheck
 #include "components/permissions/constants.h"                       // nogncheck
-#include "components/safe_browsing/core/common/features.h"          // nogncheck
-#include "components/safe_browsing/core/common/safebrowsing_constants.h"  // nogncheck
 #else
 #include "chrome/browser/flags/android/chrome_feature_list.h"
 #endif  // #if !BUILDFLAG(IS_ANDROID)
@@ -443,15 +441,6 @@ std::vector<hats::SurveyConfig> GetAllSurveyConfigs() {
           kPerformanceControlsBatterySaverOptOutSurvey,
       kHatsSurveyTriggerPerformanceControlsBatterySaverOptOut);
 
-  // Red Warning surveys.
-  survey_configs.emplace_back(
-      &safe_browsing::kRedWarningSurvey, kHatsSurveyTriggerRedWarning,
-      safe_browsing::kRedWarningSurveyTriggerId.Get(),
-      std::vector<std::string>{},
-      std::vector<std::string>{
-          safe_browsing::kFlaggedUrl, safe_browsing::kMainFrameUrl,
-          safe_browsing::kReferrerUrl, safe_browsing::kUserActivityWithUrls});
-
   // Suggested passwords experiment surveys.
   survey_configs.emplace_back(
       &password_manager::features::kPasswordGenerationExperiment,
@@ -459,57 +448,6 @@ std::vector<hats::SurveyConfig> GetAllSurveyConfigs() {
       password_manager::features::kPasswordGenerationExperimentSurveyTriggerId
           .Get(),
       std::vector<std::string>{"Suggested password accepted"});
-
-  // Desktop download warning surveys.
-  survey_configs.emplace_back(
-      &safe_browsing::kDownloadWarningSurvey,
-      kHatsSurveyTriggerDownloadWarningBubbleBypass,
-      /*presupplied_trigger_id=*/std::nullopt,
-      DownloadWarningHatsProductSpecificData::GetBitsDataFields(
-          DownloadWarningHatsType::kDownloadBubbleBypass),
-      DownloadWarningHatsProductSpecificData::GetStringDataFields(
-          DownloadWarningHatsType::kDownloadBubbleBypass));
-  survey_configs.emplace_back(
-      &safe_browsing::kDownloadWarningSurvey,
-      kHatsSurveyTriggerDownloadWarningBubbleHeed,
-      /*presupplied_trigger_id=*/std::nullopt,
-      DownloadWarningHatsProductSpecificData::GetBitsDataFields(
-          DownloadWarningHatsType::kDownloadBubbleHeed),
-      DownloadWarningHatsProductSpecificData::GetStringDataFields(
-          DownloadWarningHatsType::kDownloadBubbleHeed));
-  survey_configs.emplace_back(
-      &safe_browsing::kDownloadWarningSurvey,
-      kHatsSurveyTriggerDownloadWarningBubbleIgnore,
-      /*presupplied_trigger_id=*/std::nullopt,
-      DownloadWarningHatsProductSpecificData::GetBitsDataFields(
-          DownloadWarningHatsType::kDownloadBubbleIgnore),
-      DownloadWarningHatsProductSpecificData::GetStringDataFields(
-          DownloadWarningHatsType::kDownloadBubbleIgnore));
-  survey_configs.emplace_back(
-      &safe_browsing::kDownloadWarningSurvey,
-      kHatsSurveyTriggerDownloadWarningPageBypass,
-      /*presupplied_trigger_id=*/std::nullopt,
-      DownloadWarningHatsProductSpecificData::GetBitsDataFields(
-          DownloadWarningHatsType::kDownloadsPageBypass),
-      DownloadWarningHatsProductSpecificData::GetStringDataFields(
-          DownloadWarningHatsType::kDownloadsPageBypass));
-  survey_configs.emplace_back(
-      &safe_browsing::kDownloadWarningSurvey,
-      kHatsSurveyTriggerDownloadWarningPageHeed,
-      /*presupplied_trigger_id=*/std::nullopt,
-      DownloadWarningHatsProductSpecificData::GetBitsDataFields(
-          DownloadWarningHatsType::kDownloadsPageHeed),
-      DownloadWarningHatsProductSpecificData::GetStringDataFields(
-          DownloadWarningHatsType::kDownloadsPageHeed));
-  survey_configs.emplace_back(
-      &safe_browsing::kDownloadWarningSurvey,
-      kHatsSurveyTriggerDownloadWarningPageIgnore,
-      /*presupplied_trigger_id=*/std::nullopt,
-      DownloadWarningHatsProductSpecificData::GetBitsDataFields(
-          DownloadWarningHatsType::kDownloadsPageIgnore),
-      DownloadWarningHatsProductSpecificData::GetStringDataFields(
-          DownloadWarningHatsType::kDownloadsPageIgnore));
-
 #else
   survey_configs.emplace_back(&chrome::android::kChromeSurveyNextAndroid,
                               kHatsSurveyTriggerAndroidStartupSurvey);

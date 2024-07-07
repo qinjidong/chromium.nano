@@ -264,39 +264,6 @@ class ContentSettingStorageAccessImageModel
 
 namespace {
 
-struct ContentSettingsImageDetails {
-  ContentSettingsType content_type;
-  // This field is not a raw_ref<> because it was filtered by the rewriter for:
-  // #global-scope
-  RAW_PTR_EXCLUSION const gfx::VectorIcon& icon;
-  int blocked_tooltip_id;
-  int blocked_explanatory_text_id;
-  int accessed_tooltip_id;
-};
-
-const ContentSettingsImageDetails kImageDetails[] = {
-    {ContentSettingsType::COOKIES, vector_icons::kCookieIcon,
-     IDS_BLOCKED_ON_DEVICE_SITE_DATA_MESSAGE, 0,
-     IDS_ACCESSED_ON_DEVICE_SITE_DATA_MESSAGE},
-    {ContentSettingsType::IMAGES, vector_icons::kPhotoIcon,
-     IDS_BLOCKED_IMAGES_MESSAGE, 0, 0},
-    {ContentSettingsType::JAVASCRIPT, vector_icons::kCodeIcon,
-     IDS_BLOCKED_JAVASCRIPT_MESSAGE, 0, 0},
-    {ContentSettingsType::MIXEDSCRIPT, kMixedContentIcon,
-     IDS_BLOCKED_DISPLAYING_INSECURE_CONTENT, 0, 0},
-    {ContentSettingsType::SOUND, kTabAudioIcon, IDS_BLOCKED_SOUND_TITLE, 0, 0},
-    {ContentSettingsType::ADS, vector_icons::kAdsIcon,
-     IDS_BLOCKED_ADS_PROMPT_TOOLTIP, IDS_BLOCKED_ADS_PROMPT_TITLE, 0},
-};
-
-const ContentSettingsImageDetails* GetImageDetails(ContentSettingsType type) {
-  for (const ContentSettingsImageDetails& image_details : kImageDetails) {
-    if (image_details.content_type == type)
-      return &image_details;
-  }
-  return nullptr;
-}
-
 void GetIconChromeRefresh(ContentSettingsType type,
                           bool blocked,
                           raw_ptr<const gfx::VectorIcon>* icon) {
@@ -577,55 +544,7 @@ ContentSettingBlockedImageModel::ContentSettingBlockedImageModel(
 
 bool ContentSettingBlockedImageModel::UpdateAndGetVisibility(
     WebContents* web_contents) {
-  const ContentSettingsType type = content_type();
-  const ContentSettingsImageDetails* image_details = GetImageDetails(type);
-  DCHECK(image_details) << "No entry for " << static_cast<int32_t>(type)
-                        << " in kImageDetails[].";
-
-  int tooltip_id = image_details->blocked_tooltip_id;
-  int explanation_id = image_details->blocked_explanatory_text_id;
-
-  // If a content type is blocked by default and was accessed, display the
-  // content blocked page action.
-  PageSpecificContentSettings* content_settings =
-      PageSpecificContentSettings::GetForFrame(
-          web_contents->GetPrimaryMainFrame());
-  if (!content_settings)
-    return false;
-
-  bool is_blocked = content_settings->IsContentBlocked(type);
-  bool is_allowed = content_settings->IsContentAllowed(type);
-  if (!is_blocked && !is_allowed)
-    return false;
-
-  Profile* profile =
-      Profile::FromBrowserContext(web_contents->GetBrowserContext());
-  auto* map = HostContentSettingsMapFactory::GetForProfile(profile);
-
-  // For allowed cookies, don't show the cookie page action unless cookies are
-  // blocked by default.
-  if (!is_blocked && type == ContentSettingsType::COOKIES &&
-      map->GetDefaultContentSetting(type, nullptr) != CONTENT_SETTING_BLOCK) {
-    return false;
-  }
-
-  // TODO(crbug.com/40675739): Handle first-party blocking with new ui.
-  if (type == ContentSettingsType::COOKIES &&
-      CookieSettingsFactory::GetForProfile(profile)
-          ->ShouldBlockThirdPartyCookies()) {
-    return false;
-  }
-
-  if (!is_blocked) {
-    tooltip_id = image_details->accessed_tooltip_id;
-    explanation_id = 0;
-  }
-
-  SetIcon(type, content_settings->IsContentBlocked(type));
-  set_explanatory_string_id(explanation_id);
-  DCHECK(tooltip_id);
-  set_tooltip(l10n_util::GetStringUTF16(tooltip_id));
-  return true;
+  return false;
 }
 
 // Geolocation -----------------------------------------------------------------

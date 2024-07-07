@@ -19,14 +19,9 @@
 #include "chrome/browser/extensions/api/cookies/cookies_helpers.h"
 #include "chrome/browser/extensions/chrome_extension_function_details.h"
 #include "chrome/browser/profiles/profile.h"
-#include "chrome/browser/safe_browsing/extension_telemetry/cookies_get_all_signal.h"
-#include "chrome/browser/safe_browsing/extension_telemetry/cookies_get_signal.h"
-#include "chrome/browser/safe_browsing/extension_telemetry/extension_telemetry_service.h"
-#include "chrome/browser/safe_browsing/extension_telemetry/extension_telemetry_service_factory.h"
 #include "chrome/browser/ui/browser.h"
 #include "chrome/browser/ui/browser_list.h"
 #include "chrome/common/extensions/api/cookies.h"
-#include "components/safe_browsing/core/common/features.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/storage_partition.h"
@@ -301,21 +296,7 @@ void CookiesGetFunction::GetCookieListCallback(
   Respond(WithArguments(base::Value()));
 }
 
-void CookiesGetFunction::NotifyExtensionTelemetry() {
-  auto* telemetry_service =
-      safe_browsing::ExtensionTelemetryServiceFactory::GetForProfile(
-          Profile::FromBrowserContext(browser_context()));
-
-  if (!telemetry_service || !telemetry_service->enabled()) {
-    return;
-  }
-
-  auto cookies_get_signal = std::make_unique<safe_browsing::CookiesGetSignal>(
-      extension_id(), parsed_args_->details.name,
-      parsed_args_->details.store_id.value_or(std::string()),
-      parsed_args_->details.url);
-  telemetry_service->AddSignal(std::move(cookies_get_signal));
-}
+void CookiesGetFunction::NotifyExtensionTelemetry() {}
 
 CookiesGetAllFunction::CookiesGetAllFunction() {
 }
@@ -406,26 +387,7 @@ void CookiesGetAllFunction::GetCookieListCallback(
   }
 }
 
-void CookiesGetAllFunction::NotifyExtensionTelemetry() {
-  auto* telemetry_service =
-      safe_browsing::ExtensionTelemetryServiceFactory::GetForProfile(
-          Profile::FromBrowserContext(browser_context()));
-
-  if (!telemetry_service || !telemetry_service->enabled()) {
-    return;
-  }
-
-  auto cookies_get_all_signal =
-      std::make_unique<safe_browsing::CookiesGetAllSignal>(
-          extension_id(), parsed_args_->details.domain.value_or(std::string()),
-          parsed_args_->details.name.value_or(std::string()),
-          parsed_args_->details.path.value_or(std::string()),
-          parsed_args_->details.secure,
-          parsed_args_->details.store_id.value_or(std::string()),
-          parsed_args_->details.url.value_or(std::string()),
-          parsed_args_->details.session);
-  telemetry_service->AddSignal(std::move(cookies_get_all_signal));
-}
+void CookiesGetAllFunction::NotifyExtensionTelemetry() {}
 
 CookiesSetFunction::CookiesSetFunction()
     : state_(NO_RESPONSE), success_(false) {}

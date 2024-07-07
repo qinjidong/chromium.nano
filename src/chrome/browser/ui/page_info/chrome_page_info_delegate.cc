@@ -18,10 +18,8 @@
 #include "chrome/browser/privacy_sandbox/privacy_sandbox_service_factory.h"
 #include "chrome/browser/privacy_sandbox/tracking_protection_settings_factory.h"
 #include "chrome/browser/profiles/profile.h"
-#include "chrome/browser/safe_browsing/chrome_password_protection_service.h"
 #include "chrome/browser/ssl/security_state_tab_helper.h"
 #include "chrome/browser/ssl/stateful_ssl_host_state_delegate_factory.h"
-#include "chrome/browser/subresource_filter/subresource_filter_profile_context_factory.h"
 #include "chrome/browser/ui/url_identity.h"
 #include "chrome/browser/usb/usb_chooser_context.h"
 #include "chrome/browser/usb/usb_chooser_context_factory.h"
@@ -38,8 +36,6 @@
 #include "components/permissions/permission_manager.h"
 #include "components/prefs/pref_service.h"
 #include "components/security_interstitials/content/stateful_ssl_host_state_delegate.h"
-#include "components/subresource_filter/content/browser/subresource_filter_content_settings_manager.h"
-#include "components/subresource_filter/content/browser/subresource_filter_profile_context.h"
 #include "content/public/browser/permission_controller.h"
 #include "content/public/browser/permission_result.h"
 #include "content/public/browser/web_contents.h"
@@ -137,46 +133,6 @@ ChromePageInfoDelegate::GetChooserContext(ContentSettingsType type) {
       return nullptr;
   }
 }
-
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-safe_browsing::ChromePasswordProtectionService*
-ChromePageInfoDelegate::GetChromePasswordProtectionService() const {
-  return safe_browsing::ChromePasswordProtectionService::
-      GetPasswordProtectionService(GetProfile());
-}
-
-safe_browsing::PasswordProtectionService*
-ChromePageInfoDelegate::GetPasswordProtectionService() const {
-  return GetChromePasswordProtectionService();
-}
-
-void ChromePageInfoDelegate::OnUserActionOnPasswordUi(
-    safe_browsing::WarningAction action) {
-  auto* chrome_password_protection_service =
-      GetChromePasswordProtectionService();
-  DCHECK(chrome_password_protection_service);
-
-  chrome_password_protection_service->OnUserAction(
-      web_contents_,
-      chrome_password_protection_service
-          ->reused_password_account_type_for_last_shown_warning(),
-      safe_browsing::RequestOutcome::UNKNOWN,
-      safe_browsing::LoginReputationClientResponse::VERDICT_TYPE_UNSPECIFIED,
-      /*verdict_token=*/"", safe_browsing::WarningUIType::PAGE_INFO, action);
-}
-
-std::u16string ChromePageInfoDelegate::GetWarningDetailText() {
-  auto* chrome_password_protection_service =
-      GetChromePasswordProtectionService();
-
-  // |password_protection_service| may be null in test.
-  return chrome_password_protection_service
-             ? chrome_password_protection_service->GetWarningDetailText(
-                   chrome_password_protection_service
-                       ->reused_password_account_type_for_last_shown_warning())
-             : std::u16string();
-}
-#endif
 
 content::PermissionResult ChromePageInfoDelegate::GetPermissionResult(
     blink::PermissionType permission,
@@ -344,16 +300,6 @@ ChromePageInfoDelegate::GetStatefulSSLHostStateDelegate() {
 
 HostContentSettingsMap* ChromePageInfoDelegate::GetContentSettings() {
   return HostContentSettingsMapFactory::GetForProfile(GetProfile());
-}
-
-bool ChromePageInfoDelegate::IsSubresourceFilterActivated(
-    const GURL& site_url) {
-  subresource_filter::SubresourceFilterContentSettingsManager*
-      settings_manager =
-          SubresourceFilterProfileContextFactory::GetForProfile(GetProfile())
-              ->settings_manager();
-
-  return settings_manager->GetSiteActivationFromMetadata(site_url);
 }
 
 bool ChromePageInfoDelegate::HasAutoPictureInPictureBeenRegistered() {

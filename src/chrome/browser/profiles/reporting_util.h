@@ -9,7 +9,6 @@
 
 #include "base/values.h"
 #include "build/chromeos_buildflags.h"
-#include "components/enterprise/common/proto/connectors.pb.h"
 
 class Profile;
 
@@ -19,11 +18,6 @@ namespace reporting {
 // returns corresponding info to a Device, Browser and Profile protos defined in
 // google3/google/internal/chrome/reporting/v1/chromereporting.proto.
 base::Value::Dict GetContext(Profile* profile);
-
-// Fetches the same information as GetContext, but in a protobuf instead of a
-// Value.
-enterprise_connectors::ClientMetadata GetContextAsClientMetadata(
-    Profile* profile);
 
 // Returns User DMToken or client id for a given `profile` if:
 // * `profile` is NOT incognito profile.

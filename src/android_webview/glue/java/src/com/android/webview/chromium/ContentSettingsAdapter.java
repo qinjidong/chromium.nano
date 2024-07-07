@@ -166,26 +166,6 @@ public class ContentSettingsAdapter extends android.webkit.WebSettings {
     }
 
     @Override
-    public void setSafeBrowsingEnabled(boolean accept) {
-        try (TraceEvent event =
-                TraceEvent.scoped(
-                        "WebView.APICall.Framework.WEB_SETTINGS_SET_SAFE_BROWSING_ENABLED")) {
-            WebViewChromium.recordWebViewApiCall(ApiCall.WEB_SETTINGS_SET_SAFE_BROWSING_ENABLED);
-            mAwSettings.setSafeBrowsingEnabled(accept);
-        }
-    }
-
-    @Override
-    public boolean getSafeBrowsingEnabled() {
-        try (TraceEvent event =
-                TraceEvent.scoped(
-                        "WebView.APICall.Framework.WEB_SETTINGS_GET_SAFE_BROWSING_ENABLED")) {
-            WebViewChromium.recordWebViewApiCall(ApiCall.WEB_SETTINGS_GET_SAFE_BROWSING_ENABLED);
-            return mAwSettings.getSafeBrowsingEnabled();
-        }
-    }
-
-    @Override
     public void setAcceptThirdPartyCookies(boolean accept) {
         mAwSettings.setAcceptThirdPartyCookies(accept);
     }

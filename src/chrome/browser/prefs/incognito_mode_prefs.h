@@ -12,10 +12,6 @@ namespace base {
 class CommandLine;
 }
 
-namespace policy {
-enum class IncognitoModeAvailability;
-}
-
 namespace user_prefs {
 class PrefRegistrySyncable;
 }
@@ -23,31 +19,12 @@ class PrefRegistrySyncable;
 // Specifies Incognito mode availability preferences.
 class IncognitoModePrefs {
  public:
-  static const policy::IncognitoModeAvailability kDefaultAvailability;
-
   IncognitoModePrefs() = delete;
   IncognitoModePrefs(const IncognitoModePrefs&) = delete;
   IncognitoModePrefs& operator=(const IncognitoModePrefs&) = delete;
 
   // Register incognito related preferences.
   static void RegisterProfilePrefs(user_prefs::PrefRegistrySyncable* registry);
-
-  // Returns kIncognitoModeAvailability preference value stored
-  // in the given pref service.
-  static policy::IncognitoModeAvailability GetAvailability(
-      const PrefService* prefs);
-
-  // Sets kIncognitoModeAvailability preference to the specified availability
-  // value.
-  static void SetAvailability(
-      PrefService* prefs,
-      const policy::IncognitoModeAvailability availability);
-
-  // Converts in_value into the corresponding Availability value. Returns true
-  // if conversion is successful (in_value is valid). Otherwise, returns false
-  // and *out_value is set to ENABLED.
-  static bool IntToAvailability(int in_value,
-                                policy::IncognitoModeAvailability* out_value);
 
   // Returns true if the initial browser should start in incognito mode.
   static bool ShouldLaunchIncognito(const base::CommandLine& command_line,
@@ -78,13 +55,6 @@ class IncognitoModePrefs {
     CHECK_PARENTAL_CONTROLS,
     DONT_CHECK_PARENTAL_CONTROLS,
   };
-
-  // Internal version of GetAvailability() that specifies whether parental
-  // controls should be checked (which is expensive and not always necessary
-  // to do - such as when checking for FORCED state).
-  static policy::IncognitoModeAvailability GetAvailabilityInternal(
-      const PrefService* pref_service,
-      GetAvailabilityMode mode);
 
   // Internal version of ShouldLaunchIncognito() and
   // ShouldOpenSubsequentBrowsersInIncognito() that specifies whether it is for

@@ -19,7 +19,6 @@
 
 #if BUILDFLAG(IS_CHROMEOS)
 #include "chrome/browser/chromeos/upload_office_to_cloud/upload_office_to_cloud.h"
-#include "chrome/browser/policy/profile_policy_connector.h"
 #include "chrome/browser/profiles/profile_manager.h"
 #endif
 
@@ -39,35 +38,6 @@ void ExternalComponentLoader::StartLoading() {
 #if BUILDFLAG(GOOGLE_CHROME_BRANDING)
   AddExternalExtension(extension_misc::kInAppPaymentsSupportAppId, prefs);
 #endif  // BUILDFLAG(GOOGLE_CHROME_BRANDING)
-
-#if BUILDFLAG(IS_CHROMEOS)
-  {
-    // Only load the Assessment Assistant if the current session is managed.
-    if (profile_->GetProfilePolicyConnector()->IsManaged()) {
-      AddExternalExtension(extension_misc::kAssessmentAssistantExtensionId,
-                           prefs);
-    }
-
-    if (chromeos::cloud_upload::IsMicrosoftOfficeOneDriveIntegrationAllowed(
-            profile_)) {
-      // Do not load in Ash if Lacros is enabled, otherwise all messages will be
-      // routed to the extension in Ash.
-      bool should_load = false;
-#if BUILDFLAG(IS_CHROMEOS_ASH)
-      // In Ash, suppress loading if Lacros is enabled, as the extension is
-      // expected to be loaded in Lacros.
-      should_load = !crosapi::browser_util::IsLacrosEnabled();
-#elif BUILDFLAG(IS_CHROMEOS_LACROS)
-      // In Lacros, only load in the primary profile (fileSystemProvider
-      // extensions in other profiles won't work).
-      should_load = profile_ == ProfileManager::GetPrimaryUserProfile();
-#endif
-      if (should_load) {
-        AddExternalExtension(extension_misc::kODFSExtensionId, prefs);
-      }
-    }
-  }
-#endif
 
   LoadFinished(std::move(prefs));
 }

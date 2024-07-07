@@ -18,7 +18,6 @@
 #include "components/content_settings/core/browser/content_settings_utils.h"
 #include "components/content_settings/core/common/content_settings.h"
 #include "components/content_settings/core/common/content_settings_utils.h"
-#include "components/policy/core/common/policy_pref_names.h"
 #include "components/signin/public/base/signin_buildflags.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/render_process_host.h"
@@ -66,27 +65,6 @@ RendererUpdater::RendererUpdater(Profile* profile)
                                 base::Unretained(this)));
   }
 #endif
-
-  PrefService* pref_service = profile_->GetPrefs();
-  force_google_safesearch_.Init(policy::policy_prefs::kForceGoogleSafeSearch,
-                                pref_service);
-  force_youtube_restrict_.Init(policy::policy_prefs::kForceYouTubeRestrict,
-                               pref_service);
-  allowed_domains_for_apps_.Init(prefs::kAllowedDomainsForApps, pref_service);
-
-  pref_change_registrar_.Init(pref_service);
-  pref_change_registrar_.Add(
-      policy::policy_prefs::kForceGoogleSafeSearch,
-      base::BindRepeating(&RendererUpdater::UpdateAllRenderers,
-                          base::Unretained(this)));
-  pref_change_registrar_.Add(
-      policy::policy_prefs::kForceYouTubeRestrict,
-      base::BindRepeating(&RendererUpdater::UpdateAllRenderers,
-                          base::Unretained(this)));
-  pref_change_registrar_.Add(
-      prefs::kAllowedDomainsForApps,
-      base::BindRepeating(&RendererUpdater::UpdateAllRenderers,
-                          base::Unretained(this)));
 }
 
 RendererUpdater::~RendererUpdater() {
@@ -103,7 +81,6 @@ RendererUpdater::~RendererUpdater() {
 }
 
 void RendererUpdater::Shutdown() {
-  pref_change_registrar_.RemoveAll();
 #if BUILDFLAG(IS_CHROMEOS_ASH)
   oauth2_login_manager_->RemoveObserver(this);
   oauth2_login_manager_ = nullptr;
@@ -229,6 +206,5 @@ chrome::mojom::DynamicParamsPtr RendererUpdater::CreateRendererDynamicParams()
 #if BUILDFLAG(ENABLE_BOUND_SESSION_CREDENTIALS)
       GetBoundSessionThrottlerParams(),
 #endif
-      force_google_safesearch_.GetValue(), force_youtube_restrict_.GetValue(),
-      allowed_domains_for_apps_.GetValue());
+      false, 0, "");
 }

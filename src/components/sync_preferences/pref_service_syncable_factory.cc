@@ -9,10 +9,6 @@
 #include "base/check_is_test.h"
 #include "base/feature_list.h"
 #include "base/trace_event/trace_event.h"
-#include "components/policy/core/browser/browser_policy_connector.h"
-#include "components/policy/core/browser/configuration_policy_pref_store.h"
-#include "components/policy/core/common/policy_service.h"
-#include "components/policy/core/common/policy_types.h"
 #include "components/pref_registry/pref_registry_syncable.h"
 #include "components/prefs/in_memory_pref_store.h"
 #include "components/prefs/pref_notifier_impl.h"
@@ -27,22 +23,6 @@ namespace sync_preferences {
 PrefServiceSyncableFactory::PrefServiceSyncableFactory() = default;
 
 PrefServiceSyncableFactory::~PrefServiceSyncableFactory() = default;
-
-void PrefServiceSyncableFactory::SetManagedPolicies(
-    policy::PolicyService* service,
-    policy::BrowserPolicyConnector* connector) {
-  set_managed_prefs(new policy::ConfigurationPolicyPrefStore(
-      connector, service, connector->GetHandlerList(),
-      policy::POLICY_LEVEL_MANDATORY));
-}
-
-void PrefServiceSyncableFactory::SetRecommendedPolicies(
-    policy::PolicyService* service,
-    policy::BrowserPolicyConnector* connector) {
-  set_recommended_prefs(new policy::ConfigurationPolicyPrefStore(
-      connector, service, connector->GetHandlerList(),
-      policy::POLICY_LEVEL_RECOMMENDED));
-}
 
 void PrefServiceSyncableFactory::SetPrefModelAssociatorClient(
     scoped_refptr<PrefModelAssociatorClient> pref_model_associator_client) {

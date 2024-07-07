@@ -25,7 +25,6 @@
 #include "chrome/browser/ui/webui/signin/signin_url_utils.h"
 #include "components/account_manager_core/account_manager_facade.h"
 #include "components/google/core/common/google_util.h"
-#include "components/policy/core/common/policy_pref_names.h"
 #include "components/signin/core/browser/account_reconcilor.h"
 #include "components/signin/public/base/account_consistency_method.h"
 #include "components/signin/public/base/consent_level.h"
@@ -587,9 +586,7 @@ void FixAccountConsistencyRequestHeader(
   // The Mirror header may be added on desktop platforms, for integration with
   // Google Drive.
   int profile_mode_mask = PROFILE_MODE_DEFAULT;
-  if (incognito_availibility ==
-          static_cast<int>(policy::IncognitoModeAvailability::kDisabled) ||
-      IncognitoModePrefs::ArePlatformParentalControlsEnabled()) {
+  if (IncognitoModePrefs::ArePlatformParentalControlsEnabled()) {
     profile_mode_mask |= PROFILE_MODE_INCOGNITO_DISABLED;
   }
 

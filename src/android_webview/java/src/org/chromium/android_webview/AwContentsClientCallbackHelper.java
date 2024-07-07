@@ -11,7 +11,6 @@ import android.os.Message;
 import android.os.SystemClock;
 
 import org.chromium.android_webview.common.Lifetime;
-import org.chromium.android_webview.safe_browsing.AwSafeBrowsingResponse;
 import org.chromium.base.Callback;
 import org.chromium.components.embedder_support.util.WebResourceResponseInfo;
 
@@ -63,33 +62,6 @@ public class AwContentsClientCallbackHelper {
             mRealm = realm;
             mAccount = account;
             mArgs = args;
-        }
-    }
-
-    private static class OnReceivedErrorInfo {
-        final AwContentsClient.AwWebResourceRequest mRequest;
-        final AwContentsClient.AwWebResourceError mError;
-
-        OnReceivedErrorInfo(
-                AwContentsClient.AwWebResourceRequest request,
-                AwContentsClient.AwWebResourceError error) {
-            mRequest = request;
-            mError = error;
-        }
-    }
-
-    private static class OnSafeBrowsingHitInfo {
-        final AwContentsClient.AwWebResourceRequest mRequest;
-        final int mThreatType;
-        final Callback<AwSafeBrowsingResponse> mCallback;
-
-        OnSafeBrowsingHitInfo(
-                AwContentsClient.AwWebResourceRequest request,
-                int threatType,
-                Callback<AwSafeBrowsingResponse> callback) {
-            mRequest = request;
-            mThreatType = threatType;
-            mCallback = callback;
         }
     }
 
@@ -194,19 +166,6 @@ public class AwContentsClientCallbackHelper {
                         LoginRequestInfo info = (LoginRequestInfo) msg.obj;
                         mContentsClient.onReceivedLoginRequest(
                                 info.mRealm, info.mAccount, info.mArgs);
-                        break;
-                    }
-                case MSG_ON_RECEIVED_ERROR:
-                    {
-                        OnReceivedErrorInfo info = (OnReceivedErrorInfo) msg.obj;
-                        mContentsClient.onReceivedError(info.mRequest, info.mError);
-                        break;
-                    }
-                case MSG_ON_SAFE_BROWSING_HIT:
-                    {
-                        OnSafeBrowsingHitInfo info = (OnSafeBrowsingHitInfo) msg.obj;
-                        mContentsClient.onSafeBrowsingHit(
-                                info.mRequest, info.mThreatType, info.mCallback);
                         break;
                     }
                 case MSG_ON_NEW_PICTURE:
@@ -317,21 +276,6 @@ public class AwContentsClientCallbackHelper {
     public void postOnReceivedLoginRequest(String realm, String account, String args) {
         LoginRequestInfo info = new LoginRequestInfo(realm, account, args);
         mHandler.sendMessage(mHandler.obtainMessage(MSG_ON_RECEIVED_LOGIN_REQUEST, info));
-    }
-
-    public void postOnReceivedError(
-            AwContentsClient.AwWebResourceRequest request,
-            AwContentsClient.AwWebResourceError error) {
-        OnReceivedErrorInfo info = new OnReceivedErrorInfo(request, error);
-        mHandler.sendMessage(mHandler.obtainMessage(MSG_ON_RECEIVED_ERROR, info));
-    }
-
-    public void postOnSafeBrowsingHit(
-            AwContentsClient.AwWebResourceRequest request,
-            int threatType,
-            Callback<AwSafeBrowsingResponse> callback) {
-        OnSafeBrowsingHitInfo info = new OnSafeBrowsingHitInfo(request, threatType, callback);
-        mHandler.sendMessage(mHandler.obtainMessage(MSG_ON_SAFE_BROWSING_HIT, info));
     }
 
     public void postOnNewPicture(Callable<Picture> pictureProvider) {

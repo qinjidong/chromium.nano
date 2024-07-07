@@ -13,7 +13,6 @@
 #include "base/memory/weak_ptr.h"
 #include "base/scoped_observation.h"
 #include "base/time/time.h"
-#include "components/component_updater/component_updater_service.h"
 #include "components/soda/soda_installer.h"
 
 class PrefService;
@@ -26,8 +25,7 @@ namespace speech {
 
 // Installer of SODA (Speech On-Device API) for the Live Caption feature on
 // non-ChromeOS desktop versions of Chrome browser.
-class SodaInstallerImpl : public SodaInstaller,
-                          public component_updater::ServiceObserver {
+class SodaInstallerImpl : public SodaInstaller {
  public:
   SodaInstallerImpl();
   ~SodaInstallerImpl() override;
@@ -52,9 +50,6 @@ class SodaInstallerImpl : public SodaInstaller,
   void InstallSoda(PrefService* global_prefs) override;
   void UninstallSoda(PrefService* global_prefs) override;
 
-  // component_updater::ServiceObserver:
-  void OnEvent(Events event, const std::string& id) override;
-
   void OnSodaBinaryInstalled();
   void OnSodaLanguagePackInstalled(speech::LanguageCode language_code);
 
@@ -66,10 +61,6 @@ class SodaInstallerImpl : public SodaInstaller,
 
   base::Time soda_binary_install_start_time_;
   base::flat_map<LanguageCode, base::Time> language_pack_install_start_time_;
-
-  base::ScopedObservation<component_updater::ComponentUpdateService,
-                          component_updater::ComponentUpdateService::Observer>
-      component_updater_observation_{this};
 
   base::WeakPtrFactory<SodaInstallerImpl> weak_factory_{this};
 };

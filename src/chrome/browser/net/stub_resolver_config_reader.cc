@@ -24,7 +24,6 @@
 #include "chrome/browser/browser_process.h"
 #include "chrome/browser/net/secure_dns_config.h"
 #include "chrome/browser/net/secure_dns_util.h"
-#include "chrome/browser/policy/chrome_browser_policy_connector.h"
 #include "chrome/common/chrome_features.h"
 #include "chrome/common/pref_names.h"
 #include "components/flags_ui/pref_service_flags_storage.h"
@@ -40,7 +39,6 @@
 
 #if BUILDFLAG(IS_ANDROID)
 #include "base/android/build_info.h"
-#include "chrome/browser/enterprise/util/android_enterprise_info.h"
 #endif
 
 #if BUILDFLAG(IS_CHROMEOS_ASH)
@@ -144,13 +142,6 @@ StubResolverConfigReader::StubResolverConfigReader(PrefService* local_state,
       FROM_HERE, kParentalControlsCheckDelay,
       base::BindOnce(&StubResolverConfigReader::OnParentalControlsDelayTimer,
                      base::Unretained(this)));
-
-#if BUILDFLAG(IS_ANDROID)
-  chrome::enterprise_util::AndroidEnterpriseInfo::GetInstance()
-      ->GetAndroidEnterpriseInfoState(base::BindOnce(
-          &StubResolverConfigReader::OnAndroidOwnedStateCheckComplete,
-          weak_factory_.GetWeakPtr()));
-#endif
 }
 
 StubResolverConfigReader::~StubResolverConfigReader() = default;
@@ -208,10 +199,6 @@ bool StubResolverConfigReader::ShouldDisableDohForManaged() {
   // IsEnterpriseDevice() which effectively equates to a domain join check.
   // Consider whether this should use IsManagedDevice() instead.
   if (base::win::IsEnrolledToDomain())
-    return true;
-#endif
-#if !BUILDFLAG(IS_ANDROID) && !BUILDFLAG(IS_CHROMEOS)
-  if (g_browser_process->browser_policy_connector()->HasMachineLevelPolicies())
     return true;
 #endif
   return false;

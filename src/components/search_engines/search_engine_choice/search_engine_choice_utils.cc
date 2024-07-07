@@ -21,8 +21,6 @@
 #include "base/version.h"
 #include "build/branding_buildflags.h"
 #include "components/country_codes/country_codes.h"
-#include "components/policy/core/common/policy_service.h"
-#include "components/policy/policy_constants.h"
 #include "components/prefs/pref_service.h"
 #include "components/search_engines/eea_countries_ids.h"
 #include "components/search_engines/search_engine_type.h"

@@ -3342,13 +3342,6 @@ source_set("browser") {
     configs += [ "//tools/ipc_fuzzer:ipc_fuzzer_config" ]
   }
 
-  if (use_minikin_hyphenation) {
-    sources += [
-      "hyphenation/hyphenation_impl.cc",
-      "hyphenation/hyphenation_impl.h",
-    ]
-  }
-
   if (enable_vr) {
     if (!is_android) {
       sources += [

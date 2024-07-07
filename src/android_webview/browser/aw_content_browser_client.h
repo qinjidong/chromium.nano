@@ -26,10 +26,6 @@ namespace content {
 class RenderFrameHost;
 }  // namespace content
 
-namespace safe_browsing {
-class UrlCheckerDelegate;
-}  // namespace safe_browsing
-
 namespace net {
 class IsolationInfo;
 }  // namespace net
@@ -294,12 +290,6 @@ class AwContentBrowserClient : public content::ContentBrowserClient {
   }
 
  private:
-  scoped_refptr<safe_browsing::UrlCheckerDelegate>
-  GetSafeBrowsingUrlCheckerDelegate();
-
-  scoped_refptr<safe_browsing::UrlCheckerDelegate>
-      safe_browsing_url_checker_delegate_;
-
   const bool sniff_file_urls_;
 
   // The AwFeatureListCreator is owned by AwMainDelegate.

@@ -7,7 +7,6 @@
 #include "android_webview/browser/aw_contents.h"
 #include "android_webview/browser/aw_contents_io_thread_client.h"
 #include "android_webview/browser/aw_crash_keys.h"
-#include "android_webview/browser/safe_browsing/aw_safe_browsing_allowlist_manager.h"
 #include "android_webview/browser_jni_headers/AwContentsStatics_jni.h"
 #include "base/android/jni_array.h"
 #include "base/android/jni_string.h"
@@ -50,27 +49,7 @@ void NotifyClientCertificatesChanged() {
   net::CertDatabase::GetInstance()->NotifyObserversClientCertStoreChanged();
 }
 
-void SafeBrowsingAllowlistAssigned(const JavaRef<jobject>& callback,
-                                   bool success) {
-  DCHECK_CURRENTLY_ON(BrowserThread::UI);
-  JNIEnv* env = AttachCurrentThread();
-  Java_AwContentsStatics_safeBrowsingAllowlistAssigned(env, callback, success);
-}
-
 }  // namespace
-
-// static
-ScopedJavaLocalRef<jstring>
-JNI_AwContentsStatics_GetSafeBrowsingPrivacyPolicyUrl(JNIEnv* env) {
-  DCHECK_CURRENTLY_ON(BrowserThread::UI);
-  GURL privacy_policy_url(
-      security_interstitials::kSafeBrowsingPrivacyPolicyUrl);
-  std::string locale =
-      AwBrowserProcess::GetInstance()->GetSafeBrowsingUIManager()->app_locale();
-  privacy_policy_url =
-      google_util::AppendGoogleLocaleParam(privacy_policy_url, locale);
-  return base::android::ConvertUTF8ToJavaString(env, privacy_policy_url.spec());
-}
 
 // static
 void JNI_AwContentsStatics_ClearClientCertPreferences(
@@ -95,21 +74,6 @@ ScopedJavaLocalRef<jstring> JNI_AwContentsStatics_GetProductVersion(
     JNIEnv* env) {
   return base::android::ConvertUTF8ToJavaString(
       env, version_info::GetVersionNumber());
-}
-
-// static
-void JNI_AwContentsStatics_SetSafeBrowsingAllowlist(
-    JNIEnv* env,
-    const JavaParamRef<jobjectArray>& jrules,
-    const JavaParamRef<jobject>& callback) {
-  std::vector<std::string> rules;
-  base::android::AppendJavaStringArrayToStringVector(env, jrules, &rules);
-  AwSafeBrowsingAllowlistManager* allowlist_manager =
-      AwBrowserProcess::GetInstance()->GetSafeBrowsingAllowlistManager();
-  allowlist_manager->SetAllowlistOnUIThread(
-      std::move(rules),
-      base::BindOnce(&SafeBrowsingAllowlistAssigned,
-                     ScopedJavaGlobalRef<jobject>(env, callback)));
 }
 
 // static

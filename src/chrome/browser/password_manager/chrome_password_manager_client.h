@@ -33,7 +33,6 @@
 #include "components/password_manager/core/browser/password_manager_metrics_recorder.h"
 #include "components/password_manager/core/browser/password_store/password_store_backend_error.h"
 #include "components/prefs/pref_member.h"
-#include "components/safe_browsing/buildflags.h"
 #include "components/signin/public/base/signin_buildflags.h"
 #include "components/sync/service/sync_service.h"
 #include "content/public/browser/render_frame_host_receiver_set.h"
@@ -236,9 +235,6 @@ class ChromePasswordManagerClient
   autofill::LogManager* GetLogManager() override;
   void AnnotateNavigationEntry(bool has_password_field) override;
   autofill::LanguageCode GetPageLanguage() const override;
-
-  safe_browsing::PasswordProtectionService* GetPasswordProtectionService()
-      const override;
 
 #if defined(ON_FOCUS_PING_ENABLED)
   void CheckSafeBrowsingReputation(const GURL& form_action,

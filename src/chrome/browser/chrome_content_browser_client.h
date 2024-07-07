@@ -27,8 +27,6 @@
 #include "build/chromeos_buildflags.h"
 #include "chrome/browser/startup_data.h"
 #include "components/file_access/scoped_file_access.h"
-#include "components/safe_browsing/buildflags.h"
-#include "components/safe_browsing/content/browser/web_api_handshake_checker.h"
 #include "content/public/browser/child_process_security_policy.h"
 #include "content/public/browser/content_browser_client.h"
 #include "content/public/browser/digital_identity_provider.h"
@@ -82,17 +80,6 @@ class SiteForCookies;
 namespace permissions {
 class BluetoothDelegateImpl;
 }  // namespace permissions
-
-namespace safe_browsing {
-class AsyncCheckTracker;
-class RealTimeUrlLookupServiceBase;
-class SafeBrowsingService;
-class UrlCheckerDelegate;
-
-namespace hash_realtime_utils {
-enum class HashRealTimeSelection;
-}
-}  // namespace safe_browsing
 
 namespace sandbox {
 class SandboxCompiler;
@@ -1049,15 +1036,6 @@ class ChromeContentBrowserClient : public content::ContentBrowserClient {
       content::RenderFrameHost* rfh,
       mojo::PendingReceiver<blink::mojom::ModelManager> receiver) override;
 
-#if !BUILDFLAG(IS_ANDROID)
-  void QueryInstalledWebAppsByManifestId(
-      const GURL& frame_url,
-      const GURL& manifest_id,
-      content::BrowserContext* browser_context,
-      base::OnceCallback<void(std::optional<blink::mojom::RelatedApplication>)>
-          callback) override;
-#endif  // !BUILDFLAG(IS_ANDROID)
-
  protected:
   static bool HandleWebUI(GURL* url, content::BrowserContext* browser_context);
   static bool HandleWebUIReverse(GURL* url,
@@ -1103,41 +1081,6 @@ class ChromeContentBrowserClient : public content::ContentBrowserClient {
       bool allow);
 #endif
 
-  // Returns the existing UrlCheckerDelegate object if it is already created.
-  // Otherwise, creates a new one and returns it. Updates the
-  // |allowlist_domains| in the UrlCheckerDelegate object before returning. It
-  // returns nullptr if |safe_browsing_enabled_for_profile| is false, because it
-  // should bypass safe browsing check when safe browsing is disabled. Set
-  // |should_check_on_sb_disabled| to true if you still want to perform safe
-  // browsing check when safe browsing is disabled(e.g. for enterprise real time
-  // URL check).
-  scoped_refptr<safe_browsing::UrlCheckerDelegate>
-  GetSafeBrowsingUrlCheckerDelegate(
-      bool safe_browsing_enabled_for_profile,
-      bool should_check_on_sb_disabled,
-      const std::vector<std::string>& allowlist_domains);
-
-  // Returns a RealTimeUrlLookupServiceBase object used for real time URL check.
-  // Returns an enterprise version if |is_enterprise_lookup_enabled| is true.
-  // Returns a consumer version if |is_enterprise_lookup_enabled| is false and
-  // |is_consumer_lookup_enabled| is true. Returns nullptr if both are false.
-  safe_browsing::RealTimeUrlLookupServiceBase* GetUrlLookupService(
-      content::BrowserContext* browser_context,
-      bool is_enterprise_lookup_enabled,
-      bool is_consumer_lookup_enabled);
-
-  // Returns an AsyncCheckTracker object used for holding URL checkers for async
-  // Safe Browsing check. It may return nullptr if the WebContents is null,
-  // the ui_manager is null, the real-time check is not enabled, or the loader
-  // is for no-state prefetch or frame prerender.
-  safe_browsing::AsyncCheckTracker* GetAsyncCheckTracker(
-      const base::RepeatingCallback<content::WebContents*()>& wc_getter,
-      bool is_enterprise_lookup_enabled,
-      bool is_consumer_lookup_enabled,
-      safe_browsing::hash_realtime_utils::HashRealTimeSelection
-          hash_realtime_selection,
-      int frame_tree_node_id);
-
   // Try to upload an enterprise legacy tech event to the enterprise management
   // server for admins.
   void ReportLegacyTechEvent(
@@ -1151,36 +1094,6 @@ class ChromeContentBrowserClient : public content::ContentBrowserClient {
       std::optional<content::LegacyTechCookieIssueDetails> cookie_issue_details)
       override;
 
-  void SafeBrowsingWebApiHandshakeChecked(
-      std::unique_ptr<safe_browsing::WebApiHandshakeChecker> checker,
-      int process_id,
-      int frame_routing_id,
-      const GURL& url,
-      const url::Origin& initiator_origin,
-      mojo::PendingRemote<network::mojom::WebTransportHandshakeClient>
-          handshake_client,
-      WillCreateWebTransportCallback callback,
-      safe_browsing::WebApiHandshakeChecker::CheckResult result);
-  void MaybeInterceptWebTransport(
-      int process_id,
-      int frame_routing_id,
-      const GURL& url,
-      const url::Origin& initiator_origin,
-      mojo::PendingRemote<network::mojom::WebTransportHandshakeClient>
-          handshake_client,
-      WillCreateWebTransportCallback callback);
-
-#if BUILDFLAG(SAFE_BROWSING_AVAILABLE)
-  std::unique_ptr<blink::URLLoaderThrottle>
-  MaybeCreateSafeBrowsingURLLoaderThrottle(
-      const network::ResourceRequest& request,
-      content::BrowserContext* browser_context,
-      const base::RepeatingCallback<content::WebContents*()>& wc_getter,
-      int frame_tree_node_id,
-      std::optional<int64_t> navigation_id,
-      Profile* profile);
-#endif
-
 #if !BUILDFLAG(IS_ANDROID)
   void OnKeepaliveTimerFired(
       std::unique_ptr<ScopedKeepAlive> keep_alive_handle);
@@ -1192,10 +1105,6 @@ class ChromeContentBrowserClient : public content::ContentBrowserClient {
   // Vector of additional ChromeContentBrowserClientParts.
   // Parts are deleted in the reverse order they are added.
   std::vector<std::unique_ptr<ChromeContentBrowserClientParts>> extra_parts_;
-
-  scoped_refptr<safe_browsing::SafeBrowsingService> safe_browsing_service_;
-  scoped_refptr<safe_browsing::UrlCheckerDelegate>
-      safe_browsing_url_checker_delegate_;
 
   StartupData startup_data_;
 

@@ -25,7 +25,6 @@
 #include "build/build_config.h"
 #include "build/chromeos_buildflags.h"
 #include "chrome/browser/browser_process.h"
-#include "chrome/browser/policy/chrome_browser_policy_connector.h"
 #include "chrome/browser/prefs/chrome_command_line_pref_store.h"
 #include "chrome/browser/prefs/chrome_pref_model_associator_client.h"
 #include "chrome/browser/prefs/profile_pref_store_manager.h"
@@ -40,7 +39,6 @@
 #include "chrome/grit/browser_resources.h"
 #include "chrome/grit/generated_resources.h"
 #include "components/component_updater/pref_names.h"
-#include "components/policy/core/browser/configuration_policy_pref_store.h"
 #include "components/pref_registry/pref_registry_syncable.h"
 #include "components/prefs/default_pref_store.h"
 #include "components/prefs/json_pref_store.h"
@@ -51,7 +49,6 @@
 #include "components/prefs/pref_service.h"
 #include "components/prefs/pref_store.h"
 #include "components/prefs/pref_value_store.h"
-#include "components/safe_browsing/core/common/safe_browsing_prefs.h"
 #include "components/search_engines/default_search_manager.h"
 #include "components/search_engines/search_engines_pref_names.h"
 #include "components/signin/public/base/signin_pref_names.h"
@@ -148,8 +145,6 @@ const prefs::TrackedPreferenceMetadata kTrackedPrefs[] = {
      PrefTrackingStrategy::ATOMIC, ValueType::IMPERSONAL},
     // kSyncRemainingRollbackTries is deprecated and will be removed a few
     // releases after M50.
-    {18, prefs::kSafeBrowsingIncidentsSent, EnforcementLevel::ENFORCE_ON_LOAD,
-     PrefTrackingStrategy::ATOMIC, ValueType::IMPERSONAL},
     {23, prefs::kGoogleServicesAccountId, EnforcementLevel::ENFORCE_ON_LOAD,
      PrefTrackingStrategy::ATOMIC, ValueType::PERSONAL},
     // This is being migrated to `kGoogleServicesLastSyncingGaiaId` since
@@ -296,15 +291,11 @@ void CleanupObsoleteStandaloneBrowserPrefsFile() {
 void PrepareFactory(
     sync_preferences::PrefServiceSyncableFactory* factory,
     const base::FilePath& pref_filename,
-    policy::PolicyService* policy_service,
     supervised_user::SupervisedUserSettingsService* supervised_user_settings,
     scoped_refptr<PersistentPrefStore> user_pref_store,
     scoped_refptr<PrefStore> extension_prefs,
     scoped_refptr<PersistentPrefStore> standalone_browser_prefs,
-    bool async,
-    policy::BrowserPolicyConnector* policy_connector) {
-  factory->SetManagedPolicies(policy_service, policy_connector);
-  factory->SetRecommendedPolicies(policy_service, policy_connector);
+    bool async) {
   if (supervised_user_settings) {
     scoped_refptr<PrefStore> supervised_user_prefs =
         base::MakeRefCounted<SupervisedUserPrefStore>(supervised_user_settings);
@@ -358,16 +349,14 @@ namespace chrome_prefs {
 std::unique_ptr<PrefService> CreateLocalState(
     const base::FilePath& pref_filename,
     scoped_refptr<PersistentPrefStore> pref_store,
-    policy::PolicyService* policy_service,
-    scoped_refptr<PrefRegistry> pref_registry,
-    policy::BrowserPolicyConnector* policy_connector) {
+    scoped_refptr<PrefRegistry> pref_registry) {
   sync_preferences::PrefServiceSyncableFactory factory;
-  PrepareFactory(&factory, pref_filename, policy_service,
+  PrepareFactory(&factory, pref_filename,
                  nullptr,  // supervised_user_settings
                  pref_store,
                  nullptr,  // extension_prefs
                  nullptr,  // standalone_browser_prefs
-                 /*async=*/false, policy_connector);
+                 /*async=*/false);
 
   return factory.Create(std::move(pref_registry));
 }
@@ -376,11 +365,9 @@ std::unique_ptr<sync_preferences::PrefServiceSyncable> CreateProfilePrefs(
     const base::FilePath& profile_path,
     mojo::PendingRemote<prefs::mojom::TrackedPreferenceValidationDelegate>
         validation_delegate,
-    policy::PolicyService* policy_service,
     supervised_user::SupervisedUserSettingsService* supervised_user_settings,
     scoped_refptr<PrefStore> extension_prefs,
     scoped_refptr<user_prefs::PrefRegistrySyncable> pref_registry,
-    policy::BrowserPolicyConnector* connector,
     bool async,
     scoped_refptr<base::SequencedTaskRunner> io_task_runner) {
   TRACE_EVENT0("browser", "chrome_prefs::CreateProfilePrefs");
@@ -413,10 +400,9 @@ std::unique_ptr<sync_preferences::PrefServiceSyncable> CreateProfilePrefs(
       FROM_HERE, base::BindOnce(&CleanupObsoleteStandaloneBrowserPrefsFile));
 #endif
 
-  PrepareFactory(&factory, profile_path, policy_service,
-                 supervised_user_settings, std::move(user_pref_store),
-                 std::move(extension_prefs),
-                 std::move(standalone_browser_prefs), async, connector);
+  PrepareFactory(&factory, profile_path,supervised_user_settings,
+                 std::move(user_pref_store), std::move(extension_prefs),
+                 std::move(standalone_browser_prefs), async);
 
   if (base::FeatureList::IsEnabled(syncer::kEnablePreferencesAccountStorage)) {
     // Note: Only mobile platforms are targeted as part of the experiment,

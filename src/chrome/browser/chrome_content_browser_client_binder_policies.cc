@@ -6,7 +6,6 @@
 
 #include "components/autofill/content/common/mojom/autofill_driver.mojom.h"
 #include "components/page_load_metrics/common/page_load_metrics.mojom.h"
-#include "components/subresource_filter/content/mojom/subresource_filter.mojom.h"
 #include "extensions/buildflags/buildflags.h"
 #include "third_party/blink/public/common/features.h"
 
@@ -40,9 +39,6 @@ void RegisterPoliciesForChannelAssociatedInterfaces(
     content::MojoBinderPolicyMap& policy_map) {
   policy_map.SetAssociatedPolicy<page_load_metrics::mojom::PageLoadMetrics>(
       content::MojoBinderAssociatedPolicy::kGrant);
-  policy_map
-      .SetAssociatedPolicy<subresource_filter::mojom::SubresourceFilterHost>(
-          content::MojoBinderAssociatedPolicy::kGrant);
 #if BUILDFLAG(ENABLE_EXTENSIONS)
   // LocalFrameHost supports content scripts related APIs, which are
   // RequestScriptInjectionPermission, GetInstallState, SendRequestIPC, and

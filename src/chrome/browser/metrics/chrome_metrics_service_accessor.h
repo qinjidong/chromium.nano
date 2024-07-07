@@ -63,17 +63,6 @@ class ChromeOSPerUserMetricsBrowserTestBase;
 class UkmConsentParamBrowserTest;
 }  // namespace metrics
 
-namespace safe_browsing {
-class ChromeSafeBrowsingUIManagerDelegate;
-class DownloadUrlSBClient;
-class IncidentReportingService;
-class ServicesDelegateDesktop;
-
-namespace internal {
-class ReporterRunner;
-}  // namespace internal
-}  // namespace safe_browsing
-
 namespace settings {
 class MetricsReportingHandler;
 }
@@ -158,11 +147,6 @@ class ChromeMetricsServiceAccessor : public metrics::MetricsServiceAccessor {
   friend class ash::settings::PerSessionSettingsUserActionTracker;
   friend class settings::MetricsReportingHandler;
   friend class UmaSessionStats;
-  friend class safe_browsing::ChromeSafeBrowsingUIManagerDelegate;
-  friend class safe_browsing::DownloadUrlSBClient;
-  friend class safe_browsing::IncidentReportingService;
-  friend class safe_browsing::ServicesDelegateDesktop;
-  friend class safe_browsing::internal::ReporterRunner;
   friend class segmentation_platform::FieldTrialRegisterImpl;
   friend class ChromeMetricsServiceClient;
   friend class ChromePasswordManagerClient;

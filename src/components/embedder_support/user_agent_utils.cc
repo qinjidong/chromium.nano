@@ -20,7 +20,6 @@
 #include "build/build_config.h"
 #include "components/embedder_support/pref_names.h"
 #include "components/embedder_support/switches.h"
-#include "components/policy/core/common/policy_pref_names.h"
 #include "components/prefs/pref_service.h"
 #include "components/version_info/version_info.h"
 #include "content/public/browser/web_contents.h"
@@ -139,45 +138,6 @@ const std::string& GetWindowsPlatformVersion() {
 }
 #endif  // BUILDFLAG(IS_WIN)
 
-// Returns true if the user agent reduction should be forced (or prevented).
-// TODO(crbug.com/1330890): Remove this method along with policy.
-bool ShouldReduceUserAgentMinorVersion(
-    UserAgentReductionEnterprisePolicyState user_agent_reduction) {
-  return ((user_agent_reduction !=
-               UserAgentReductionEnterprisePolicyState::kForceDisabled &&
-           base::FeatureList::IsEnabled(
-               blink::features::kReduceUserAgentMinorVersion)) ||
-          user_agent_reduction ==
-              UserAgentReductionEnterprisePolicyState::kForceEnabled);
-}
-
-// For desktop:
-// Returns true if both kReduceUserAgentMinorVersionName and
-// kReduceUserAgentPlatformOsCpu are enabled. It makes
-// kReduceUserAgentPlatformOsCpu depend on kReduceUserAgentMinorVersionName.
-//
-// For android:
-// Returns true if both kReduceUserAgentMinorVersionName and
-// kReduceUserAgentAndroidVersionDeviceModel are enabled. It makes
-// kReduceUserAgentAndroidVersionDeviceModel depend on
-// kReduceUserAgentMinorVersionName.
-//
-// It helps us avoid introducing individual enterprise policy controls for
-// sending unified platform for the user agent string.
-bool ShouldSendUserAgentUnifiedPlatform(
-    UserAgentReductionEnterprisePolicyState user_agent_reduction) {
-#if BUILDFLAG(IS_ANDROID)
-  return ShouldReduceUserAgentMinorVersion(user_agent_reduction) &&
-         base::FeatureList::IsEnabled(
-             blink::features::kReduceUserAgentAndroidVersionDeviceModel);
-#else
-  return ShouldReduceUserAgentMinorVersion(user_agent_reduction) &&
-         base::FeatureList::IsEnabled(
-             blink::features::kReduceUserAgentPlatformOsCpu) &&
-         blink::features::kAllExceptLegacyWindowsPlatform.Get();
-#endif
-}
-
 const blink::UserAgentBrandList GetUserAgentBrandList(
     const std::string& major_version,
     bool enable_updated_grease_by_policy,
@@ -253,11 +213,7 @@ std::vector<std::string> GetFormFactorsClientHint(
 
 std::string GetProductAndVersion(
     UserAgentReductionEnterprisePolicyState user_agent_reduction) {
-  return ShouldReduceUserAgentMinorVersion(user_agent_reduction)
-             ? version_info::GetProductNameAndVersionForReducedUserAgent(
-                   blink::features::kUserAgentFrozenBuildVersion.Get())
-             : std::string(
-                   version_info::GetProductNameAndVersionForUserAgent());
+  return std::string(version_info::GetProductNameAndVersionForUserAgent());
 }
 
 // Internal function to handle return the full or "reduced" user agent string,
@@ -279,9 +235,7 @@ std::string GetUserAgentInternal(
   // desktop UA strings.
   // In User-Agent reduction phase 6, only apply the <unifiedPlatform> to
   // android UA strings.
-  return ShouldSendUserAgentUnifiedPlatform(user_agent_reduction)
-             ? content::BuildUnifiedPlatformUserAgentFromProduct(product)
-             : content::BuildUserAgentFromProduct(product);
+  return content::BuildUnifiedPlatformUserAgentFromProduct(product);
 }
 
 std::optional<std::string> GetUserAgentFromCommandLine() {
@@ -459,14 +413,6 @@ blink::UserAgentMetadata GetUserAgentMetadata(const PrefService* pref_service,
   blink::UserAgentMetadata metadata;
 
   bool enable_updated_grease_by_policy = true;
-  // TODO(crbug.com/40838057): Remove this after M126 which deprecates the
-  // policy.
-  if (pref_service) {
-    if (pref_service->HasPrefPath(
-            policy::policy_prefs::kUserAgentClientHintsGREASEUpdateEnabled))
-      enable_updated_grease_by_policy = pref_service->GetBoolean(
-          policy::policy_prefs::kUserAgentClientHintsGREASEUpdateEnabled);
-  }
 
   // Low entropy client hints.
   metadata.brand_version_list =
@@ -550,20 +496,5 @@ int GetHighestKnownUniversalApiContractVersionForTesting() {
   return kHighestKnownUniversalApiContractVersion;
 }
 #endif  // BUILDFLAG(IS_WIN)
-
-embedder_support::UserAgentReductionEnterprisePolicyState
-GetUserAgentReductionFromPrefs(const PrefService* pref_service) {
-  if (!pref_service->HasPrefPath(kReduceUserAgentMinorVersion))
-    return UserAgentReductionEnterprisePolicyState::kDefault;
-  switch (pref_service->GetInteger(kReduceUserAgentMinorVersion)) {
-    case 1:
-      return UserAgentReductionEnterprisePolicyState::kForceDisabled;
-    case 2:
-      return UserAgentReductionEnterprisePolicyState::kForceEnabled;
-    case 0:
-    default:
-      return UserAgentReductionEnterprisePolicyState::kDefault;
-  }
-}
 
 }  // namespace embedder_support

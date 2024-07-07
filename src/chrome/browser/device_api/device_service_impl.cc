@@ -11,7 +11,6 @@
 #include "chrome/browser/app_mode/app_mode_utils.h"
 #include "chrome/browser/device_api/device_attribute_api.h"
 #include "chrome/browser/profiles/profile.h"
-#include "chrome/browser/web_applications/policy/web_app_policy_constants.h"
 #include "chrome/common/pref_names.h"
 #include "components/prefs/pref_service.h"
 #include "content/public/browser/browser_thread.h"
@@ -21,7 +20,6 @@
 #include "url/origin.h"
 
 #if BUILDFLAG(IS_CHROMEOS)
-#include "chrome/browser/web_applications/isolated_web_apps/policy/isolated_web_app_policy_constants.h"
 #include "chrome/common/url_constants.h"
 #endif
 
@@ -33,7 +31,6 @@
 
 #if BUILDFLAG(IS_CHROMEOS_LACROS)
 #include "chrome/browser/lacros/app_mode/kiosk_session_service_lacros.h"
-#include "components/policy/core/common/policy_loader_lacros.h"
 #endif
 
 namespace {
@@ -93,24 +90,11 @@ bool IsForceInstalledIsolatedWebApp(const PrefService* prefs,
 #endif
 }
 
-bool IsForceInstalledWebApp(const PrefService* prefs,
-                            const url::Origin& origin) {
-  const base::Value::List& web_app_list =
-      prefs->GetList(prefs::kWebAppInstallForceList);
-
-  return base::Contains(web_app_list, origin, [](const auto& entry) {
-    std::string entry_url =
-        CHECK_DEREF(entry.GetDict().FindString(web_app::kUrlKey));
-    return url::Origin::Create(GURL(entry_url));
-  });
-}
-
 // Check whether the target origin is included in the WebAppInstallForceList or
 // IsolatedWebAppInstallForceList policy.
 bool IsForceInstalledOrigin(const PrefService* prefs,
                             const url::Origin& origin) {
-  return IsForceInstalledIsolatedWebApp(prefs, origin) ||
-         IsForceInstalledWebApp(prefs, origin);
+  return IsForceInstalledIsolatedWebApp(prefs, origin);
 }
 
 const Profile* GetProfile(content::RenderFrameHost& host) {
@@ -122,15 +106,7 @@ const PrefService* GetPrefs(content::RenderFrameHost& host) {
 }
 
 bool IsAffiliatedUser() {
-#if BUILDFLAG(IS_CHROMEOS_ASH)
-  const user_manager::User* user =
-      user_manager::UserManager::Get()->GetPrimaryUser();
-  return (user != nullptr) && user->IsAffiliated();
-#elif BUILDFLAG(IS_CHROMEOS_LACROS)
-  return policy::PolicyLoaderLacros::IsMainUserAffiliated();
-#else
   return false;
-#endif
 }
 
 bool IsTrustedContext(content::RenderFrameHost& host,

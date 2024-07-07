@@ -12,7 +12,6 @@ import androidx.annotation.Nullable;
 import org.chromium.base.metrics.RecordHistogram;
 import org.chromium.base.metrics.RecordUserAction;
 import org.chromium.chrome.browser.profiles.Profile;
-import org.chromium.chrome.browser.safe_browsing.SafeBrowsingState;
 import org.chromium.components.content_settings.CookieControlsMode;
 
 /**
@@ -35,9 +34,6 @@ class PrivacyGuideMetricsDelegate {
     /** Initial state of History Sync when {@link HistorySyncFragment} is created. */
     private @Nullable Boolean mInitialHistorySyncState;
 
-    /** Initial state of the Safe Browsing when {@link SafeBrowsingFragment} is created. */
-    private @Nullable @SafeBrowsingState Integer mInitialSafeBrowsingState;
-
     /** Initial mode of the Cookies Control when {@link CookiesFragment} is created. */
     private @Nullable @CookieControlsMode Integer mInitialCookiesControlMode;
 
@@ -58,9 +54,6 @@ class PrivacyGuideMetricsDelegate {
         if (mInitialHistorySyncState != null) {
             bundle.putBoolean(INITIAL_HISTORY_SYNC_STATE, mInitialHistorySyncState);
         }
-        if (mInitialSafeBrowsingState != null) {
-            bundle.putInt(INITIAL_SAFE_BROWSING_STATE, mInitialSafeBrowsingState);
-        }
         if (mInitialCookiesControlMode != null) {
             bundle.putInt(INITIAL_COOKIES_CONTROL_MODE, mInitialCookiesControlMode);
         }
@@ -76,9 +69,6 @@ class PrivacyGuideMetricsDelegate {
         }
         if (bundle.containsKey(INITIAL_HISTORY_SYNC_STATE)) {
             mInitialHistorySyncState = bundle.getBoolean(INITIAL_HISTORY_SYNC_STATE);
-        }
-        if (bundle.containsKey(INITIAL_SAFE_BROWSING_STATE)) {
-            mInitialSafeBrowsingState = bundle.getInt(INITIAL_SAFE_BROWSING_STATE);
         }
         if (bundle.containsKey(INITIAL_COOKIES_CONTROL_MODE)) {
             mInitialCookiesControlMode = bundle.getInt(INITIAL_COOKIES_CONTROL_MODE);
@@ -147,42 +137,6 @@ class PrivacyGuideMetricsDelegate {
         RecordHistogram.recordEnumeratedHistogram(
                 "Settings.PrivacyGuide.NextNavigation",
                 PrivacyGuideInteractions.HISTORY_SYNC_NEXT_BUTTON,
-                PrivacyGuideInteractions.MAX_VALUE);
-    }
-
-    /** A method to record metrics on the next click of {@link SafeBrowsingFragment} */
-    private void recordMetricsOnNextForSafeBrowsingCard(Profile profile) {
-        assert mInitialSafeBrowsingState != null : "Initial state of Safe Browsing not set.";
-
-        @SafeBrowsingState int currentValue = PrivacyGuideUtils.getSafeBrowsingState(profile);
-
-        boolean isStartStateEnhance =
-                mInitialSafeBrowsingState == SafeBrowsingState.ENHANCED_PROTECTION;
-        boolean isEndStateEnhance = currentValue == SafeBrowsingState.ENHANCED_PROTECTION;
-
-        @PrivacyGuideSettingsStates int stateChange;
-
-        if (isStartStateEnhance && isEndStateEnhance) {
-            stateChange = PrivacyGuideSettingsStates.SAFE_BROWSING_ENHANCED_TO_ENHANCED;
-        } else if (isStartStateEnhance && !isEndStateEnhance) {
-            stateChange = PrivacyGuideSettingsStates.SAFE_BROWSING_ENHANCED_TO_STANDARD;
-        } else if (!isStartStateEnhance && isEndStateEnhance) {
-            stateChange = PrivacyGuideSettingsStates.SAFE_BROWSING_STANDARD_TO_ENHANCED;
-        } else {
-            stateChange = PrivacyGuideSettingsStates.SAFE_BROWSING_STANDARD_TO_STANDARD;
-        }
-
-        // Record histogram comparing |mInitialSafeBrowsingState| and |currentValue|
-        RecordHistogram.recordEnumeratedHistogram(
-                "Settings.PrivacyGuide.SettingsStates",
-                stateChange,
-                PrivacyGuideSettingsStates.MAX_VALUE);
-        // Record user action for clicking the next button on the Safe Browsing card
-        RecordUserAction.record("Settings.PrivacyGuide.NextClickSafeBrowsing");
-        // Record histogram for clicking the next button on the Safe Browsing card
-        RecordHistogram.recordEnumeratedHistogram(
-                "Settings.PrivacyGuide.NextNavigation",
-                PrivacyGuideInteractions.SAFE_BROWSING_NEXT_BUTTON,
                 PrivacyGuideInteractions.MAX_VALUE);
     }
 
@@ -272,11 +226,6 @@ class PrivacyGuideMetricsDelegate {
                     mInitialHistorySyncState = PrivacyGuideUtils.isHistorySyncEnabled(mProfile);
                     break;
                 }
-            case PrivacyGuideFragment.FragmentType.SAFE_BROWSING:
-                {
-                    mInitialSafeBrowsingState = PrivacyGuideUtils.getSafeBrowsingState(mProfile);
-                    break;
-                }
             case PrivacyGuideFragment.FragmentType.COOKIES:
                 {
                     mInitialCookiesControlMode = PrivacyGuideUtils.getCookieControlsMode(mProfile);
@@ -322,11 +271,6 @@ class PrivacyGuideMetricsDelegate {
             case PrivacyGuideFragment.FragmentType.HISTORY_SYNC:
                 {
                     recordMetricsOnNextForHistorySyncCard();
-                    break;
-                }
-            case PrivacyGuideFragment.FragmentType.SAFE_BROWSING:
-                {
-                    recordMetricsOnNextForSafeBrowsingCard(mProfile);
                     break;
                 }
             case PrivacyGuideFragment.FragmentType.COOKIES:
@@ -413,23 +357,6 @@ class PrivacyGuideMetricsDelegate {
     }
 
     /**
-     * A method to record metrics on Safe Browsing radio button change of the Privacy Guide's {@link
-     * SafeBrowsingFragment}.
-     */
-    static void recordMetricsOnSafeBrowsingChange(@SafeBrowsingState int safeBrowsingState) {
-        switch (safeBrowsingState) {
-            case SafeBrowsingState.ENHANCED_PROTECTION:
-                RecordUserAction.record("Settings.PrivacyGuide.ChangeSafeBrowsingEnhanced");
-                break;
-            case SafeBrowsingState.STANDARD_PROTECTION:
-                RecordUserAction.record("Settings.PrivacyGuide.ChangeSafeBrowsingStandard");
-                break;
-            default:
-                assert false : "Unexpected SafeBrowsingState " + safeBrowsingState;
-        }
-    }
-
-    /**
      * A method to record metrics on Cookie Controls radio button change of the Privacy Guide's
      * {@link CookiesFragment}.
      */
@@ -469,11 +396,6 @@ class PrivacyGuideMetricsDelegate {
             case PrivacyGuideFragment.FragmentType.HISTORY_SYNC:
                 {
                     RecordUserAction.record("Settings.PrivacyGuide.BackClickHistorySync");
-                    break;
-                }
-            case PrivacyGuideFragment.FragmentType.SAFE_BROWSING:
-                {
-                    RecordUserAction.record("Settings.PrivacyGuide.BackClickSafeBrowsing");
                     break;
                 }
             case PrivacyGuideFragment.FragmentType.COOKIES:

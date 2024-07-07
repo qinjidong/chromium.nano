@@ -20,7 +20,6 @@
 #include "build/build_config.h"
 #include "chrome/common/media/webrtc_logging.mojom.h"
 #include "chrome/services/speech/buildflags/buildflags.h"
-#include "components/safe_browsing/content/renderer/phishing_classifier/phishing_model_setter_impl.h"
 #include "components/spellcheck/spellcheck_buildflags.h"
 #include "content/public/renderer/content_renderer_client.h"
 #include "content/public/renderer/render_thread.h"
@@ -69,10 +68,6 @@ namespace extensions {
 class Extension;
 }
 #endif
-
-namespace subresource_filter {
-class UnverifiedRulesetDealer;
-}
 
 namespace url {
 class Origin;
@@ -158,8 +153,6 @@ class ChromeContentRendererClient
       content::RenderFrame* render_frame) override;
   bool IsExternalPepperPlugin(const std::string& module_name) override;
   bool IsOriginIsolatedPepperPlugin(const base::FilePath& plugin_path) override;
-  std::unique_ptr<blink::WebSocketHandshakeThrottleProvider>
-  CreateWebSocketHandshakeThrottleProvider() override;
   bool ShouldReportDetailedMessageForSource(
       const std::u16string& source) override;
   std::unique_ptr<blink::WebContentSettingsClient>
@@ -275,13 +268,9 @@ class ChromeContentRendererClient
 #if BUILDFLAG(ENABLE_SPELLCHECK)
   std::unique_ptr<SpellCheck> spellcheck_;
 #endif
-  std::unique_ptr<subresource_filter::UnverifiedRulesetDealer>
-      subresource_filter_ruleset_dealer_;
 #if defined(ENABLE_PLUGINS)
   std::set<std::string> allowed_camera_device_origins_;
 #endif
-  std::unique_ptr<safe_browsing::PhishingModelSetterImpl>
-      phishing_model_setter_;
 
   scoped_refptr<blink::ThreadSafeBrowserInterfaceBrokerProxy>
       browser_interface_broker_;

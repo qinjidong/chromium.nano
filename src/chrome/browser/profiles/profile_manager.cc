@@ -83,7 +83,6 @@
 #include "components/browsing_data/core/pref_names.h"
 #include "components/content_settings/core/browser/host_content_settings_map.h"
 #include "components/crash/core/common/crash_key.h"
-#include "components/policy/core/common/policy_pref_names.h"
 #include "components/prefs/pref_service.h"
 #include "components/prefs/scoped_user_pref_update.h"
 #include "components/search_engines/default_search_manager.h"
@@ -105,15 +104,6 @@
 #include "extensions/buildflags/buildflags.h"
 #include "google_apis/gaia/gaia_auth_util.h"
 #include "ui/base/l10n/l10n_util.h"
-
-#if BUILDFLAG(ENABLE_EXTENSIONS)
-#include "chrome/browser/extensions/extension_service.h"
-#include "extensions/browser/api/management/management_api.h"
-#include "extensions/browser/extension_registry.h"
-#include "extensions/browser/extension_system.h"
-#include "extensions/common/extension_set.h"
-#include "extensions/common/manifest.h"
-#endif
 
 #if BUILDFLAG(ENABLE_SESSION_SERVICE)
 #include "chrome/browser/sessions/app_session_service_factory.h"
@@ -282,35 +272,6 @@ void ProfileSizeTask(const base::FilePath& path, int enabled_app_count) {
   if (enabled_app_count != -1)
     UMA_HISTOGRAM_COUNTS_10000("Profile.AppCount", enabled_app_count);
 }
-
-#if BUILDFLAG(ENABLE_EXTENSIONS)
-
-// Returns the number of installed (and enabled) apps, excluding any component
-// apps.
-size_t GetEnabledAppCount(Profile* profile) {
-  if (extensions::ChromeContentBrowserClientExtensionsPart::
-          AreExtensionsDisabledForProfile(profile)) {
-    return 0u;
-  }
-
-  extensions::ExtensionRegistry* registry =
-      extensions::ExtensionRegistry::Get(profile);
-  DCHECK(registry);
-
-  size_t installed_apps = 0u;
-  const extensions::ExtensionSet& extensions = registry->enabled_extensions();
-  for (extensions::ExtensionSet::const_iterator iter = extensions.begin();
-       iter != extensions.end(); ++iter) {
-    if ((*iter)->is_app() &&
-        (*iter)->location() !=
-            extensions::mojom::ManifestLocation::kComponent) {
-      ++installed_apps;
-    }
-  }
-  return installed_apps;
-}
-
-#endif  // ENABLE_EXTENSIONS
 
 // Once a profile is initialized through LoadProfile this method is executed.
 // It will then run |client_callback| with the right profile.
@@ -556,11 +517,6 @@ Profile* ProfileManager::GetLastUsedProfileAllowedByPolicy() {
 Profile* ProfileManager::MaybeForceOffTheRecordMode(Profile* profile) {
   if (!profile)
     return nullptr;
-  if (profile->IsGuestSession() || profile->IsSystemProfile() ||
-      IncognitoModePrefs::GetAvailability(profile->GetPrefs()) ==
-          policy::IncognitoModeAvailability::kForced) {
-    return profile->GetPrimaryOTRProfile(/*create_if_needed=*/true);
-  }
   return profile;
 }
 
@@ -1481,59 +1437,11 @@ void ProfileManager::DoFinalInitForServices(Profile* profile,
 
   TRACE_EVENT0("browser", "ProfileManager::DoFinalInitForServices");
 
-#if BUILDFLAG(ENABLE_EXTENSIONS)
-  bool extensions_enabled = !go_off_the_record;
-#if BUILDFLAG(IS_CHROMEOS_ASH)
-  if ((!base::CommandLine::ForCurrentProcess()->HasSwitch(
-           switches::kDisableLoginScreenApps) &&
-       ash::ProfileHelper::IsSigninProfile(profile)) ||
-      ash::ProfileHelper::IsLockScreenAppProfile(profile) ||
-      ash::IsShimlessRmaAppBrowserContext(profile)) {
-    extensions_enabled = true;
-  }
-#endif
-  extensions::ExtensionSystem::Get(profile)->InitForRegularProfile(
-      extensions_enabled);
-
-  // Set the block extensions bit on the ExtensionService. There likely are no
-  // blockable extensions to block.
-  ProfileAttributesEntry* entry =
-      GetProfileAttributesStorage().GetProfileAttributesWithPath(
-          profile->GetPath());
-  if (entry && entry->IsSigninRequired()) {
-    extensions::ExtensionSystem::Get(profile)
-        ->extension_service()
-        ->BlockAllExtensions();
-  }
-
-#if BUILDFLAG(IS_CHROMEOS)
-  // Ensure that the `ContactCenterInsightsExtensionManager` is instantiated
-  // after other systems are set up and only when extensions are enabled for the
-  // given profile. This is done in `ProfileManager` so we can repurpose the
-  // same pre-conditional checks that are being used with other extension
-  // components and we can maintain said order.
-  if (extensions_enabled) {
-    ::chromeos::ContactCenterInsightsExtensionManager::GetForProfile(profile);
-
-    ::chromeos::DeskApiExtensionManager::GetForProfile(profile);
-  }
-#endif
-
-#endif
   // Initialization needs to happen after extension system initialization (for
   // extension::ManagementPolicy) and InitProfileUserPrefs (for setting the
   // initializing the supervised flag if necessary).
   ChildAccountServiceFactory::GetForProfile(profile)->Init();
   SupervisedUserServiceFactory::GetForProfile(profile)->Init();
-#if BUILDFLAG(ENABLE_EXTENSIONS)
-  // After the ManagementPolicy has been set, update it for the Supervised User
-  // Extension Delegate, which has been created before the profile
-  // initialization and needs to obtain the new policies.
-  extensions::ManagementAPI::GetFactoryInstance()
-      ->Get(profile)
-      ->GetSupervisedUserExtensionsDelegate()
-      ->UpdateManagementPolicyRegistration();
-#endif  // BUILDFLAG(ENABLE_EXTENSIONS)
 
   // Ensure NavigationPredictorKeyedService is started.
   NavigationPredictorKeyedServiceFactory::GetForProfile(profile);
@@ -1579,9 +1487,6 @@ void ProfileManager::DoFinalInitLogging(Profile* profile) {
   TRACE_EVENT0("browser", "ProfileManager::DoFinalInitLogging");
   // Count number of extensions in this profile.
   int enabled_app_count = -1;
-#if BUILDFLAG(ENABLE_EXTENSIONS)
-  enabled_app_count = GetEnabledAppCount(profile);
-#endif
 
   // Log the profile size after a reasonable startup delay.
   base::ThreadPool::PostDelayedTask(
@@ -2135,12 +2040,6 @@ void ProfileManager::OnBrowserClosed(Browser* browser) {
                                    duration.InMinutes(), 1,
                                    base::Days(28).InMinutes(), 100);
     // ChromeOS handles guest data independently.
-#if !BUILDFLAG(IS_CHROMEOS_ASH)
-    // Clear all browsing data once a Guest Session completes. The Guest profile
-    // has BrowserContextKeyedServices that the ProfileDestroyer can't delete
-    // properly.
-    profiles::RemoveBrowsingDataForProfile(profile->GetPath());
-#endif  //! BUILDFLAG(IS_CHROMEOS_ASH)
   }
 
   base::FilePath path = profile->GetPath();

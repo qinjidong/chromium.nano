@@ -44,8 +44,6 @@
 #include "chrome/browser/certificate_provider/certificate_provider_service.h"
 #include "chrome/browser/certificate_provider/certificate_provider_service_factory.h"
 #include "chrome/browser/chromeos/kcer/kcer_factory.h"
-#include "chrome/browser/policy/networking/user_network_configuration_updater.h"
-#include "chrome/browser/policy/networking/user_network_configuration_updater_factory.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chromeos/ash/components/network/policy_certificate_provider.h"
 #include "chromeos/components/kcer/kcer.h"
@@ -53,7 +51,6 @@
 #endif  // BUILDFLAG(IS_CHROMEOS)
 
 #if BUILDFLAG(IS_CHROMEOS_ASH)
-#include "chrome/browser/policy/networking/user_network_configuration_updater_ash.h"
 #include "chromeos/components/onc/certificate_scope.h"
 #endif  // BUILDFLAG(IS_CHROMEOS_ASH)
 
@@ -561,21 +558,6 @@ void CertificateManagerModel::Create(
   DCHECK_CURRENTLY_ON(BrowserThread::UI);
 
   std::unique_ptr<Params> params = std::make_unique<Params>();
-#if BUILDFLAG(IS_CHROMEOS)
-  params->policy_certs_provider =
-      policy::UserNetworkConfigurationUpdaterFactory::GetForBrowserContext(
-          browser_context);
-
-  chromeos::CertificateProviderService* certificate_provider_service =
-      chromeos::CertificateProviderServiceFactory::GetForBrowserContext(
-          browser_context);
-  params->extension_certificate_provider =
-      certificate_provider_service->CreateCertificateProvider();
-
-  params->kcer =
-      kcer::KcerFactory::GetKcer(Profile::FromBrowserContext(browser_context));
-#endif
-
   content::GetIOThreadTaskRunner({})->PostTask(
       FROM_HERE,
       base::BindOnce(&CertificateManagerModel::GetCertDBOnIOThread,

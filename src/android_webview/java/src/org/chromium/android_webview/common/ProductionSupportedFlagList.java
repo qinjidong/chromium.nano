@@ -19,7 +19,6 @@ import org.chromium.components.metrics.MetricsFeatures;
 import org.chromium.components.metrics.MetricsSwitches;
 import org.chromium.components.network_session_configurator.NetworkSessionSwitches;
 import org.chromium.components.permissions.PermissionsAndroidFeatureList;
-import org.chromium.components.safe_browsing.SafeBrowsingFeatures;
 import org.chromium.components.variations.VariationsSwitches;
 import org.chromium.components.viz.common.VizFeatures;
 import org.chromium.content_public.common.ContentFeatures;
@@ -621,28 +620,6 @@ public final class ProductionSupportedFlagList {
                 BlinkFeatures.RENDER_BLOCKING_FONTS,
                 "When enabled, blocks rendering on font preloads to reduce CLS. "
                         + "See go/critical-font-analysis"),
-        Flag.baseFeature(
-                SafeBrowsingFeatures.SAFE_BROWSING_NEW_GMS_API_FOR_BROWSE_URL_DATABASE_CHECK,
-                "When enabled, Safe Browsing traffic will route through the new SafeBrowsing API"),
-        Flag.baseFeature(
-                SafeBrowsingFeatures.HASH_PREFIX_REAL_TIME_LOOKUPS,
-                "When enabled, Safe Browsing checks will happen in real time"),
-        Flag.baseFeature(
-                SafeBrowsingFeatures.SAFE_BROWSING_ASYNC_REAL_TIME_CHECK,
-                "When enabled, the real time Safe Browsing check will be called asynchronously,"
-                        + " along with an additional v4 check which will be synchronous."),
-        Flag.baseFeature(
-                "SafeBrowsingSkipSubResources2",
-                "When enabled, Safe Browsing will skip WebTransport and WebSockets"),
-        Flag.baseFeature(
-                "AddWarningShownTSToClientSafeBrowsingReport",
-                "When enabled, client reports will include a timestamp of when the warning was "
-                        + "shown to the user"),
-        Flag.baseFeature(
-                "CreateWarningShownClientSafeBrowsingReports",
-                "When enabled, WARNING_SHOWN client reports will be sent when a warning is "
-                        + "shown to the user"),
-        Flag.baseFeature("SafeBrowsingOnUIThread"),
         Flag.baseFeature(
                 BlinkFeatures.ANDROID_EXTENDED_KEYBOARD_SHORTCUTS,
                 "Enables WebView to use the extended keyboard shortcuts added for Android U"),

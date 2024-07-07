@@ -23,9 +23,6 @@
 #include "components/page_load_metrics/browser/observers/ad_metrics/page_ad_density_tracker.h"
 #include "components/page_load_metrics/browser/page_load_metrics_observer.h"
 #include "components/page_load_metrics/common/page_load_metrics.mojom-forward.h"
-#include "components/subresource_filter/content/browser/subresource_filter_observer.h"
-#include "components/subresource_filter/content/browser/subresource_filter_observer_manager.h"
-#include "components/subresource_filter/core/common/load_policy.h"
 #include "net/http/http_response_info.h"
 #include "services/metrics/public/cpp/ukm_source.h"
 
@@ -43,8 +40,7 @@ BASE_DECLARE_FEATURE(kRestrictedNavigationAdTagging);
 // This observer labels each sub-frame as an ad or not, and keeps track of
 // relevant per-frame and whole-page byte statistics.
 class AdsPageLoadMetricsObserver
-    : public PageLoadMetricsObserver,
-      public subresource_filter::SubresourceFilterObserver {
+    : public PageLoadMetricsObserver {
  public:
   using AggregateFrameData = page_load_metrics::AggregateFrameData;
   using FrameTreeData = page_load_metrics::FrameTreeData;
@@ -193,13 +189,6 @@ class AdsPageLoadMetricsObserver
   // site with more than 30 percent ad density by height.
   void CheckForAdDensityViolation();
 
-  // subresource_filter::SubresourceFilterObserver:
-  void OnSubresourceFilterGoingAway() override;
-  void OnPageActivationComputed(
-      content::NavigationHandle* navigation_handle,
-      const subresource_filter::mojom::ActivationState& activation_state)
-      override;
-
   void UpdateAdFrameData(content::NavigationHandle* navigation_handle,
                          bool is_adframe,
                          bool should_ignore_detected_ad);
@@ -263,7 +252,6 @@ class AdsPageLoadMetricsObserver
   std::map<FrameTreeNodeId, base::TimeTicks> frame_navigation_starts_;
 
   int64_t navigation_id_ = -1;
-  bool subresource_filter_is_enabled_ = false;
 
   // When the observer receives report of a document resource loading for a
   // sub-frame before the sub-frame commit occurs, hold onto the resource
@@ -282,10 +270,6 @@ class AdsPageLoadMetricsObserver
   // display state for frames. This prevents us from receiving the updates when
   // the frame elements are being destroyed in the renderer.
   bool process_display_state_updates_ = true;
-
-  base::ScopedObservation<subresource_filter::SubresourceFilterObserverManager,
-                          subresource_filter::SubresourceFilterObserver>
-      subresource_observation_{this};
 
   // The tick clock used to get the current time. Can be replaced by tests.
   raw_ptr<const base::TickClock> clock_;

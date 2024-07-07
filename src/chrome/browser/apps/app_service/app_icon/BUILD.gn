@@ -106,7 +106,6 @@ source_set("unit_tests") {
     "//chrome/browser/web_applications",
     "//chrome/browser/web_applications:web_applications_test_support",
     "//chrome/common:non_code_constants",
-    "//chrome/test:test_support",
     "//components/app_constants",
     "//components/services/app_service",
     "//content/test:test_support",
@@ -150,7 +149,6 @@ source_set("test_support") {
     ":app_icon",
     "//build:chromeos_buildflags",
     "//chrome/browser/apps:icon_standardizer",
-    "//chrome/test:test_support",
     "//components/services/app_service",
     "//skia",
   ]

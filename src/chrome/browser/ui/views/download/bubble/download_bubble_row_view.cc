@@ -195,12 +195,7 @@ class DownloadBubbleDeepScanNotice : public views::View {
                                    : views::style::STYLE_SECONDARY);
     views::StyledLabel::RangeStyleInfo link_style =
         views::StyledLabel::RangeStyleInfo::CreateForLink(base::BindRepeating(
-            [](base::WeakPtr<Browser> browser) {
-              if (!browser) {
-                return;
-              }
-              chrome::ShowSafeBrowsingEnhancedProtection(browser.get());
-            },
+            [](base::WeakPtr<Browser> browser) {},
             browser));
     link_style.text_style = features::IsChromeRefresh2023()
                                 ? views::style::STYLE_LINK_5

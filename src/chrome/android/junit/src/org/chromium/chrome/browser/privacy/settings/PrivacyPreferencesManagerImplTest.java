@@ -21,8 +21,6 @@ import org.junit.runner.RunWith;
 import org.robolectric.annotation.Config;
 
 import org.chromium.base.test.BaseRobolectricTestRunner;
-import org.chromium.chrome.browser.policy.PolicyServiceFactory;
-import org.chromium.components.policy.PolicyService;
 
 /**
  * junit tests for {@link PrivacyPreferencesManagerImpl}'s handling of "Usage and Crash reporting"
@@ -105,15 +103,9 @@ public class PrivacyPreferencesManagerImplTest {
         PrivacyPreferencesManagerImpl preferenceManager =
                 new TestPrivacyPreferencesManager(context);
 
-        // Mock policy service not yet initialized.
-        PolicyService policyService = mock(PolicyService.class);
-        when(policyService.isInitializationComplete()).thenReturn(false);
-        PolicyServiceFactory.setPolicyServiceForTest(policyService);
-
         // Simulate native initialization notification call.
         preferenceManager.onNativeInitialized();
 
-        verify(policyService).addObserver(any());
         assertTrue(preferenceManager.isUsageAndCrashReportingPermittedByPolicy());
     }
 
@@ -122,11 +114,6 @@ public class PrivacyPreferencesManagerImplTest {
         Context context = mock(Context.class);
         PrivacyPreferencesManagerImpl preferenceManager =
                 new TestPrivacyPreferencesManager(context);
-
-        // Mock policy service initialized.
-        PolicyService policyService = mock(PolicyService.class);
-        when(policyService.isInitializationComplete()).thenReturn(true);
-        PolicyServiceFactory.setPolicyServiceForTest(policyService);
 
         // Mock MetricsReportingEnabled=true.
         PrivacyPreferencesManagerImpl.Natives preferenceManagerNatives =
@@ -137,7 +124,6 @@ public class PrivacyPreferencesManagerImplTest {
         // Simulate native initialization notification call.
         preferenceManager.onNativeInitialized();
 
-        verify(policyService).addObserver(any());
         assertTrue(preferenceManager.isUsageAndCrashReportingPermittedByPolicy());
     }
 
@@ -146,11 +132,6 @@ public class PrivacyPreferencesManagerImplTest {
         Context context = mock(Context.class);
         PrivacyPreferencesManagerImpl preferenceManager =
                 new TestPrivacyPreferencesManager(context);
-
-        // Mock policy service initialized.
-        PolicyService policyService = mock(PolicyService.class);
-        when(policyService.isInitializationComplete()).thenReturn(true);
-        PolicyServiceFactory.setPolicyServiceForTest(policyService);
 
         // Mock MetricsReportingEnabled=false.
         PrivacyPreferencesManagerImpl.Natives preferenceManagerNatives =
@@ -161,7 +142,6 @@ public class PrivacyPreferencesManagerImplTest {
         // Simulate native initialization notification call.
         preferenceManager.onNativeInitialized();
 
-        verify(policyService).addObserver(any());
         assertFalse(preferenceManager.isUsageAndCrashReportingPermittedByPolicy());
     }
 

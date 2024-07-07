@@ -16,10 +16,6 @@
 #include "net/ssl/ssl_info.h"
 #include "url/gurl.h"
 
-namespace policy {
-class PolicyTest_SSLErrorOverridingDisallowed_Test;
-}
-
 namespace security_interstitials {
 class SSLErrorUI;
 }
@@ -72,7 +68,6 @@ class SSLBlockingPage : public SSLBlockingPageBase {
   void PopulateInterstitialStrings(base::Value::Dict& load_time_data) override;
 
  private:
-  friend class policy::PolicyTest_SSLErrorOverridingDisallowed_Test;
   friend class SSLUITestBase;
   friend class InterstitialAccessibilityBrowserTest;
   FRIEND_TEST_ALL_PREFIXES(SSLBlockingPageTest,

@@ -11,7 +11,6 @@
 #include "chrome/browser/extensions/extension_management_constants.h"
 #include "chrome/browser/extensions/external_provider_impl.h"
 #include "chrome/browser/extensions/forced_extensions/install_stage_tracker.h"
-#include "chrome/browser/policy/profile_policy_connector.h"
 #include "chrome/browser/profiles/profile.h"
 #include "components/prefs/pref_change_registrar.h"
 #include "components/prefs/pref_service.h"
@@ -38,18 +37,9 @@ ForceInstalledTracker::ForceInstalledTracker(ExtensionRegistry* registry,
           ExtensionManagementFactory::GetForBrowserContext(profile)),
       registry_(registry),
       profile_(profile),
-      pref_service_(profile->GetPrefs()) {
-  // Load immediately if PolicyService is ready, or wait for it to finish
-  // initializing first.
-  if (policy_service()->IsInitializationComplete(policy::POLICY_DOMAIN_CHROME))
-    OnPolicyServiceInitialized(policy::POLICY_DOMAIN_CHROME);
-  else
-    policy_service()->AddObserver(policy::POLICY_DOMAIN_CHROME, this);
-}
+      pref_service_(profile->GetPrefs()) {}
 
-ForceInstalledTracker::~ForceInstalledTracker() {
-  policy_service()->RemoveObserver(policy::POLICY_DOMAIN_CHROME, this);
-}
+ForceInstalledTracker::~ForceInstalledTracker() {}
 
 void ForceInstalledTracker::UpdateCounters(ExtensionStatus status, int delta) {
   switch (status) {
@@ -86,55 +76,17 @@ void ForceInstalledTracker::ChangeExtensionStatus(
   UpdateCounters(item->second.status, +1);
 }
 
-void ForceInstalledTracker::OnPolicyUpdated(const policy::PolicyNamespace& ns,
-                                            const policy::PolicyMap& previous,
-                                            const policy::PolicyMap& current) {}
-
-void ForceInstalledTracker::OnPolicyServiceInitialized(
-    policy::PolicyDomain domain) {
-  DCHECK_EQ(domain, policy::POLICY_DOMAIN_CHROME);
-  DCHECK_EQ(status_, kWaitingForPolicyService);
-
-  policy_service()->RemoveObserver(policy::POLICY_DOMAIN_CHROME, this);
-
-  // Continue to listen to |kInstallForceList| pref changes if it is empty.
-  if (!ProceedIfForcedExtensionsPrefReady()) {
-    status_ = kWaitingForInstallForcelistPref;
-    pref_change_registrar_.Init(pref_service_);
-    pref_change_registrar_.Add(
-        pref_names::kInstallForceList,
-        base::BindRepeating(&ForceInstalledTracker::OnInstallForcelistChanged,
-                            base::Unretained(this)));
-  }
-}
-
 void ForceInstalledTracker::OnInstallForcelistChanged() {
   DCHECK_EQ(status_, kWaitingForInstallForcelistPref);
   ProceedIfForcedExtensionsPrefReady();
 }
 
 bool ForceInstalledTracker::ProceedIfForcedExtensionsPrefReady() {
-  DCHECK(
-      policy_service()->IsInitializationComplete(policy::POLICY_DOMAIN_CHROME));
-  DCHECK(status_ == kWaitingForPolicyService ||
-         status_ == kWaitingForInstallForcelistPref);
-
-  const base::Value::Dict& value =
-      pref_service_->GetDict(pref_names::kInstallForceList);
-  if (!forced_extensions_pref_ready_ && !value.empty()) {
-    forced_extensions_pref_ready_ = true;
-    OnForcedExtensionsPrefReady();
-    return true;
-  }
   return false;
 }
 
 void ForceInstalledTracker::OnForcedExtensionsPrefReady() {
   DCHECK(forced_extensions_pref_ready_);
-  DCHECK(
-      policy_service()->IsInitializationComplete(policy::POLICY_DOMAIN_CHROME));
-  DCHECK(status_ == kWaitingForPolicyService ||
-         status_ == kWaitingForInstallForcelistPref);
 
   pref_change_registrar_.RemoveAll();
 
@@ -339,10 +291,6 @@ bool ForceInstalledTracker::IsExtensionFetchedFromCache(
   return status.value() == ExtensionDownloaderDelegate::CacheStatus::
                                CACHE_HIT_ON_MANIFEST_FETCH_FAILURE ||
          status.value() == ExtensionDownloaderDelegate::CacheStatus::CACHE_HIT;
-}
-
-policy::PolicyService* ForceInstalledTracker::policy_service() {
-  return profile_->GetProfilePolicyConnector()->policy_service();
 }
 
 void ForceInstalledTracker::MaybeNotifyObservers() {

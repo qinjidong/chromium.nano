@@ -9,7 +9,6 @@
 
 #include "base/supports_user_data.h"
 #include "base/time/time.h"
-#include "components/safe_browsing/core/common/proto/csd.pb.h"
 
 namespace download {
 class DownloadItem;
@@ -163,10 +162,6 @@ class DownloadItemWarningData : public base::SupportsUserData::Data {
   static bool HasIncorrectPassword(const download::DownloadItem* download);
   static void SetHasIncorrectPassword(download::DownloadItem* download,
                                       bool has_incorrect_password);
-
-  // Converts an `event` to the Safe Browsing report proto format.
-  static safe_browsing::ClientSafeBrowsingReportRequest::DownloadWarningAction
-  ConstructCsbrrDownloadWarningAction(const WarningActionEvent& event);
 
   // Returns whether we have shown a local password decryption prompt for this
   // download.

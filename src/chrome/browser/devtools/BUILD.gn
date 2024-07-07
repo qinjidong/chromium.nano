@@ -103,21 +103,11 @@ static_library("devtools") {
   deps = [
     "//base",
 
-    # To prevent circular GN dependencies, this target does not depend on
-    # //chrome/browser:browser, even though it has a real build dependency on
-    # it.  However, depending on the order in which this target and
-    # //chrome/browser:browser are built it's possible that the connectors
-    # proto header (which //chrome/browser:browser depends on) is not generated
-    # yet causing devtools not to compile.  Adding this indirect dependency to
-    # the proto to fix that.
-    "//components/enterprise/common/proto:connectors_proto",
-
     # Similar bandaid as the above. Since we cannot depend on
     # //chrome/browser:browser, we include indirect dependencies here.
     "//chrome/browser/autofill:autofill",
     "//components/autofill/content/browser:browser",
     "//components/autofill/core/browser:browser",
-    "//components/enterprise/buildflags",
     "//components/paint_preview/buildflags:buildflags",
     "//components/variations/service:service",
     "//components/webapps/common:common",
@@ -273,7 +263,6 @@ static_library("devtools") {
       "//components/payments/content",
       "//components/privacy_sandbox/privacy_sandbox_attestations",
       "//components/security_state/content",
-      "//components/subresource_filter/content/browser:browser",
       "//components/webapps/browser",
       "//third_party/blink/public/common:headers",
       "//third_party/inspector_protocol:crdtp",

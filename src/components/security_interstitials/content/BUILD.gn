@@ -60,7 +60,6 @@ static_library("security_interstitial_page") {
 
   public_deps = [
     "//components/captive_portal/core:buildflags",
-    "//components/safe_browsing/core/browser/db:hit_report",
   ]
 
   deps = [
@@ -78,11 +77,8 @@ static_library("security_interstitial_page") {
     "//components/pref_registry",
     "//components/prefs:prefs",
     "//components/resources",
-    "//components/safe_browsing/core/common:common",
-    "//components/safe_browsing/core/common:safe_browsing_prefs",
     "//components/security_interstitials/core:core",
     "//components/security_interstitials/core:insecure_form_util",
-    "//components/security_interstitials/core:unsafe_resource",
     "//components/ssl_errors",
     "//components/strings:components_strings_grit",
     "//components/url_formatter",

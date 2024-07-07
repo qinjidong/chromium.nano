@@ -11,7 +11,6 @@
 #include "base/features.h"
 #include "base/no_destructor.h"
 #include "components/embedder_support/android/metrics/features.h"
-#include "components/safe_browsing/core/common/features.h"
 
 namespace android_webview {
 
@@ -33,14 +32,12 @@ const base::Feature* const kFeaturesExposedToJava[] = {
     &metrics::kAndroidMetricsAsyncMetricLogging,
     &features::kWebViewZoomKeyboardShortcuts,
     &features::kWebViewClearFunctorInBackground,
-    &safe_browsing::kHashPrefixRealTimeLookups,
     &features::kWebViewSupervisedUserSiteDetection,
     &features::kWebViewSupervisedUserSiteBlock,
     &base::features::kCollectAndroidFrameTimelineMetrics,
     &features::kWebViewInjectPlatformJsApis,
     &features::kWebViewMediaIntegrityApi,
     &features::kWebViewMediaIntegrityApiBlinkExtension,
-    &safe_browsing::kSafeBrowsingNewGmsApiForBrowseUrlDatabaseCheck,
     &features::kWebViewMuteAudio,
     &features::kWebViewUseInitialNetworkStateAtStartup,
     &features::kWebViewReduceUAAndroidVersionDeviceModel,

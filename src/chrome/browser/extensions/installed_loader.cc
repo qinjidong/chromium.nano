@@ -33,7 +33,6 @@
 #include "chrome/common/extensions/manifest_handlers/settings_overrides_handler.h"
 #include "chrome/common/pref_names.h"
 #include "chrome/common/webui_url_constants.h"
-#include "components/safe_browsing/core/common/safe_browsing_prefs.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/common/url_constants.h"
 #include "extensions/browser/allowlist_state.h"
@@ -1127,19 +1126,6 @@ void InstalledLoader::RecordExtensionsMetrics(Profile* profile,
                                 enabled_not_allowlisted_count);
     base::UmaHistogramCounts100("Extensions.NotAllowlistedDisabled2",
                                 disabled_not_allowlisted_count);
-  }
-  if (safe_browsing::IsEnhancedProtectionEnabled(*profile->GetPrefs())) {
-    base::UmaHistogramCounts100("Extensions.NotAllowlistedEnabledAndEsbUser",
-                                enabled_not_allowlisted_count);
-    base::UmaHistogramCounts100("Extensions.NotAllowlistedDisabledAndEsbUser",
-                                disabled_not_allowlisted_count);
-    if (should_record_incremented_metrics) {
-      base::UmaHistogramCounts100("Extensions.NotAllowlistedEnabledAndEsbUser2",
-                                  enabled_not_allowlisted_count);
-      base::UmaHistogramCounts100(
-          "Extensions.NotAllowlistedDisabledAndEsbUser2",
-          disabled_not_allowlisted_count);
-    }
   }
 }
 

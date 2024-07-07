@@ -15,8 +15,6 @@ using download::DownloadItem;
 using WarningSurface = DownloadItemWarningData::WarningSurface;
 using WarningAction = DownloadItemWarningData::WarningAction;
 using WarningActionEvent = DownloadItemWarningData::WarningActionEvent;
-using ClientSafeBrowsingReportRequest =
-    safe_browsing::ClientSafeBrowsingReportRequest;
 using DeepScanTrigger = DownloadItemWarningData::DeepScanTrigger;
 
 namespace {
@@ -185,83 +183,6 @@ void DownloadItemWarningData::SetHasIncorrectPassword(
   }
 
   GetOrCreate(download)->has_incorrect_password_ = has_incorrect_password;
-}
-
-// static
-ClientSafeBrowsingReportRequest::DownloadWarningAction
-DownloadItemWarningData::ConstructCsbrrDownloadWarningAction(
-    const WarningActionEvent& event) {
-  ClientSafeBrowsingReportRequest::DownloadWarningAction action;
-  switch (event.surface) {
-    case DownloadItemWarningData::WarningSurface::BUBBLE_MAINPAGE:
-      action.set_surface(ClientSafeBrowsingReportRequest::
-                             DownloadWarningAction::BUBBLE_MAINPAGE);
-      break;
-    case DownloadItemWarningData::WarningSurface::BUBBLE_SUBPAGE:
-      action.set_surface(ClientSafeBrowsingReportRequest::
-                             DownloadWarningAction::BUBBLE_SUBPAGE);
-      break;
-    case DownloadItemWarningData::WarningSurface::DOWNLOADS_PAGE:
-      action.set_surface(ClientSafeBrowsingReportRequest::
-                             DownloadWarningAction::DOWNLOADS_PAGE);
-      break;
-    case DownloadItemWarningData::WarningSurface::DOWNLOAD_PROMPT:
-      action.set_surface(ClientSafeBrowsingReportRequest::
-                             DownloadWarningAction::DOWNLOAD_PROMPT);
-      break;
-    case DownloadItemWarningData::WarningSurface::DOWNLOAD_NOTIFICATION:
-      action.set_surface(ClientSafeBrowsingReportRequest::
-                             DownloadWarningAction::DOWNLOAD_NOTIFICATION);
-      break;
-  }
-  switch (event.action) {
-    case DownloadItemWarningData::WarningAction::PROCEED:
-      action.set_action(
-          ClientSafeBrowsingReportRequest::DownloadWarningAction::PROCEED);
-      break;
-    case DownloadItemWarningData::WarningAction::DISCARD:
-      action.set_action(
-          ClientSafeBrowsingReportRequest::DownloadWarningAction::DISCARD);
-      break;
-    case DownloadItemWarningData::WarningAction::KEEP:
-      action.set_action(
-          ClientSafeBrowsingReportRequest::DownloadWarningAction::KEEP);
-      break;
-    case DownloadItemWarningData::WarningAction::CLOSE:
-      action.set_action(
-          ClientSafeBrowsingReportRequest::DownloadWarningAction::CLOSE);
-      break;
-    case DownloadItemWarningData::WarningAction::CANCEL:
-      action.set_action(
-          ClientSafeBrowsingReportRequest::DownloadWarningAction::CANCEL);
-      break;
-    case DownloadItemWarningData::WarningAction::DISMISS:
-      action.set_action(
-          ClientSafeBrowsingReportRequest::DownloadWarningAction::DISMISS);
-      break;
-    case DownloadItemWarningData::WarningAction::BACK:
-      action.set_action(
-          ClientSafeBrowsingReportRequest::DownloadWarningAction::BACK);
-      break;
-    case DownloadItemWarningData::WarningAction::OPEN_SUBPAGE:
-      action.set_action(
-          ClientSafeBrowsingReportRequest::DownloadWarningAction::OPEN_SUBPAGE);
-      break;
-    case DownloadItemWarningData::WarningAction::PROCEED_DEEP_SCAN:
-      action.set_action(ClientSafeBrowsingReportRequest::DownloadWarningAction::
-                            PROCEED_DEEP_SCAN);
-      break;
-    case DownloadItemWarningData::WarningAction::OPEN_LEARN_MORE_LINK:
-      action.set_action(ClientSafeBrowsingReportRequest::DownloadWarningAction::
-                            OPEN_LEARN_MORE_LINK);
-      break;
-    case DownloadItemWarningData::WarningAction::SHOWN:
-      NOTREACHED_IN_MIGRATION();
-      break;
-  }
-  action.set_is_terminal_action(event.is_terminal_action);
-  action.set_interval_msec(event.action_latency_msec);
-  return action;
 }
 
 // static

@@ -12,7 +12,6 @@
 #include "chrome/browser/task_manager/web_contents_tags.h"
 #include "chrome/browser/web_applications/manifest_update_manager.h"
 #include "chrome/browser/web_applications/os_integration/os_integration_manager.h"
-#include "chrome/browser/web_applications/policy/web_app_policy_manager.h"
 #include "chrome/browser/web_applications/web_app_audio_focus_id_map.h"
 #include "chrome/browser/web_applications/web_app_launch_queue.h"
 #include "chrome/browser/web_applications/web_app_provider.h"
@@ -237,10 +236,7 @@ void WebAppTabHelper::UpdateAudioFocusGroupId() {
       ->SetAudioFocusGroupId(audio_focus_group_id_);
 }
 
-void WebAppTabHelper::ReinstallPlaceholderAppIfNecessary(const GURL& url) {
-  provider_->policy_manager().ReinstallPlaceholderAppIfNecessary(
-      url, base::DoNothing());
-}
+void WebAppTabHelper::ReinstallPlaceholderAppIfNecessary(const GURL& url) {}
 
 std::optional<webapps::AppId> WebAppTabHelper::FindAppWithUrlInScope(
     const GURL& url) const {

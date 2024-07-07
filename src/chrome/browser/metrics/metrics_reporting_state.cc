@@ -25,13 +25,8 @@
 #include "content/public/browser/browser_thread.h"
 
 #if BUILDFLAG(IS_CHROMEOS_ASH)
-#include "chrome/browser/ash/policy/core/browser_policy_connector_ash.h"
 #include "chrome/browser/browser_process_platform_part.h"
 #endif  // BUILDFLAG(IS_CHROMEOS_ASH)
-
-#if BUILDFLAG(IS_ANDROID)
-#include "components/policy/core/common/features.h"
-#endif  // BUILDFLAG(IS_ANDROID)
 
 namespace {
 
@@ -204,16 +199,10 @@ void ApplyMetricsReportingPolicy() {
 }
 
 bool IsMetricsReportingPolicyManaged() {
-#if BUILDFLAG(IS_CHROMEOS_ASH)
-  policy::BrowserPolicyConnectorAsh* policy_connector =
-      g_browser_process->platform_part()->browser_policy_connector_ash();
-  return policy_connector->IsDeviceEnterpriseManaged();
-#else
   const PrefService* pref_service = g_browser_process->local_state();
   const PrefService::Preference* pref =
       pref_service->FindPreference(metrics::prefs::kMetricsReportingEnabled);
   return pref && pref->IsManaged();
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
 }
 
 void ClearPreviouslyCollectedMetricsData() {

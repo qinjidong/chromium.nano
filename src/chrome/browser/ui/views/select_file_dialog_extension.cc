@@ -297,8 +297,6 @@ void SelectFileDialogExtension::OnSystemDialogWillClose() {
   owner_ = {};
   system_files_app_web_contents_ = nullptr;
   PendingDialog::GetInstance()->Remove(routing_id_);
-  // Actually invoke the appropriate callback on our listener.
-  ApplyPolicyAndNotifyListener(std::move(dialog_caller));
 }
 
 // static
@@ -544,56 +542,6 @@ bool SelectFileDialogExtension::HasMultipleFileTypeChoicesImpl() {
 
 bool SelectFileDialogExtension::IsResizeable() const {
   return can_resize_;
-}
-
-void SelectFileDialogExtension::ApplyPolicyAndNotifyListener(
-    std::optional<policy::DlpFileDestination> dialog_caller) {
-  if (!listener_)
-    return;
-
-  // The selected files are passed by reference to the listener. Ensure they
-  // outlive the dialog if it is immediately deleted by the listener.
-  std::vector<ui::SelectedFileInfo> selection_files =
-      std::move(selection_files_);
-  selection_files_.clear();
-
-  if (!dialog_caller.has_value() || selection_files.empty()) {
-    NotifyListener(std::move(selection_files));
-    return;
-  }
-
-  if (auto* files_controller =
-          policy::DlpFilesControllerAsh::GetForPrimaryProfile();
-      files_controller && type_ == Type::SELECT_SAVEAS_FILE) {
-    files_controller->CheckIfDownloadAllowed(
-        dialog_caller.value(),
-        // TODO(crbug.com/1385687): Handle selection_files.size() > 1.
-        selection_files[0].local_path.empty() ? selection_files[0].file_path
-                                              : selection_files[0].local_path,
-        base::BindOnce(
-            [](base::WeakPtr<SelectFileDialogExtension> weak_ptr,
-               std::vector<ui::SelectedFileInfo> selection_files,
-               bool is_allowed) {
-              if (!is_allowed)
-                weak_ptr->selection_type_ = SelectionType::CANCEL;
-              weak_ptr->NotifyListener(std::move(selection_files));
-            },
-            weak_factory_.GetWeakPtr(), std::move(selection_files)));
-    return;
-  } else if (files_controller) {
-    files_controller->FilterDisallowedUploads(
-        std::move(selection_files), dialog_caller.value(),
-        base::BindOnce(
-            [](base::WeakPtr<SelectFileDialogExtension> weak_ptr,
-               std::vector<ui::SelectedFileInfo> allowed_files) {
-              if (allowed_files.empty())
-                weak_ptr->selection_type_ = SelectionType::CANCEL;
-              weak_ptr->NotifyListener(std::move(allowed_files));
-            },
-            weak_factory_.GetWeakPtr()));
-    return;
-  }
-  NotifyListener(std::move(selection_files));
 }
 
 void SelectFileDialogExtension::NotifyListener(

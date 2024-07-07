@@ -25,7 +25,6 @@
 #include "chrome/browser/download/download_stats.h"
 #include "chrome/browser/history/history_service_factory.h"
 #include "chrome/browser/profiles/profile.h"
-#include "chrome/browser/safe_browsing/safe_browsing_metrics_collector_factory.h"
 #include "chrome/common/chrome_features.h"
 #include "chrome/common/pref_names.h"
 #include "chrome/grit/generated_resources.h"
@@ -34,9 +33,6 @@
 #include "components/download/public/common/download_target_info.h"
 #include "components/history/core/browser/history_service.h"
 #include "components/prefs/pref_service.h"
-#include "components/safe_browsing/content/browser/download/download_stats.h"
-#include "components/safe_browsing/content/common/file_type_policies.h"
-#include "components/safe_browsing/core/browser/safe_browsing_metrics_collector.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/browser_task_traits.h"
 #include "content/public/browser/browser_thread.h"
@@ -76,23 +72,11 @@
 using content::BrowserThread;
 using download::DownloadItem;
 using download::DownloadPathReservationTracker;
-using safe_browsing::DownloadFileType;
 
 namespace {
 
 const base::FilePath::CharType kCrdownloadSuffix[] =
     FILE_PATH_LITERAL(".crdownload");
-
-// Condenses the results from HistoryService::GetVisibleVisitCountToHost() to a
-// single bool. A host is considered visited before if prior visible visits were
-// found in history and the first such visit was earlier than the most recent
-// midnight.
-void VisitCountsToVisitedBefore(base::OnceCallback<void(bool)> callback,
-                                history::VisibleVisitCountToHostResult result) {
-  std::move(callback).Run(
-      result.success && result.count > 0 &&
-      (result.first_visit.LocalMidnight() < base::Time::Now().LocalMidnight()));
-}
 
 #if BUILDFLAG(IS_WIN)
 // Keeps track of whether Adobe Reader is up to date.
@@ -131,7 +115,6 @@ DownloadTargetDeterminer::DownloadTargetDeterminer(
       create_target_directory_(false),
       conflict_action_(conflict_action),
       danger_type_(download->GetDangerType()),
-      danger_level_(DownloadFileType::NOT_DANGEROUS),
       virtual_path_(initial_virtual_path),
       is_filetype_handled_safely_(false),
 #if BUILDFLAG(IS_ANDROID)
@@ -321,13 +304,6 @@ base::FilePath DownloadTargetDeterminer::GenerateFileName() const {
   base::FilePath generated_filename = net::GenerateFileName(
       download_->GetURL(), download_->GetContentDisposition(), referrer_charset,
       suggested_filename, sniffed_mime_type, default_filename);
-
-  // We don't replace the file extension if sfafe browsing consider the file
-  // extension to be unsafe. Just let safe browsing scan the generated file.
-  if (safe_browsing::FileTypePolicies::GetInstance()->IsCheckedBinaryFile(
-          generated_filename)) {
-    return generated_filename;
-  }
 
   // If no mime type or explicitly specified a name, don't replace file
   // extension.
@@ -957,50 +933,6 @@ DownloadTargetDeterminer::Result
   DCHECK_CURRENTLY_ON(BrowserThread::UI);
   next_state_ = STATE_DETERMINE_INTERMEDIATE_PATH;
 
-  // Checking if there are prior visits to the referrer is only necessary if the
-  // danger level of the download depends on the file type.
-  if (danger_type_ != download::DOWNLOAD_DANGER_TYPE_NOT_DANGEROUS &&
-      danger_type_ != download::DOWNLOAD_DANGER_TYPE_MAYBE_DANGEROUS_CONTENT &&
-      danger_type_ != download::DOWNLOAD_DANGER_TYPE_ALLOWLISTED_BY_POLICY) {
-    return CONTINUE;
-  }
-
-  // First determine the danger level assuming that the user doesn't have any
-  // prior visits to the referrer recoreded in history. The resulting danger
-  // level would be ALLOW_ON_USER_GESTURE if the level depends on the visit
-  // history. In the latter case, we can query the history DB to determine if
-  // there were prior requests and determine the danger level again once the
-  // result is available.
-  danger_level_ = GetDangerLevel(NO_VISITS_TO_REFERRER);
-
-  if (danger_level_ == DownloadFileType::NOT_DANGEROUS)
-    return CONTINUE;
-
-  if (danger_level_ == DownloadFileType::ALLOW_ON_USER_GESTURE) {
-    // HistoryServiceFactory redirects incognito profiles to on-record profiles.
-    // There's no history for on-record profiles in unit_tests.
-    history::HistoryService* history_service =
-        HistoryServiceFactory::GetForProfile(
-            GetProfile(), ServiceAccessType::EXPLICIT_ACCESS);
-
-    if (history_service && download_->GetReferrerUrl().is_valid()) {
-      history_service->GetVisibleVisitCountToHost(
-          download_->GetReferrerUrl(),
-          base::BindOnce(
-              &VisitCountsToVisitedBefore,
-              base::BindOnce(
-                  &DownloadTargetDeterminer::CheckVisitedReferrerBeforeDone,
-                  weak_ptr_factory_.GetWeakPtr())),
-          &history_tracker_);
-      return QUIT_DOLOOP;
-    }
-  }
-
-  // If the danger level doesn't depend on having visited the refererrer URL or
-  // if original profile doesn't have a HistoryService or the referrer url is
-  // invalid, then assume the referrer has not been visited before.
-  if (danger_type_ == download::DOWNLOAD_DANGER_TYPE_NOT_DANGEROUS)
-    danger_type_ = download::DOWNLOAD_DANGER_TYPE_DANGEROUS_FILE;
   return CONTINUE;
 }
 
@@ -1008,17 +940,6 @@ void DownloadTargetDeterminer::CheckVisitedReferrerBeforeDone(
     bool visited_referrer_before) {
   DCHECK_CURRENTLY_ON(BrowserThread::UI);
   DCHECK_EQ(STATE_DETERMINE_INTERMEDIATE_PATH, next_state_);
-  safe_browsing::RecordDownloadFileTypeAttributes(
-      safe_browsing::FileTypePolicies::GetInstance()->GetFileDangerLevel(
-          virtual_path_.BaseName(), download_->GetURL(),
-          GetProfile()->GetPrefs()),
-      download_->HasUserGesture(), visited_referrer_before,
-      GetLastDownloadBypassTimestamp());
-  danger_level_ = GetDangerLevel(
-      visited_referrer_before ? VISITED_REFERRER : NO_VISITS_TO_REFERRER);
-  if (danger_level_ != DownloadFileType::NOT_DANGEROUS &&
-      danger_type_ == download::DOWNLOAD_DANGER_TYPE_NOT_DANGEROUS)
-    danger_type_ = download::DOWNLOAD_DANGER_TYPE_DANGEROUS_FILE;
   DoLoop();
 }
 
@@ -1115,7 +1036,6 @@ void DownloadTargetDeterminer::ScheduleCallbackAndDeleteSelf(
             << " Intermediate:" << intermediate_path_.AsUTF8Unsafe()
             << " Confirmation reason:" << static_cast<int>(confirmation_reason_)
             << " Danger type:" << danger_type_
-            << " Danger level:" << danger_level_
             << " Interrupt reason:" << static_cast<int>(interrupt_reason);
   download::DownloadTargetInfo target_info;
 
@@ -1143,7 +1063,7 @@ void DownloadTargetDeterminer::ScheduleCallbackAndDeleteSelf(
 
   base::SingleThreadTaskRunner::GetCurrentDefault()->PostTask(
       FROM_HERE, base::BindOnce(std::move(completion_callback_),
-                                std::move(target_info), danger_level_));
+                                std::move(target_info)));
   delete this;
 }
 
@@ -1227,31 +1147,7 @@ DownloadConfirmationReason DownloadTargetDeterminer::NeedsConfirmation(
 
 bool DownloadTargetDeterminer::IsDownloadDlpBlocked(
     const base::FilePath& download_path) const {
-#if BUILDFLAG(IS_CHROMEOS_ASH)
-  auto* web_contents =
-      download_ ? content::DownloadItemUtils::GetWebContents(download_)
-                : nullptr;
-  if (!web_contents)
-    return false;
-  policy::DlpRulesManager* rules_manager =
-      policy::DlpRulesManagerFactory::GetForPrimaryProfile();
-  if (!rules_manager)
-    return false;
-  policy::DlpFilesControllerAsh* files_controller =
-      static_cast<policy::DlpFilesControllerAsh*>(
-          rules_manager->GetDlpFilesController());
-  if (!files_controller)
-    return false;
-  const GURL authority_url = download::BaseFile::GetEffectiveAuthorityURL(
-      download_->GetURL(), download_->GetReferrerUrl());
-  if (!authority_url.is_valid()) {
-    return true;
-  }
-  return files_controller->ShouldPromptBeforeDownload(
-      policy::DlpFileDestination(authority_url), download_path);
-#else
   return false;
-#endif
 }
 
 bool DownloadTargetDeterminer::HasPromptedForPath() const {
@@ -1259,72 +1155,10 @@ bool DownloadTargetDeterminer::HasPromptedForPath() const {
                                 DownloadItem::TARGET_DISPOSITION_PROMPT);
 }
 
-DownloadFileType::DangerLevel DownloadTargetDeterminer::GetDangerLevel(
-    PriorVisitsToReferrer visits) const {
-  DCHECK_CURRENTLY_ON(BrowserThread::UI);
-
-  // If the user has has been prompted or will be, assume that the user has
-  // approved the download. A programmatic download is considered safe unless it
-  // contains malware.
-  bool user_approved_path =
-      !download_->GetForcedFilePath().empty() &&
-      // Drag and drop download paths are not approved by the user. See
-      // https://crbug.com/1513639
-      download_->GetDownloadSource() != download::DownloadSource::DRAG_AND_DROP;
-  if (HasPromptedForPath() ||
-      confirmation_reason_ != DownloadConfirmationReason::NONE ||
-      user_approved_path) {
-    return DownloadFileType::NOT_DANGEROUS;
-  }
-
-  // User-initiated extension downloads from pref-whitelisted sources are not
-  // considered dangerous.
-  if (download_->HasUserGesture() &&
-      download_crx_util::IsTrustedExtensionDownload(GetProfile(), *download_)) {
-    return DownloadFileType::NOT_DANGEROUS;
-  }
-
-  // Anything the user has marked auto-open is OK if it's user-initiated.
-  if (download_prefs_->IsAutoOpenEnabled(download_->GetURL(), virtual_path_) &&
-      download_->HasUserGesture())
-    return DownloadFileType::NOT_DANGEROUS;
-
-  DownloadFileType::DangerLevel danger_level =
-      safe_browsing::FileTypePolicies::GetInstance()->GetFileDangerLevel(
-          virtual_path_.BaseName(), download_->GetURL(),
-          GetProfile()->GetPrefs());
-
-  // A danger level of ALLOW_ON_USER_GESTURE is used to label potentially
-  // dangerous file types that have a high frequency of legitimate use. We would
-  // like to avoid prompting for the legitimate cases as much as possible. To
-  // that end, we consider a download to be legitimate if one of the following
-  // is true, and avoid prompting:
-  //
-  // * The user navigated to the download URL via the omnibox (either by typing
-  //   the URL, pasting it, or using search).
-  //
-  // * The navigation that initiated the download has a user gesture associated
-  //   with it AND the user the user is familiar with the referring origin. A
-  //   user is considered familiar with a referring origin if a visit for a page
-  //   from the same origin was recorded on the previous day or earlier.
-  if (danger_level == DownloadFileType::ALLOW_ON_USER_GESTURE &&
-      ((download_->GetTransitionType() &
-        ui::PAGE_TRANSITION_FROM_ADDRESS_BAR) != 0 ||
-       (download_->HasUserGesture() && visits == VISITED_REFERRER)))
-    return DownloadFileType::NOT_DANGEROUS;
-  return danger_level;
-}
-
 std::optional<base::Time>
 DownloadTargetDeterminer::GetLastDownloadBypassTimestamp() const {
-  safe_browsing::SafeBrowsingMetricsCollector* metrics_collector =
-      safe_browsing::SafeBrowsingMetricsCollectorFactory::GetForProfile(
-          GetProfile());
   // metrics_collector can be null in incognito.
-  return metrics_collector ? metrics_collector->GetLatestEventTimestamp(
-                                 safe_browsing::SafeBrowsingMetricsCollector::
-                                     EventType::DANGEROUS_DOWNLOAD_BYPASS)
-                           : std::nullopt;
+  return std::nullopt;
 }
 
 void DownloadTargetDeterminer::OnDownloadDestroyed(

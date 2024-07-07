@@ -22,10 +22,8 @@
 #include "chrome/browser/password_manager/chrome_password_manager_client.h"
 #include "chrome/browser/predictors/loading_predictor.h"
 #include "chrome/browser/predictors/loading_predictor_factory.h"
-#include "chrome/browser/safe_browsing/extension_telemetry/extension_web_request_reporter_impl.h"
 #include "chrome/browser/signin/google_accounts_private_api_host.h"
 #include "chrome/browser/supervised_user/supervised_user_navigation_observer.h"
-#include "chrome/browser/trusted_vault/trusted_vault_encryption_keys_tab_helper.h"
 #include "chrome/common/buildflags.h"
 #include "chrome/common/chrome_features.h"
 #include "components/autofill/content/browser/content_autofill_driver_factory.h"
@@ -34,12 +32,8 @@
 #include "components/offline_pages/buildflags/buildflags.h"
 #include "components/page_load_metrics/browser/metrics_web_contents_observer.h"
 #include "components/password_manager/content/browser/content_password_manager_driver_factory.h"
-#include "components/safe_browsing/buildflags.h"
-#include "components/safe_browsing/content/browser/mojo_safe_browsing_impl.h"
-#include "components/safe_browsing/core/common/features.h"
 #include "components/security_interstitials/content/security_interstitial_tab_helper.h"
 #include "components/spellcheck/spellcheck_buildflags.h"
-#include "components/subresource_filter/content/browser/content_subresource_filter_throttle_manager.h"
 #include "content/public/browser/browser_task_traits.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/render_process_host.h"
@@ -130,66 +124,6 @@
 
 namespace {
 
-#if BUILDFLAG(SAFE_BROWSING_AVAILABLE)
-// Helper method for ExposeInterfacesToRenderer() that checks the latest
-// SafeBrowsing pref value on the UI thread before hopping over to the IO
-// thread.
-void MaybeCreateSafeBrowsingForRenderer(
-    int process_id,
-    base::WeakPtr<content::ResourceContext> resource_context,
-    base::RepeatingCallback<scoped_refptr<safe_browsing::UrlCheckerDelegate>(
-        bool safe_browsing_enabled,
-        bool should_check_on_sb_disabled,
-        const std::vector<std::string>& allowlist_domains)>
-        get_checker_delegate,
-    mojo::PendingReceiver<safe_browsing::mojom::SafeBrowsing> receiver) {
-  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
-
-  content::RenderProcessHost* render_process_host =
-      content::RenderProcessHost::FromID(process_id);
-  if (!render_process_host)
-    return;
-
-  PrefService* pref_service =
-      Profile::FromBrowserContext(render_process_host->GetBrowserContext())
-          ->GetPrefs();
-
-  std::vector<std::string> allowlist_domains =
-      safe_browsing::GetURLAllowlistByPolicy(pref_service);
-
-  bool safe_browsing_enabled =
-      safe_browsing::IsSafeBrowsingEnabled(*pref_service);
-
-  safe_browsing::MojoSafeBrowsingImpl::MaybeCreate(
-      process_id, std::move(resource_context),
-      base::BindRepeating(get_checker_delegate, safe_browsing_enabled,
-                          // Navigation initiated from renderer should never
-                          // check when safe browsing is disabled, because
-                          // enterprise check only supports mainframe URL.
-                          /*should_check_on_sb_disabled=*/false,
-                          allowlist_domains),
-      std::move(receiver));
-}
-
-#if BUILDFLAG(ENABLE_EXTENSIONS)
-void MaybeCreateExtensionWebRequestReporterForRenderer(
-    int process_id,
-    mojo::PendingReceiver<safe_browsing::mojom::ExtensionWebRequestReporter>
-        receiver) {
-  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
-
-  content::RenderProcessHost* render_process_host =
-      content::RenderProcessHost::FromID(process_id);
-  if (!render_process_host) {
-    return;
-  }
-
-  safe_browsing::ExtensionWebRequestReporterImpl::Create(render_process_host,
-                                                         std::move(receiver));
-}
-#endif  // BUILDFLAG(ENABLE_EXTENSIONS)
-#endif  // BUILDFLAG(SAFE_BROWSING_AVAILABLE)
-
 // BadgeManager is not used for Android.
 #if !BUILDFLAG(IS_ANDROID)
 void BindBadgeServiceForServiceWorker(
@@ -230,27 +164,6 @@ void ChromeContentBrowserClient::ExposeInterfacesToRenderer(
             render_process_host->GetID()),
         ui_task_runner);
   }
-
-#if BUILDFLAG(SAFE_BROWSING_AVAILABLE)
-  if (safe_browsing_service_) {
-    content::ResourceContext* resource_context =
-        render_process_host->GetBrowserContext()->GetResourceContext();
-    registry->AddInterface<safe_browsing::mojom::SafeBrowsing>(
-        base::BindRepeating(
-            &MaybeCreateSafeBrowsingForRenderer, render_process_host->GetID(),
-            resource_context->GetWeakPtr(),
-            base::BindRepeating(
-                &ChromeContentBrowserClient::GetSafeBrowsingUrlCheckerDelegate,
-                base::Unretained(this))),
-        ui_task_runner);
-#if BUILDFLAG(ENABLE_EXTENSIONS)
-    registry->AddInterface<safe_browsing::mojom::ExtensionWebRequestReporter>(
-        base::BindRepeating(&MaybeCreateExtensionWebRequestReporterForRenderer,
-                            render_process_host->GetID()),
-        ui_task_runner);
-#endif  // BUILDFLAG(ENABLE_EXTENSIONS)
-  }
-#endif  // BUILDFLAG(SAFE_BROWSING_AVAILABLE)
 
 #if BUILDFLAG(IS_WIN)
   // Add the ModuleEventSink interface. This is the interface used by renderer
@@ -474,16 +387,6 @@ void ChromeContentBrowserClient::
           &render_frame_host));
 #endif  // defined(ENABLE_PLUGINS) || BUILDFLAG(IS_ANDROID)
   associated_registry.AddInterface<
-      chrome::mojom::TrustedVaultEncryptionKeysExtension>(base::BindRepeating(
-      [](content::RenderFrameHost* render_frame_host,
-         mojo::PendingAssociatedReceiver<
-             chrome::mojom::TrustedVaultEncryptionKeysExtension> receiver) {
-        TrustedVaultEncryptionKeysTabHelper::
-            BindTrustedVaultEncryptionKeysExtension(std::move(receiver),
-                                                    render_frame_host);
-      },
-      &render_frame_host));
-  associated_registry.AddInterface<
       chrome::mojom::GoogleAccountsPrivateApiExtension>(base::BindRepeating(
       [](content::RenderFrameHost* render_frame_host,
          mojo::PendingAssociatedReceiver<
@@ -595,15 +498,6 @@ void ChromeContentBrowserClient::
              security_interstitials::mojom::InterstitialCommands> receiver) {
         security_interstitials::SecurityInterstitialTabHelper::
             BindInterstitialCommands(std::move(receiver), render_frame_host);
-      },
-      &render_frame_host));
-  associated_registry.AddInterface<
-      subresource_filter::mojom::SubresourceFilterHost>(base::BindRepeating(
-      [](content::RenderFrameHost* render_frame_host,
-         mojo::PendingAssociatedReceiver<
-             subresource_filter::mojom::SubresourceFilterHost> receiver) {
-        subresource_filter::ContentSubresourceFilterThrottleManager::
-            BindReceiver(std::move(receiver), render_frame_host);
       },
       &render_frame_host));
   associated_registry

@@ -99,10 +99,6 @@ class SystemWebAppDelegate;
 namespace chromeos::clipboard_history {
 class ClipboardHistorySubmenuModel;
 }  // namespace chromeos::clipboard_history
-
-namespace policy {
-class DlpRulesManager;
-}  // namespace policy
 #endif
 
 class RenderViewContextMenu
@@ -201,10 +197,6 @@ class RenderViewContextMenu
   // Returns true if keyboard lock is active and requires the user to press and
   // hold escape to exit exclusive access mode.
   bool IsPressAndHoldEscRequiredToExitFullscreen() const;
-
-#if BUILDFLAG(IS_CHROMEOS)
-  virtual const policy::DlpRulesManager* GetDlpRulesManager() const;
-#endif
 
 #if BUILDFLAG(ENABLE_COMPOSE)
   virtual ChromeComposeClient* GetChromeComposeClient() const;

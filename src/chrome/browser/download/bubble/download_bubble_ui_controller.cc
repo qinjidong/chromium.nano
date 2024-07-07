@@ -31,8 +31,6 @@
 #include "chrome/browser/feature_engagement/tracker_factory.h"
 #include "chrome/browser/offline_items_collection/offline_content_aggregator_factory.h"
 #include "chrome/browser/profiles/profile_key.h"
-#include "chrome/browser/safe_browsing/download_protection/download_protection_service.h"
-#include "chrome/browser/safe_browsing/safe_browsing_service.h"
 #include "chrome/browser/ui/browser.h"
 #include "chrome/browser/ui/browser_finder.h"
 #include "chrome/browser/ui/browser_list.h"
@@ -45,8 +43,6 @@
 #include "components/download/public/common/download_stats.h"
 #include "components/feature_engagement/public/tracker.h"
 #include "components/offline_items_collection/core/offline_content_aggregator.h"
-#include "components/safe_browsing/core/common/features.h"
-#include "components/safe_browsing/core/common/safe_browsing_prefs.h"
 #include "content/public/browser/download_item_utils.h"
 #include "content/public/browser/download_manager.h"
 
@@ -272,14 +268,6 @@ void DownloadBubbleUIController::ProcessDownloadButtonPress(
   switch (command) {
     case DownloadCommands::KEEP:
     case DownloadCommands::DISCARD: {
-      if (safe_browsing::IsSafeBrowsingSurveysEnabled(*profile_->GetPrefs())) {
-        TrustSafetySentimentService* trust_safety_sentiment_service =
-            TrustSafetySentimentServiceFactory::GetForProfile(profile_);
-        if (trust_safety_sentiment_service) {
-          trust_safety_sentiment_service->InteractedWithDownloadWarningUI(
-              warning_surface, warning_action);
-        }
-      }
       DownloadItemWarningData::AddWarningActionEvent(item, warning_surface,
                                                      warning_action);
       // Launch a HaTS survey. Note this needs to come before the command is
@@ -298,8 +286,6 @@ void DownloadBubbleUIController::ProcessDownloadButtonPress(
       break;
     }
     case DownloadCommands::REVIEW:
-      model->ReviewScanningVerdict(
-          browser_->tab_strip_model()->GetActiveWebContents());
       break;
     case DownloadCommands::RETRY:
       RetryDownload(model.get(), command);
@@ -443,7 +429,4 @@ DownloadBubbleUIController::GetWeakPtr() {
   return weak_factory_.GetWeakPtr();
 }
 
-void DownloadBubbleUIController::SetDeepScanNoticeSeen() {
-  profile_->GetPrefs()->SetBoolean(
-      prefs::kSafeBrowsingAutomaticDeepScanningIPHSeen, true);
-}
+void DownloadBubbleUIController::SetDeepScanNoticeSeen() {}

@@ -13,8 +13,6 @@
 #include "components/content_settings/core/common/content_settings_types.h"
 #include "components/page_info/page_info.h"
 #include "components/permissions/permission_uma_util.h"
-#include "components/safe_browsing/buildflags.h"
-#include "components/safe_browsing/core/browser/password_protection/metrics_util.h"
 #include "components/security_state/core/security_state.h"
 #include "content/public/browser/permission_result.h"
 
@@ -26,10 +24,6 @@ namespace permissions {
 class ObjectPermissionContextBase;
 class PermissionDecisionAutoBlocker;
 }  // namespace permissions
-
-namespace safe_browsing {
-class PasswordProtectionService;
-}  // namespace safe_browsing
 
 namespace ui {
 class Event;
@@ -53,14 +47,6 @@ class PageInfoDelegate {
   virtual permissions::ObjectPermissionContextBase* GetChooserContext(
       ContentSettingsType type) = 0;
 
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-  // Helper methods requiring access to PasswordProtectionService.
-  virtual safe_browsing::PasswordProtectionService*
-  GetPasswordProtectionService() const = 0;
-  virtual void OnUserActionOnPasswordUi(
-      safe_browsing::WarningAction action) = 0;
-  virtual std::u16string GetWarningDetailText() = 0;
-#endif
   // Get permission status for the permission associated with ContentSetting of
   // type |type|.
   virtual content::PermissionResult GetPermissionResult(
@@ -108,10 +94,6 @@ class PageInfoDelegate {
   // The |HostContentSettingsMap| is the service that provides and manages
   // content settings (aka. site permissions).
   virtual HostContentSettingsMap* GetContentSettings() = 0;
-
-  // The subresource filter service determines whether ads should be blocked on
-  // the site and relevant permission prompts should be shown respectively.
-  virtual bool IsSubresourceFilterActivated(const GURL& site_url) = 0;
 
   // True if the site has registered for auto picture-in-picture.
   virtual bool HasAutoPictureInPictureBeenRegistered() = 0;

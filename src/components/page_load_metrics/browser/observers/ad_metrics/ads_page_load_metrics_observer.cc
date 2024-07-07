@@ -29,12 +29,6 @@
 #include "components/page_load_metrics/browser/page_load_metrics_util.h"
 #include "components/page_load_metrics/browser/resource_tracker.h"
 #include "components/page_load_metrics/common/page_end_reason.h"
-#include "components/subresource_filter/content/browser/content_subresource_filter_throttle_manager.h"
-#include "components/subresource_filter/content/browser/content_subresource_filter_web_contents_helper.h"
-#include "components/subresource_filter/core/browser/subresource_filter_features.h"
-#include "components/subresource_filter/core/common/common_features.h"
-#include "components/subresource_filter/core/common/load_policy.h"
-#include "components/subresource_filter/core/mojom/subresource_filter.mojom.h"
 #include "content/public/browser/global_request_id.h"
 #include "content/public/browser/global_routing_id.h"
 #include "content/public/browser/navigation_handle.h"
@@ -192,15 +186,7 @@ AdsPageLoadMetricsObserver::CreateIfNeeded(
     content::WebContents* web_contents,
     heavy_ad_intervention::HeavyAdService* heavy_ad_service,
     const ApplicationLocaleGetter& application_locale_getter) {
-  // TODO(bokan): ContentSubresourceFilterThrottleManager is now associated
-  // with a FrameTree. When AdsPageLoadMetricsObserver becomes aware of MPArch
-  // this should use the associated page rather than the primary page.
-  if (!base::FeatureList::IsEnabled(subresource_filter::kAdTagging) ||
-      !subresource_filter::ContentSubresourceFilterWebContentsHelper::
-          FromWebContents(web_contents))
-    return nullptr;
-  return std::make_unique<AdsPageLoadMetricsObserver>(
-      heavy_ad_service, application_locale_getter);
+  return nullptr;
 }
 
 // static
@@ -291,13 +277,6 @@ PageLoadMetricsObserver::ObservePolicy AdsPageLoadMetricsObserver::OnStart(
     const GURL& currently_committed_url,
     bool started_in_foreground) {
   navigation_id_ = navigation_handle->GetNavigationId();
-  auto* observer_manager =
-      subresource_filter::SubresourceFilterObserverManager::FromWebContents(
-          navigation_handle->GetWebContents());
-  // |observer_manager| isn't constructed if the feature for subresource
-  // filtering isn't enabled.
-  if (observer_manager)
-    subresource_observation_.Observe(observer_manager);
   aggregate_frame_data_ = std::make_unique<AggregateFrameData>();
   return CONTINUE_OBSERVING;
 }
@@ -341,7 +320,7 @@ PageLoadMetricsObserver::ObservePolicy AdsPageLoadMetricsObserver::OnCommit(
 
   // If the frame is blocked by the subresource filter, we don't want to record
   // any AdsPageLoad metrics.
-  return subresource_filter_is_enabled_ ? STOP_OBSERVING : CONTINUE_OBSERVING;
+  return CONTINUE_OBSERVING;
 }
 
 void AdsPageLoadMetricsObserver::OnTimingUpdate(
@@ -531,63 +510,7 @@ void AdsPageLoadMetricsObserver::ReadyToCommitNextNavigation(
 // ad, even if it navigates to a non-ad page. This function labels all of a
 // page's frames, even those that fail to commit.
 void AdsPageLoadMetricsObserver::OnDidFinishSubFrameNavigation(
-    content::NavigationHandle* navigation_handle) {
-  // If the AdsPageLoadMetricsObserver is created, this does not return nullptr.
-  auto* throttle_manager =
-      subresource_filter::ContentSubresourceFilterThrottleManager::
-          FromNavigationHandle(*navigation_handle);
-  DCHECK(throttle_manager);
-
-  frame_navigation_starts_[navigation_handle->GetFrameTreeNodeId()] =
-      navigation_handle->NavigationStart();
-
-  const bool is_adframe = throttle_manager->IsFrameTaggedAsAd(
-      navigation_handle->GetFrameTreeNodeId());
-
-  // TODO(crbug.com/40109934): The following block is a hack to ignore
-  // certain frames that are detected by AdTagging. These frames are ignored
-  // specifically for ad metrics and for the heavy ad intervention. The frames
-  // ignored here are still considered ads by the heavy ad intervention. This
-  // logic should be moved into /subresource_filter/ and applied to all of ad
-  // tagging, rather than being implemented in AdsPLMO.
-  bool should_ignore_detected_ad = false;
-  std::optional<subresource_filter::LoadPolicy> load_policy =
-      throttle_manager->LoadPolicyForLastCommittedNavigation(
-          navigation_handle->GetFrameTreeNodeId());
-
-  // Only un-tag frames as ads if the navigation has committed. This prevents
-  // frames from being untagged that have an aborted navigation to allowlist
-  // urls.
-  if (restricted_navigation_ad_tagging_enabled_ && load_policy &&
-      navigation_handle->GetNetErrorCode() == net::OK &&
-      navigation_handle->HasCommitted()) {
-    // If a filter list explicitly allows the rule, we should ignore a detected
-    // ad.
-    bool navigation_is_explicitly_allowed =
-        *load_policy == subresource_filter::LoadPolicy::EXPLICITLY_ALLOW;
-
-    const GURL& last_committed_url =
-        navigation_handle->GetRenderFrameHost()->GetLastCommittedURL();
-    const GURL& outermost_main_frame_last_committed_url =
-        navigation_handle->GetRenderFrameHost()
-            ->GetOutermostMainFrame()
-            ->GetLastCommittedURL();
-    // If a frame is detected to be an ad, but is same domain to the top frame,
-    // and does not match a disallowed rule, ignore it.
-    bool should_ignore_same_domain_ad =
-        (*load_policy != subresource_filter::LoadPolicy::DISALLOW) &&
-        (*load_policy != subresource_filter::LoadPolicy::WOULD_DISALLOW) &&
-        net::registry_controlled_domains::SameDomainOrHost(
-            last_committed_url, outermost_main_frame_last_committed_url,
-            net::registry_controlled_domains::INCLUDE_PRIVATE_REGISTRIES);
-    should_ignore_detected_ad =
-        navigation_is_explicitly_allowed || should_ignore_same_domain_ad;
-  }
-
-  UpdateAdFrameData(navigation_handle, is_adframe, should_ignore_detected_ad);
-
-  ProcessOngoingNavigationResource(navigation_handle);
-}
+    content::NavigationHandle* navigation_handle) {}
 
 void AdsPageLoadMetricsObserver::FrameReceivedUserActivation(
     content::RenderFrameHost* render_frame_host) {
@@ -719,31 +642,7 @@ void AdsPageLoadMetricsObserver::OnMainFrameImageAdRectsChanged(
 
 // TODO(crbug.com/40727873): Evaluate imposing width requirements
 // for ad density violations.
-void AdsPageLoadMetricsObserver::CheckForAdDensityViolation() {
-#if BUILDFLAG(IS_ANDROID)
-  const int kMaxMobileAdDensityByHeight = 30;
-  if (page_ad_density_tracker_.MaxPageAdDensityByHeight() >
-      kMaxMobileAdDensityByHeight) {
-    // TODO(bokan): ContentSubresourceFilterThrottleManager is now associated
-    // with a FrameTree. When AdsPageLoadMetricsObserver becomes aware of MPArch
-    // this should use the associated page rather than the primary page.
-    auto* throttle_manager =
-        subresource_filter::ContentSubresourceFilterThrottleManager::FromPage(
-            GetDelegate().GetWebContents()->GetPrimaryPage());
-    // AdsPageLoadMetricsObserver is not created unless there is a
-    // throttle manager.
-    DCHECK(throttle_manager);
-
-    // Violations can be triggered multiple times for the same page as
-    // violations after the first are ignored. Ad frame violations are
-    // attributed to the main frame url.
-    throttle_manager->OnAdsViolationTriggered(
-        GetDelegate().GetWebContents()->GetPrimaryMainFrame(),
-        subresource_filter::mojom::AdsViolation::
-            kMobileAdDensityByHeightAbove30);
-  }
-#endif
-}
+void AdsPageLoadMetricsObserver::CheckForAdDensityViolation() {}
 
 void AdsPageLoadMetricsObserver::OnSubFrameDeleted(int frame_tree_node_id) {
   frame_navigation_starts_.erase(frame_tree_node_id);
@@ -797,31 +696,6 @@ void AdsPageLoadMetricsObserver::OnV8MemoryChanged(
       aggregate_frame_data_->update_outermost_main_frame_memory(
           update.delta_bytes);
     }
-  }
-}
-
-void AdsPageLoadMetricsObserver::OnSubresourceFilterGoingAway() {
-  subresource_observation_.Reset();
-}
-
-void AdsPageLoadMetricsObserver::OnPageActivationComputed(
-    content::NavigationHandle* navigation_handle,
-    const subresource_filter::mojom::ActivationState& activation_state) {
-  DCHECK(navigation_handle);
-  DCHECK_GE(navigation_id_, 0);
-
-  // The subresource filter's activation level and navigation id is the same for
-  // all frames on a page, so we only record this for the main frame.
-  if (navigation_handle->IsInMainFrame() &&
-      navigation_handle->GetNavigationId() == navigation_id_ &&
-      activation_state.activation_level ==
-          subresource_filter::mojom::ActivationLevel::kEnabled) {
-    // Prerendering navigation is filtered out by checking `navigation_id_`.
-    // TODO(crbug.com/40222513): Consider enabling this observer for
-    // prerendering.
-    DCHECK(!navigation_handle->IsInPrerenderedMainFrame());
-    DCHECK(!subresource_filter_is_enabled_);
-    subresource_filter_is_enabled_ = true;
   }
 }
 
@@ -1253,27 +1127,6 @@ FrameTreeData* AdsPageLoadMetricsObserver::FindFrameData(FrameTreeNodeId id) {
 
 void AdsPageLoadMetricsObserver::MaybeTriggerStrictHeavyAdIntervention() {
   DCHECK(heavy_ads_blocklist_reason_.has_value());
-  if (heavy_ads_blocklist_reason_ !=
-      blocklist::BlocklistReason::kUserOptedOutOfHost)
-    return;
-
-  // TODO(bokan): ContentSubresourceFilterThrottleManager is now associated
-  // with a FrameTree. When AdsPageLoadMetricsObserver becomes aware of MPArch
-  // this should use the associated page rather than the primary page.
-  auto* throttle_manager =
-      subresource_filter::ContentSubresourceFilterThrottleManager::FromPage(
-          GetDelegate().GetWebContents()->GetPrimaryPage());
-  // AdsPageLoadMetricsObserver is not created unless there is a
-  // throttle manager.
-  DCHECK(throttle_manager);
-
-  // Violations can be triggered multiple times for the same page as
-  // violations after the first are ignored. Ad frame violations are
-  // attributed to the main frame url.
-  throttle_manager->OnAdsViolationTriggered(
-      GetDelegate().GetWebContents()->GetPrimaryMainFrame(),
-      subresource_filter::mojom::AdsViolation::
-          kHeavyAdsInterventionAtHostLimit);
 }
 
 void AdsPageLoadMetricsObserver::MaybeTriggerHeavyAdIntervention(

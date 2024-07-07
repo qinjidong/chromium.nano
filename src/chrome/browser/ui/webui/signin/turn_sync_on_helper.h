@@ -146,14 +146,6 @@ class TurnSyncOnHelper {
                    std::unique_ptr<Delegate> delegate,
                    base::OnceClosure callback);
 
-  // Convenience constructor using the default delegate and empty callback.
-  TurnSyncOnHelper(Profile* profile,
-                   Browser* browser,
-                   signin_metrics::AccessPoint signin_access_point,
-                   signin_metrics::PromoAction signin_promo_action,
-                   const CoreAccountId& account_id,
-                   SigninAbortedMode signin_aborted_mode);
-
   TurnSyncOnHelper(const TurnSyncOnHelper&) = delete;
   TurnSyncOnHelper& operator=(const TurnSyncOnHelper&) = delete;
 
@@ -275,7 +267,6 @@ class TurnSyncOnHelper {
   base::ScopedClosureRunner scoped_callback_runner_;
 
   std::unique_ptr<SyncStartupTracker> sync_startup_tracker_;
-  std::unique_ptr<TurnSyncOnHelperPolicyFetchTracker> policy_fetch_tracker_;
 #if BUILDFLAG(ENABLE_DICE_SUPPORT)
   std::unique_ptr<DiceSignedInProfileCreator> dice_signed_in_profile_creator_;
 #endif

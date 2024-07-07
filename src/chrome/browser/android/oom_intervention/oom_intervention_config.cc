@@ -10,7 +10,6 @@
 #include "base/strings/string_number_conversions.h"
 #include "base/system/sys_info.h"
 #include "chrome/common/chrome_features.h"
-#include "components/subresource_filter/core/common/common_features.h"
 
 namespace {
 
@@ -102,10 +101,7 @@ bool GetSwapFreeThreshold(uint64_t* threshold) {
 }  // namespace
 
 OomInterventionConfig::OomInterventionConfig()
-    : is_intervention_enabled_(
-          base::SysInfo::IsLowEndDevice() &&
-          base::FeatureList::IsEnabled(subresource_filter::kAdTagging) &&
-          base::FeatureList::IsEnabled(features::kOomIntervention)),
+    : is_intervention_enabled_(false),
       renderer_detection_args_(blink::mojom::DetectionArgs::New()) {
   if (!is_intervention_enabled_)
     return;

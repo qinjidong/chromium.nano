@@ -22,7 +22,6 @@
 #include "build/chromeos_buildflags.h"
 #include "chrome/app/vector_icons/vector_icons.h"
 #include "chrome/browser/browser_process.h"
-#include "chrome/browser/enterprise/util/managed_browser_utils.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/profiles/profile_attributes_entry.h"
 #include "chrome/browser/profiles/profile_attributes_storage.h"
@@ -45,7 +44,6 @@
 #include "chrome/common/pref_names.h"
 #include "chrome/grit/branded_strings.h"
 #include "chrome/grit/generated_resources.h"
-#include "components/policy/core/common/management/management_service.h"
 #include "components/prefs/pref_change_registrar.h"
 #include "components/prefs/pref_service.h"
 #include "components/signin/public/base/consent_level.h"
@@ -93,24 +91,6 @@ gfx::Image GetGaiaAccountImage(Profile* profile) {
         .account_image;
   }
   return gfx::Image();
-}
-
-// Expected to be called when Management is set.
-// Returns:
-// - true for Work.
-// - false for School.
-bool IsManagementWork(Profile* profile) {
-  CHECK(chrome::enterprise_util::CanShowEnterpriseBadging(profile));
-  auto* identity_manager = IdentityManagerFactory::GetForProfile(profile);
-  auto management_environment =
-      chrome::enterprise_util::GetManagementEnvironment(
-          profile, identity_manager->FindExtendedAccountInfoByAccountId(
-                       identity_manager->GetPrimaryAccountId(
-                           signin::ConsentLevel::kSignin)));
-  CHECK_NE(management_environment,
-           chrome::enterprise_util::ManagementEnvironment::kNone);
-  return management_environment ==
-         chrome::enterprise_util::ManagementEnvironment::kWork;
 }
 
 }  // namespace
@@ -672,8 +652,7 @@ class ManagementStateProvider : public StateProvider,
 
   // StateProvider:
   bool IsActive() const override {
-    return chrome::enterprise_util::CanShowEnterpriseBadging(&profile_.get()) &&
-           (!IsTransient() || temporarily_showing_);
+    return false;
   }
 
  private:
@@ -686,12 +665,7 @@ class ManagementStateProvider : public StateProvider,
   // ProfileAttributesStorage::Observer:
   void OnProfileUserManagementAcceptanceChanged(
       const base::FilePath& profile_path) override {
-    if (!chrome::enterprise_util::CanShowEnterpriseBadging(&profile_.get())) {
-      RequestUpdate();
-      return;
-    }
-
-    TryShowManagementText();
+    RequestUpdate();
   }
 
   void TryShowManagementText() {
@@ -1257,8 +1231,6 @@ AvatarToolbarButtonDelegate::GetTextAndColor(
                    AvatarToolbarButton::ProfileLabelType::kSchool) {
           text = l10n_util::GetStringUTF16(IDS_AVATAR_BUTTON_SCHOOL);
         }
-      } else if (IsManagementWork(profile_)) {
-        text = l10n_util::GetStringUTF16(IDS_AVATAR_BUTTON_WORK);
       } else {
         // School.
         text = l10n_util::GetStringUTF16(IDS_AVATAR_BUTTON_SCHOOL);

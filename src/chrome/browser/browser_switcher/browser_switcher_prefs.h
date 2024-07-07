@@ -18,7 +18,6 @@
 #include "base/memory/weak_ptr.h"
 #include "build/build_config.h"
 #include "components/keyed_service/core/keyed_service.h"
-#include "components/policy/core/common/policy_service.h"
 #include "components/prefs/pref_change_registrar.h"
 #include "url/gurl.h"
 
@@ -124,8 +123,7 @@ enum class ParsingMode {
 // only respects managed prefs. Also does some type conversions and
 // transformations on the prefs (e.g. expanding preset values for
 // AlternativeBrowserPath).
-class BrowserSwitcherPrefs : public KeyedService,
-                             public policy::PolicyService::Observer {
+class BrowserSwitcherPrefs : public KeyedService {
  private:
   using PrefsChangedSignature = void(BrowserSwitcherPrefs*,
                                      const std::vector<std::string>&);
@@ -208,18 +206,12 @@ class BrowserSwitcherPrefs : public KeyedService,
   const std::vector<std::string>& GetChromeParameters() const;
 #endif
 
-  // policy::PolicyService::Observer
-  void OnPolicyUpdated(const policy::PolicyNamespace& ns,
-                       const policy::PolicyMap& previous,
-                       const policy::PolicyMap& current) override;
-
   base::CallbackListSubscription RegisterPrefsChangedCallback(
       PrefsChangedCallback cb);
 
  protected:
   // For internal use and testing.
-  BrowserSwitcherPrefs(PrefService* prefs,
-                       policy::PolicyService* policy_service);
+  BrowserSwitcherPrefs(PrefService* prefs);
 
  private:
   void RunCallbacksIfDirty();
@@ -236,7 +228,6 @@ class BrowserSwitcherPrefs : public KeyedService,
   void ChromeParametersChanged();
 #endif
 
-  const raw_ptr<policy::PolicyService> policy_service_;
   const raw_ptr<PrefService> prefs_;
 
   // We need 2 change registrars because we can't bind 2 observers to the same

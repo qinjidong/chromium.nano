@@ -167,49 +167,6 @@ public class SharedStatics {
         }
     }
 
-    /**
-     * Starts Safe Browsing initialization. This should only be called once.
-     *
-     * @param context is the application context the WebView will be used in.
-     * @param callback will be called with the value true if initialization is successful. The
-     *     callback will be run on the UI thread.
-     */
-    public void initSafeBrowsing(Context context, Callback<Boolean> callback) {
-        try (TraceEvent event =
-                TraceEvent.scoped("WebView.APICall.Framework.START_SAFE_BROWSING")) {
-            recordStaticApiCall(ApiCall.START_SAFE_BROWSING);
-            PostTask.runOrPostTask(
-                    TaskTraits.UI_DEFAULT,
-                    () -> AwContentsStatics.initSafeBrowsing(context, callback));
-        }
-    }
-
-    public void setSafeBrowsingAllowlist(List<String> urls, Callback<Boolean> callback) {
-        try (TraceEvent event =
-                TraceEvent.scoped("WebView.APICall.Framework.SET_SAFE_BROWSING_ALLOWLIST")) {
-            recordStaticApiCall(ApiCall.SET_SAFE_BROWSING_ALLOWLIST);
-            PostTask.runOrPostTask(
-                    TaskTraits.UI_DEFAULT,
-                    () -> AwContentsStatics.setSafeBrowsingAllowlist(urls, callback));
-        }
-    }
-
-    /**
-     * Returns a URL pointing to the privacy policy for Safe Browsing reporting.
-     *
-     * @return the url pointing to a privacy policy document which can be displayed to users.
-     */
-    public Uri getSafeBrowsingPrivacyPolicyUrl() {
-        try (TraceEvent event =
-                TraceEvent.scoped(
-                        "WebView.APICall.Framework.GET_SAFE_BROWSING_PRIVACY_POLICY_URL")) {
-            recordStaticApiCall(ApiCall.GET_SAFE_BROWSING_PRIVACY_POLICY_URL);
-            return PostTask.runSynchronously(
-                    TaskTraits.UI_DEFAULT,
-                    () -> AwContentsStatics.getSafeBrowsingPrivacyPolicyUrl());
-        }
-    }
-
     public boolean isMultiProcessEnabled() {
         try (TraceEvent event =
                 TraceEvent.scoped("WebView.APICall.Framework.IS_MULTI_PROCESS_ENABLED")) {

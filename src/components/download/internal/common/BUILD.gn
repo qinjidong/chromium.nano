@@ -2,8 +2,6 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-import("//components/safe_browsing/buildflags.gni")
-
 if (is_android) {
   import("//build/config/android/config.gni")
   import("//build/config/android/rules.gni")
@@ -77,7 +75,6 @@ source_set("internal") {
     "//components/download/public/common:interfaces",
     "//components/filename_generation",
     "//components/leveldb_proto",
-    "//components/safe_browsing:buildflags",
     "//components/services/quarantine",
     "//mojo/public/c/system",
     "//net",
@@ -89,11 +86,6 @@ source_set("internal") {
   ]
 
   configs += [ "//build/config/compiler:wexit_time_destructors" ]
-
-  # TODO(crbug.com/40120259): Enable this on Fuchsia
-  if (safe_browsing_mode > 0 && !is_fuchsia) {
-    deps += [ "//components/safe_browsing/content/common:file_type_policies" ]
-  }
 
   if (is_android) {
     sources += [

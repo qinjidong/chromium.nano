@@ -15,7 +15,6 @@
 #include "components/password_manager/core/common/password_manager_features.h"
 #include "components/password_manager/services/csv_password/csv_password_parser_impl.h"
 #include "components/password_manager/services/csv_password/public/mojom/csv_password_parser.mojom.h"
-#include "components/safe_browsing/buildflags.h"
 #include "components/services/language_detection/language_detection_service_impl.h"
 #include "components/services/language_detection/public/mojom/language_detection.mojom.h"
 #include "components/services/patch/file_patcher_impl.h"
@@ -73,10 +72,6 @@
 #include "chrome/services/speech/speech_recognition_service_impl.h"  // nogncheck
 #include "media/mojo/mojom/speech_recognition_service.mojom.h"  // nogncheck
 #endif  // BUILDFLAG(ENABLE_BROWSER_SPEECH_SERVICE)
-
-#if BUILDFLAG(FULL_SAFE_BROWSING) || BUILDFLAG(IS_CHROMEOS_ASH)
-#include "chrome/services/file_util/file_util_service.h"  // nogncheck
-#endif
 
 #if BUILDFLAG(ENABLE_EXTENSIONS)
 #include "chrome/services/removable_storage_writer/public/mojom/removable_storage_writer.mojom.h"
@@ -270,13 +265,6 @@ auto RunScreenAIServiceFactory(
 auto RunCupsIppParser(
     mojo::PendingReceiver<ipp_parser::mojom::IppParser> receiver) {
   return std::make_unique<ipp_parser::IppParser>(std::move(receiver));
-}
-#endif
-
-#if BUILDFLAG(FULL_SAFE_BROWSING) || BUILDFLAG(IS_CHROMEOS_ASH)
-auto RunFileUtil(
-    mojo::PendingReceiver<chrome::mojom::FileUtilService> receiver) {
-  return std::make_unique<FileUtilService>(std::move(receiver));
 }
 #endif
 
@@ -483,10 +471,6 @@ void RegisterMainThreadServices(mojo::ServiceFactory& services) {
 #if BUILDFLAG(IS_MAC)
   services.Add(RunMacNotificationService);
 #endif  // BUILDFLAG(IS_MAC)
-
-#if BUILDFLAG(FULL_SAFE_BROWSING) || BUILDFLAG(IS_CHROMEOS_ASH)
-  services.Add(RunFileUtil);
-#endif
 
 #if BUILDFLAG(ENABLE_EXTENSIONS) && !BUILDFLAG(IS_WIN)
   // On Windows, this service runs in an elevated utility process.

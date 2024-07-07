@@ -14,9 +14,6 @@
 #include "chrome/browser/content_settings/host_content_settings_map_factory.h"
 #include "chrome/browser/ui/hats/hats_service.h"
 #include "chrome/browser/ui/hats/hats_service_factory.h"
-#include "chrome/browser/ui/safety_hub/card_data_helper.h"
-#include "chrome/browser/ui/safety_hub/menu_notification_service_factory.h"
-#include "chrome/browser/ui/safety_hub/safety_hub_constants.h"
 #include "chrome/browser/ui/webui/settings/site_settings_helper.h"
 #include "chrome/common/channel_info.h"
 #include "chrome/common/chrome_features.h"
@@ -30,8 +27,6 @@
 #include "components/prefs/pref_service.h"
 #include "components/privacy_sandbox/privacy_sandbox_prefs.h"
 #include "components/privacy_sandbox/tracking_protection_prefs.h"
-#include "components/safe_browsing/core/browser/db/v4_protocol_manager_util.h"
-#include "components/safe_browsing/core/common/safe_browsing_prefs.h"
 #include "components/signin/public/base/signin_pref_names.h"
 #include "components/unified_consent/pref_names.h"
 #include "components/version_info/channel.h"
@@ -78,9 +73,6 @@ bool HasNonDefaultPrivacySetting(Profile* profile) {
   auto* prefs = profile->GetPrefs();
 
   std::vector<std::string> prefs_to_check = {
-      prefs::kSafeBrowsingEnabled,
-      prefs::kSafeBrowsingEnhanced,
-      prefs::kSafeBrowsingScoutReportingEnabled,
       prefs::kEnableDoNotTrack,
       password_manager::prefs::kPasswordLeakDetectionEnabled,
       prefs::kCookieControlsMode,
@@ -155,67 +147,6 @@ std::map<std::string, bool> GetPrivacySettingsProductSpecificData(
   return product_specific_data;
 }
 
-// Returns true if the threat_type is not in the phishing, malware, unwanted
-// software, or billing threat categories.
-bool IsOtherSBInterstitialCategory(safe_browsing::SBThreatType threat_type) {
-  switch (threat_type) {
-    case safe_browsing::SBThreatType::SB_THREAT_TYPE_URL_PHISHING:
-    case safe_browsing::SBThreatType::SB_THREAT_TYPE_URL_CLIENT_SIDE_PHISHING:
-    case safe_browsing::SBThreatType::SB_THREAT_TYPE_URL_MALWARE:
-    case safe_browsing::SBThreatType::SB_THREAT_TYPE_URL_UNWANTED:
-    case safe_browsing::SBThreatType::SB_THREAT_TYPE_BILLING:
-      return false;
-    default:
-      return true;
-  }
-}
-
-// Generates the Product Specific Data which accompanies survey results for the
-// Password Protection UI product area.
-std::map<std::string, bool> BuildProductSpecificDataForPasswordProtection(
-    Profile* profile,
-    PasswordProtectionUIType ui_type,
-    PasswordProtectionUIAction action) {
-  std::map<std::string, bool> product_specific_data;
-  product_specific_data["Enhanced protection enabled"] =
-      safe_browsing::IsEnhancedProtectionEnabled(*profile->GetPrefs());
-  product_specific_data["Is page info UI"] = false;
-  product_specific_data["Is modal dialog UI"] = false;
-  product_specific_data["Is interstitial UI"] = false;
-  switch (ui_type) {
-    case PasswordProtectionUIType::PAGE_INFO:
-      product_specific_data["Is page info UI"] = true;
-      break;
-    case PasswordProtectionUIType::MODAL_DIALOG:
-      product_specific_data["Is modal dialog UI"] = true;
-      break;
-    case PasswordProtectionUIType::INTERSTITIAL:
-      product_specific_data["Is interstitial UI"] = true;
-      break;
-    default:
-      NOTREACHED_IN_MIGRATION();
-  }
-  product_specific_data["User completed password change"] = false;
-  product_specific_data["User clicked change password"] = false;
-  product_specific_data["User ignored warning"] = false;
-  product_specific_data["User marked as legitimate"] = false;
-  switch (action) {
-    case PasswordProtectionUIAction::CHANGE_PASSWORD:
-      product_specific_data["User clicked change password"] = true;
-      break;
-    case PasswordProtectionUIAction::IGNORE_WARNING:
-    case PasswordProtectionUIAction::CLOSE:
-      product_specific_data["User ignored warning"] = true;
-      break;
-    case PasswordProtectionUIAction::MARK_AS_LEGITIMATE:
-      product_specific_data["User marked as legitimate"] = true;
-      break;
-    default:
-      NOTREACHED_IN_MIGRATION();
-  }
-  return product_specific_data;
-}
-
 }  // namespace
 
 TrustSafetySentimentService::TrustSafetySentimentService(Profile* profile)
@@ -234,8 +165,6 @@ TrustSafetySentimentService::TrustSafetySentimentService(Profile* profile)
     metrics::DesktopSessionDurationTracker::Get()->AddObserver(this);
     performed_control_group_dice_roll_ = false;
   }
-
-  safety_hub_interaction_state_ = std::make_unique<SafetyHubInteractionState>();
 }
 
 TrustSafetySentimentService::~TrustSafetySentimentService() {
@@ -434,101 +363,6 @@ void TrustSafetySentimentService::InteractedWithPrivacySandbox4(
   TriggerOccurred(feature_area, {});
 }
 
-void TrustSafetySentimentService::InteractedWithSafeBrowsingInterstitial(
-    bool did_proceed,
-    safe_browsing::SBThreatType threat_type) {
-  std::map<std::string, bool> product_specific_data;
-  product_specific_data["User proceeded past interstitial"] = did_proceed;
-  product_specific_data["Enhanced protection enabled"] =
-      safe_browsing::IsEnhancedProtectionEnabled(*profile_->GetPrefs());
-  product_specific_data["Threat is phishing"] =
-      threat_type == safe_browsing::SBThreatType::SB_THREAT_TYPE_URL_PHISHING ||
-      threat_type ==
-          safe_browsing::SBThreatType::SB_THREAT_TYPE_URL_CLIENT_SIDE_PHISHING;
-  product_specific_data["Threat is malware"] =
-      threat_type == safe_browsing::SBThreatType::SB_THREAT_TYPE_URL_MALWARE;
-  product_specific_data["Threat is unwanted software"] =
-      threat_type == safe_browsing::SBThreatType::SB_THREAT_TYPE_URL_UNWANTED;
-  product_specific_data["Threat is billing"] =
-      threat_type == safe_browsing::SBThreatType::SB_THREAT_TYPE_BILLING;
-  DCHECK(!IsOtherSBInterstitialCategory(threat_type));
-  TriggerOccurred(FeatureArea::kSafeBrowsingInterstitial,
-                  product_specific_data);
-}
-
-void TrustSafetySentimentService::InteractedWithDownloadWarningUI(
-    DownloadItemWarningData::WarningSurface surface,
-    DownloadItemWarningData::WarningAction action) {
-  std::map<std::string, bool> product_specific_data;
-  product_specific_data["Enhanced protection enabled"] =
-      safe_browsing::IsEnhancedProtectionEnabled(*profile_->GetPrefs());
-  product_specific_data["Is mainpage UI"] = false;
-  product_specific_data["Is downloads page UI"] = false;
-  product_specific_data["Is download prompt UI"] = false;
-  product_specific_data["User proceeded past warning"] = false;
-  product_specific_data["Is subpage UI"] = false;
-  switch (surface) {
-    case DownloadItemWarningData::WarningSurface::BUBBLE_MAINPAGE:
-      product_specific_data["Is mainpage UI"] = true;
-      break;
-    case DownloadItemWarningData::WarningSurface::BUBBLE_SUBPAGE:
-      product_specific_data["Is subpage UI"] = true;
-      break;
-    case DownloadItemWarningData::WarningSurface::DOWNLOADS_PAGE:
-      product_specific_data["Is downloads page UI"] = true;
-      break;
-    case DownloadItemWarningData::WarningSurface::DOWNLOAD_PROMPT:
-      product_specific_data["Is download prompt UI"] = true;
-      break;
-    default:
-      NOTREACHED_IN_MIGRATION();
-  }
-  switch (action) {
-    case DownloadItemWarningData::WarningAction::PROCEED:
-      product_specific_data["User proceeded past warning"] = true;
-      break;
-    case DownloadItemWarningData::WarningAction::DISCARD:
-      product_specific_data["User proceeded past warning"] = false;
-      break;
-    default:
-      NOTREACHED_IN_MIGRATION();
-  }
-  TriggerOccurred(FeatureArea::kDownloadWarningUI, product_specific_data);
-}
-
-void TrustSafetySentimentService::ProtectResetOrCheckPasswordClicked(
-    PasswordProtectionUIType ui_type) {
-  // Only one Phished Password Change should ever be open.
-  DCHECK(!phished_password_change_state_);
-  phished_password_change_state_ =
-      std::make_unique<PhishedPasswordChangeState>();
-  phished_password_change_state_->ui_type_ = ui_type;
-  base::SequencedTaskRunner::GetCurrentDefault()->PostDelayedTask(
-      FROM_HERE,
-      base::BindOnce(
-          &TrustSafetySentimentService::MaybeTriggerPasswordProtectionSurvey,
-          weak_ptr_factory_.GetWeakPtr(), ui_type,
-          PasswordProtectionUIAction::CHANGE_PASSWORD),
-      kPasswordChangeInactivity);
-}
-
-void TrustSafetySentimentService::PhishedPasswordUpdateNotClicked(
-    PasswordProtectionUIType ui_type,
-    PasswordProtectionUIAction action) {
-  DCHECK(action != PasswordProtectionUIAction::CHANGE_PASSWORD);
-  MaybeTriggerPasswordProtectionSurvey(ui_type, action);
-}
-
-void TrustSafetySentimentService::PhishedPasswordUpdateFinished() {
-  if (!phished_password_change_state_) {
-    return;
-  }
-  phished_password_change_state_->finished_action = true;
-  MaybeTriggerPasswordProtectionSurvey(
-      phished_password_change_state_->ui_type_,
-      PasswordProtectionUIAction::CHANGE_PASSWORD);
-}
-
 void TrustSafetySentimentService::OnOffTheRecordProfileCreated(
     Profile* off_the_record) {
   // Only interested in the primary OTR profile i.e. the one used for incognito
@@ -614,11 +448,6 @@ void TrustSafetySentimentService::SettingsWatcher::TimerComplete() {
 TrustSafetySentimentService::PageInfoState::PageInfoState()
     : opened_time(base::Time::Now()) {}
 
-TrustSafetySentimentService::PhishedPasswordChangeState::
-    PhishedPasswordChangeState()
-    : password_change_click_ts_(base::Time::Now()),
-      ui_type_(PasswordProtectionUIType::NOT_USED) {}
-
 void TrustSafetySentimentService::SettingsWatcherComplete() {
   settings_watcher_.reset();
 }
@@ -655,76 +484,9 @@ void TrustSafetySentimentService::PerformedIneligibleAction() {
          trigger.remaining_ntps_to_open > 0;
 }
 
-// Checks inactivity delay and finished_action (change psd field to true)
-void TrustSafetySentimentService::MaybeTriggerPasswordProtectionSurvey(
-    PasswordProtectionUIType ui_type,
-    PasswordProtectionUIAction action) {
-  DCHECK(ui_type != PasswordProtectionUIType::NOT_USED);
-  std::map<std::string, bool> product_specific_data =
-      BuildProductSpecificDataForPasswordProtection(profile_, ui_type, action);
-  if (action == PasswordProtectionUIAction::CHANGE_PASSWORD) {
-    if (!phished_password_change_state_) {
-      return;
-    }
-    if (!phished_password_change_state_->finished_action &&
-        base::Time::Now() -
-                phished_password_change_state_->password_change_click_ts_ <
-            kPasswordChangeInactivity) {
-      return;
-    }
-    if (phished_password_change_state_->finished_action) {
-      product_specific_data["User completed password change"] = true;
-    }
-    phished_password_change_state_.reset();
-  }
-  TriggerOccurred(FeatureArea::kPasswordProtectionUI, product_specific_data);
-}
-
 std::map<std::string, bool>
 TrustSafetySentimentService::GetSafetyHubProductSpecificData() {
-  std::map<std::string, bool> product_specific_data;
-  product_specific_data["User visited Safety Hub page"] =
-      safety_hub_interaction_state_->has_visited;
-  product_specific_data["User clicked Safety Hub notification"] =
-      safety_hub_interaction_state_->has_clicked_notification;
-  product_specific_data["User interacted with Safety Hub"] =
-      safety_hub_interaction_state_->has_interacted_with_module;
-
-  auto* notification_service =
-      SafetyHubMenuNotificationServiceFactory::GetForProfile(profile_);
-  std::optional<safety_hub::SafetyHubModuleType> last_module =
-      notification_service->GetLastShownNotificationModule();
-
-  const std::vector<std::pair<safety_hub::SafetyHubModuleType, std::string>>
-      modules = {
-          {safety_hub::SafetyHubModuleType::EXTENSIONS, "extensions"},
-          {safety_hub::SafetyHubModuleType::NOTIFICATION_PERMISSIONS,
-           "notification permissions"},
-          {safety_hub::SafetyHubModuleType::PASSWORDS, "passwords"},
-          {safety_hub::SafetyHubModuleType::UNUSED_SITE_PERMISSIONS,
-           "unused site permissions"},
-          {safety_hub::SafetyHubModuleType::SAFE_BROWSING, "safe browsing"},
-      };
-  for (const auto& module : modules) {
-    product_specific_data["Is notification module " + std::get<1>(module)] =
-        last_module.has_value() && last_module.value() == std::get<0>(module);
-  }
-
-  safety_hub::SafetyHubCardState card_state =
-      safety_hub::GetOverallState(profile_);
-  const std::vector<std::pair<safety_hub::SafetyHubCardState, std::string>>
-      states = {
-          {safety_hub::SafetyHubCardState::kSafe, "safe"},
-          {safety_hub::SafetyHubCardState::kInfo, "info"},
-          {safety_hub::SafetyHubCardState::kWeak, "weak"},
-          {safety_hub::SafetyHubCardState::kWarning, "warning"},
-      };
-  for (const auto& state : states) {
-    product_specific_data["Global state is " + std::get<1>(state)] =
-        card_state == std::get<0>(state);
-  }
-
-  return product_specific_data;
+  return {};
 }
 
 void TrustSafetySentimentService::SafetyHubModuleInteracted() {

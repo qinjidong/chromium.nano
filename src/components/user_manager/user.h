@@ -35,10 +35,6 @@ namespace gfx {
 class ImageSkia;
 }
 
-namespace policy {
-class ProfilePolicyConnectorTest;
-}
-
 namespace user_manager {
 
 class UserManagerBase;
@@ -225,7 +221,6 @@ class USER_MANAGER_EXPORT User {
   friend class FakeUserManager;
   friend class ash::FakeChromeUserManager;
   friend class ash::UserAddingScreenTest;
-  friend class policy::ProfilePolicyConnectorTest;
   FRIEND_TEST_ALL_PREFIXES(UserTest, DeviceLocalAccountAffiliation);
   FRIEND_TEST_ALL_PREFIXES(UserTest, UserSessionInitialized);
 

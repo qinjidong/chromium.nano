@@ -39,7 +39,7 @@ import {beforeNextRender, PolymerElement} from 'chrome://resources/polymer/v3_0/
 import {BrowserProxy} from './browser_proxy.js';
 import type {MojomData} from './data.js';
 import type {PageHandlerInterface} from './downloads.mojom-webui.js';
-import {DangerType, SafeBrowsingState, State, TailoredWarningType} from './downloads.mojom-webui.js';
+import {DangerType, State, TailoredWarningType} from './downloads.mojom-webui.js';
 import {IconLoaderImpl} from './icon_loader.js';
 import {getTemplate} from './item.html.js';
 
@@ -180,8 +180,7 @@ export class DownloadsItemElement extends DownloadsItemElementBase {
 
       displayType_: {
         computed: 'computeDisplayType_(data.isInsecure, data.state,' +
-            'data.dangerType, data.safeBrowsingState,' +
-            'data.hasSafeBrowsingVerdict)',
+            'data.dangerType,' + 'data.hasSafeBrowsingVerdict)',
         type: DisplayType,
         value: DisplayType.NORMAL,
       },
@@ -458,10 +457,7 @@ export class DownloadsItemElement extends DownloadsItemElementBase {
       case State.kDangerous:
         switch (data.dangerType) {
           case DangerType.kDangerousFile:
-            return data.safeBrowsingState ===
-                    SafeBrowsingState.kNoSafeBrowsing ?
-                loadTimeData.getString('noSafeBrowsingDesc') :
-                loadTimeData.getString('dangerFileDesc');
+            return loadTimeData.getString('noSafeBrowsingDesc');
 
           case DangerType.kDangerousUrl:
           case DangerType.kDangerousContent:
@@ -1074,7 +1070,6 @@ export class DownloadsItemElement extends DownloadsItemElementBase {
     ]);
     assert(SAVED_FROM_PAGE_TYPES_ANNOUNCEMENTS.has(this.displayType_));
     assert(!!this.mojoHandler_);
-    this.mojoHandler_.saveSuspiciousRequiringGesture(this.data.id);
     const announcement = loadTimeData.getString(
         SAVED_FROM_PAGE_TYPES_ANNOUNCEMENTS.get(this.displayType_) as string);
     getAnnouncerInstance().announce(announcement);

@@ -69,8 +69,6 @@
 #include "chrome/browser/profiles/keep_alive/scoped_profile_keep_alive.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/reading_list/reading_list_model_factory.h"
-#include "chrome/browser/safe_browsing/safe_browsing_service.h"
-#include "chrome/browser/safe_browsing/verdict_cache_manager_factory.h"
 #include "chrome/browser/search_engines/template_url_service_factory.h"
 #include "chrome/browser/share/share_history.h"
 #include "chrome/browser/share/share_ranking.h"
@@ -121,7 +119,6 @@
 #include "components/prefs/pref_service.h"
 #include "components/privacy_sandbox/privacy_sandbox_settings.h"
 #include "components/reading_list/core/reading_list_model.h"
-#include "components/safe_browsing/core/browser/verdict_cache_manager.h"
 #include "components/search_engines/template_url_service.h"
 #include "components/sync/service/sync_service.h"
 #include "components/sync/service/sync_user_settings.h"
@@ -640,12 +637,6 @@ void ChromeBrowsingDataRemoverDelegate::RemoveEmbedderData(
        content::BrowsingDataRemover::ORIGIN_TYPE_UNPROTECTED_WEB)) {
     base::RecordAction(UserMetricsAction("ClearBrowsingData_Cookies"));
 
-    network::mojom::NetworkContext* safe_browsing_context = nullptr;
-    safe_browsing::SafeBrowsingService* sb_service =
-        g_browser_process->safe_browsing_service();
-    if (sb_service)
-      safe_browsing_context = sb_service->GetNetworkContext(profile_);
-
     // Cleared for DATA_TYPE_HISTORY, DATA_TYPE_COOKIES and DATA_TYPE_PASSWORDS.
     browsing_data::RemoveFederatedSiteSettingsData(delete_begin_, delete_end_,
                                                    website_settings_filter,
@@ -654,12 +645,10 @@ void ChromeBrowsingDataRemoverDelegate::RemoveEmbedderData(
     if (!filter_builder->PartitionedCookiesOnly()) {
       browsing_data::RemoveEmbedderCookieData(
           delete_begin, delete_end, filter_builder, host_content_settings_map_,
-          safe_browsing_context,
+          nullptr,
           base::BindOnce(
               &ChromeBrowsingDataRemoverDelegate::CreateTaskCompletionClosure,
               base::Unretained(this), TracingDataType::kCookies));
-      safe_browsing::VerdictCacheManagerFactory::GetForProfile(profile_)
-          ->OnCookiesDeleted();
     }
 
     if (filter_builder->MatchesMostOriginsAndDomains()) {

@@ -31,7 +31,6 @@
 #include "chrome/browser/ui/webui/side_panel/reading_list/reading_list_ui.h"
 #include "chrome/common/webui_url_constants.h"
 #include "chrome/grit/generated_resources.h"
-#include "components/policy/core/common/policy_pref_names.h"
 #include "components/profile_metrics/browser_profile_type.h"
 #include "components/reading_list/core/reading_list_entry.h"
 #include "components/url_formatter/url_formatter.h"
@@ -131,14 +130,6 @@ class ReadLaterItemContextMenu : public ui::SimpleMenuModel,
   }
 
   bool IsCommandIdEnabled(int command_id) const override {
-    PrefService* prefs = browser_->profile()->GetPrefs();
-    policy::IncognitoModeAvailability incognito_avail =
-        IncognitoModePrefs::GetAvailability(prefs);
-    switch (command_id) {
-      case IDC_CONTENT_CONTEXT_OPENLINKOFFTHERECORD:
-        return !browser_->profile()->IsOffTheRecord() &&
-               incognito_avail != policy::IncognitoModeAvailability::kDisabled;
-    }
     return true;
   }
 

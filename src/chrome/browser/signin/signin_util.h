@@ -14,7 +14,6 @@
 #include "base/supports_user_data.h"
 #include "build/build_config.h"
 #include "build/chromeos_buildflags.h"
-#include "components/policy/core/browser/signin/profile_separation_policies.h"
 #include "components/signin/public/base/signin_metrics.h"
 #include "components/signin/public/identity_manager/primary_account_mutator.h"
 #include "components/signin/public/identity_manager/tribool.h"
@@ -116,17 +115,6 @@ bool IsProfileDeletionAllowed(Profile* profile);
 bool IsProfileSeparationEnforcedByProfile(
     Profile* profile,
     const std::string& intercepted_account_email);
-
-// Returns true if profile separation is enforced by
-// `intercepted_account_separation_policies`.
-bool IsProfileSeparationEnforcedByPolicies(
-    const policy::ProfileSeparationPolicies&
-        intercepted_profile_separation_policies);
-
-bool ProfileSeparationAllowsKeepingUnmanagedBrowsingDataInManagedProfile(
-    Profile* profile,
-    const policy::ProfileSeparationPolicies&
-        intercepted_profile_separation_policies);
 
 bool IsAccountExemptedFromEnterpriseProfileSeparation(Profile* profile,
                                                       const std::string& email);

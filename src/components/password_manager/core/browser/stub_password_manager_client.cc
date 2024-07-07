@@ -125,11 +125,6 @@ StubPasswordManagerClient::GetPasswordFeatureManager() {
   return &password_feature_manager_;
 }
 
-safe_browsing::PasswordProtectionService*
-StubPasswordManagerClient::GetPasswordProtectionService() const {
-  return nullptr;
-}
-
 #if defined(ON_FOCUS_PING_ENABLED)
 void StubPasswordManagerClient::CheckSafeBrowsingReputation(
     const GURL& form_action,

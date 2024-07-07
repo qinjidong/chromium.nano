@@ -18,7 +18,6 @@ import org.chromium.chrome.browser.tab.Tab;
 import org.chromium.chrome.browser.tabmodel.TabModelSelector;
 import org.chromium.chrome.browser.tabmodel.TabModelSelectorTabObserver;
 import org.chromium.components.embedder_support.util.UrlUtilities;
-import org.chromium.components.safe_browsing.SafeBrowsingApiBridge;
 import org.chromium.content_public.browser.NavigationHandle;
 import org.chromium.content_public.browser.WebContents;
 import org.chromium.url.GURL;
@@ -109,10 +108,6 @@ public class ActivityTabStartupMetricsTracker {
         mActivityStartTimeMs = SystemClock.uptimeMillis();
         TraceEvent.startupActivityStart(mActivityId, mActivityStartTimeMs);
         tabModelSelectorSupplier.addObserver(this::registerObservers);
-        SafeBrowsingApiBridge.setOneTimeSafetyNetApiUrlCheckObserver(
-                this::updateSafetyNetCheckTime);
-        SafeBrowsingApiBridge.setOneTimeSafeBrowsingApiUrlCheckObserver(
-                this::updateSafeBrowsingCheckTime);
     }
 
     private void updateSafetyNetCheckTime(long urlCheckTimeDeltaMicros) {

@@ -8,9 +8,6 @@
 #include "base/observer_list.h"
 #include "chrome/browser/extensions/extension_service.h"
 #include "chrome/browser/profiles/profile.h"
-#include "chrome/browser/safe_browsing/safe_browsing_metrics_collector_factory.h"
-#include "components/safe_browsing/core/browser/safe_browsing_metrics_collector.h"
-#include "components/safe_browsing/core/common/safe_browsing_prefs.h"
 #include "extensions/browser/allowlist_state.h"
 #include "extensions/browser/extension_registry.h"
 #include "extensions/browser/extension_system.h"
@@ -66,14 +63,6 @@ ExtensionAllowlist::ExtensionAllowlist(Profile* profile,
   // Relies on ExtensionSystem dependency on ExtensionPrefs to ensure
   // extension_prefs outlives this object.
   extension_prefs_observation_.Observe(extension_prefs);
-
-  // Register to Enhanced Safe Browsing setting changes for allowlist
-  // enforcements.
-  pref_change_registrar_.Init(profile_->GetPrefs());
-  pref_change_registrar_.Add(
-      prefs::kSafeBrowsingEnhanced,
-      base::BindRepeating(&ExtensionAllowlist::OnSafeBrowsingEnhancedChanged,
-                          base::Unretained(this)));
 }
 
 ExtensionAllowlist::~ExtensionAllowlist() = default;
@@ -242,15 +231,8 @@ void ExtensionAllowlist::OnExtensionInstalled(const ExtensionId& extension_id,
 }
 
 void ExtensionAllowlist::SetAllowlistEnforcementFields() {
-  if (safe_browsing::IsEnhancedProtectionEnabled(*profile_->GetPrefs())) {
-    warnings_enabled_ = base::FeatureList::IsEnabled(
-        extensions_features::kSafeBrowsingCrxAllowlistShowWarnings);
-    should_auto_disable_extensions_ = base::FeatureList::IsEnabled(
-        extensions_features::kSafeBrowsingCrxAllowlistAutoDisable);
-  } else {
-    warnings_enabled_ = false;
-    should_auto_disable_extensions_ = false;
-  }
+  warnings_enabled_ = false;
+  should_auto_disable_extensions_ = false;
 }
 
 // `ApplyEnforcement` can be called when an extension becomes not allowlisted or
@@ -399,16 +381,6 @@ void ExtensionAllowlist::NotifyExtensionAllowlistWarningStateChanged(
   }
 }
 
-void ExtensionAllowlist::ReportExtensionReEnabledEvent() {
-  auto* metrics_collector =
-      safe_browsing::SafeBrowsingMetricsCollectorFactory::GetForProfile(
-          profile_);
-  DCHECK(metrics_collector);
-  if (metrics_collector) {
-    metrics_collector->AddSafeBrowsingEventToPref(
-        safe_browsing::SafeBrowsingMetricsCollector::EventType::
-            NON_ALLOWLISTED_EXTENSION_RE_ENABLED);
-  }
-}
+void ExtensionAllowlist::ReportExtensionReEnabledEvent() {}
 
 }  // namespace extensions

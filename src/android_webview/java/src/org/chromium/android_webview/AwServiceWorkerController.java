@@ -11,7 +11,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.chromium.android_webview.common.Lifetime;
-import org.chromium.android_webview.safe_browsing.AwSafeBrowsingConfigHelper;
 import org.chromium.build.annotations.DoNotInline;
 import org.chromium.components.embedder_support.util.WebResourceResponseInfo;
 
@@ -93,11 +92,6 @@ public class AwServiceWorkerController {
             // We currently don't allow third party cookies in service workers,
             // see e.g. AwCookieAccessPolicy::GetShouldAcceptThirdPartyCookies.
             return false;
-        }
-
-        @Override
-        public boolean getSafeBrowsingEnabled() {
-            return AwSafeBrowsingConfigHelper.getSafeBrowsingEnabledByManifest();
         }
     }
 

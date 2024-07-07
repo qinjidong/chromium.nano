@@ -1743,15 +1743,4 @@ void ContentBrowserClient::BindModelManager(
   MockModelManager::Create(rfh, std::move(receiver));
 }
 
-#if !BUILDFLAG(IS_ANDROID)
-void ContentBrowserClient::QueryInstalledWebAppsByManifestId(
-    const GURL& frame_url,
-    const GURL& manifest_id,
-    content::BrowserContext* browser_context,
-    base::OnceCallback<void(std::optional<blink::mojom::RelatedApplication>)>
-        callback) {
-  std::move(callback).Run(std::nullopt);
-}
-#endif  // !BUILDFLAG(IS_ANDROID)
-
 }  // namespace content

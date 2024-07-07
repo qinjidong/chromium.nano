@@ -20,7 +20,6 @@
 #include "components/privacy_sandbox/privacy_sandbox_prefs.h"
 #include "components/privacy_sandbox/tracking_protection_prefs.h"
 #include "components/proxy_config/proxy_config_pref_names.h"
-#include "components/safe_browsing/core/common/safe_browsing_prefs.h"
 #include "components/spellcheck/browser/pref_names.h"
 #include "components/translate/core/browser/translate_pref_names.h"
 
@@ -66,11 +65,6 @@ const PrefMappingEntry kMappings[] = {
     {"referrersEnabled", prefs::kEnableReferrers, APIPermissionID::kPrivacy,
      APIPermissionID::kPrivacy},
     {"doNotTrackEnabled", prefs::kEnableDoNotTrack, APIPermissionID::kPrivacy,
-     APIPermissionID::kPrivacy},
-    {"safeBrowsingEnabled", prefs::kSafeBrowsingEnabled,
-     APIPermissionID::kPrivacy, APIPermissionID::kPrivacy},
-    {"safeBrowsingExtendedReportingEnabled",
-     prefs::kSafeBrowsingScoutReportingEnabled, APIPermissionID::kPrivacy,
      APIPermissionID::kPrivacy},
     {"searchSuggestEnabled", prefs::kSearchSuggestEnabled,
      APIPermissionID::kPrivacy, APIPermissionID::kPrivacy},

@@ -75,8 +75,6 @@
 #include "chrome/common/url_constants.h"
 #include "components/crx_file/id_util.h"
 #include "components/favicon_base/favicon_url_parser.h"
-#include "components/policy/core/common/policy_pref_names.h"
-#include "components/safe_browsing/core/common/safe_browsing_prefs.h"
 #include "components/supervised_user/core/browser/supervised_user_preferences.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/render_process_host.h"
@@ -401,9 +399,6 @@ ExtensionService::ExtensionService(
       extension_prefs_(extension_prefs),
       blocklist_(blocklist),
       allowlist_(profile_, extension_prefs, this),
-      safe_browsing_verdict_handler_(extension_prefs,
-                                     ExtensionRegistry::Get(profile),
-                                     this),
       omaha_attributes_handler_(extension_prefs,
                                 ExtensionRegistry::Get(profile),
                                 this),
@@ -552,10 +547,7 @@ void ExtensionService::Init() {
 
   LoadExtensionsFromCommandLineFlag(::switches::kDisableExtensionsExcept);
   if (load_command_line_extensions) {
-    if (safe_browsing::IsEnhancedProtectionEnabled(*profile_->GetPrefs())) {
-      VLOG(1) << "--load-extension is not allowed for users opted into "
-              << "Enhanced Safe Browsing, ignoring.";
-    } else if (ShouldBlockCommandLineExtension(*profile_)) {
+    if (ShouldBlockCommandLineExtension(*profile_)) {
       VLOG(1)
           << "--load-extension is not allowed for users that have the policy "
           << "have the policy ExtensionInstallTypeBlocklist::command_line, "
@@ -573,8 +565,6 @@ void ExtensionService::Init() {
   // TODO(erikkay): this should probably be deferred to a future point
   // rather than running immediately at startup.
   CheckForExternalUpdates();
-
-  safe_browsing_verdict_handler_.Init();
 
   // Must be called after extensions are loaded.
   allowlist_.Init();
@@ -2352,7 +2342,6 @@ void ExtensionService::ManageBlocklist(
     const Blocklist::BlocklistStateMap& state_map) {
   DCHECK_CURRENTLY_ON(BrowserThread::UI);
 
-  safe_browsing_verdict_handler_.ManageBlocklist(state_map);
   error_controller_->ShowErrorIfNeeded();
 }
 

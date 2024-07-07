@@ -8,10 +8,8 @@
 #include "build/chromeos_buildflags.h"
 #include "chrome/browser/download/download_core_service.h"
 #include "chrome/browser/download/download_core_service_factory.h"
-#include "chrome/browser/enterprise/connectors/connectors_service.h"
 #include "chrome/common/pref_names.h"
 #include "components/prefs/pref_service.h"
-#include "components/safe_browsing/core/common/features.h"
 
 namespace download {
 
@@ -34,22 +32,7 @@ bool ShouldShowDownloadBubble(Profile* profile) {
 }
 
 bool DoesDownloadConnectorBlock(Profile* profile, const GURL& url) {
-  auto* connector_service =
-      enterprise_connectors::ConnectorsServiceFactory::GetForBrowserContext(
-          profile);
-  if (!connector_service) {
-    return false;
-  }
-
-  std::optional<enterprise_connectors::AnalysisSettings> settings =
-      connector_service->GetAnalysisSettings(
-          url, enterprise_connectors::AnalysisConnector::FILE_DOWNLOADED);
-  if (!settings) {
-    return false;
-  }
-
-  return settings->block_until_verdict ==
-         enterprise_connectors::BlockUntilVerdict::kBlock;
+  return false;
 }
 
 bool IsDownloadBubblePartialViewControlledByPref() {

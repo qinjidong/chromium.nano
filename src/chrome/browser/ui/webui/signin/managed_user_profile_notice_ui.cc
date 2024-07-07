@@ -11,7 +11,6 @@
 #include "base/functional/callback_helpers.h"
 #include "base/values.h"
 #include "build/build_config.h"
-#include "chrome/browser/enterprise/profile_management/profile_management_features.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/ui/ui_features.h"
 #include "chrome/browser/ui/webui/signin/managed_user_profile_notice_handler.h"
@@ -129,14 +128,6 @@ void ManagedUserProfileNoticeUI::Initialize(
                         IDS_ENTERPRISE_WELCOME_PROFILE_REQUIRED_TITLE));
 
     update_data.Set("showLinkDataCheckbox", false);
-#if !BUILDFLAG(IS_CHROMEOS)
-    update_data.Set(
-        "useUpdatedUi",
-        base::FeatureList::IsEnabled(
-            features::kEnterpriseUpdatedProfileCreationScreen) ||
-            base::FeatureList::IsEnabled(
-                profile_management::features::kOidcAuthProfileManagement));
-#endif
   }
   content::WebUIDataSource::Update(
       Profile::FromWebUI(web_ui()),

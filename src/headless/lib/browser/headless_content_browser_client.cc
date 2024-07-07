@@ -55,12 +55,6 @@
 #include "content/public/common/content_descriptors.h"
 #endif  // BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS)
 
-#if defined(HEADLESS_USE_POLICY)
-#include "components/policy/content/policy_blocklist_navigation_throttle.h"
-#include "content/public/browser/navigation_handle.h"
-#include "content/public/browser/navigation_throttle.h"
-#endif  // defined(HEADLESS_USE_POLICY)
-
 #if BUILDFLAG(ENABLE_PRINTING)
 #include "components/printing/browser/headless/headless_print_manager.h"
 #endif  // defined(ENABLE_PRINTING)
@@ -357,23 +351,6 @@ void HeadlessContentBrowserClient::SessionEnding(
   browser_->ShutdownWithExitCode(control_type.value_or(0) + 0x80u);
 }
 #endif
-
-#if defined(HEADLESS_USE_POLICY)
-std::vector<std::unique_ptr<content::NavigationThrottle>>
-HeadlessContentBrowserClient::CreateThrottlesForNavigation(
-    content::NavigationHandle* handle) {
-  std::vector<std::unique_ptr<content::NavigationThrottle>> throttles;
-
-  // Avoid creating naviagtion throttle if preferences are not available
-  // (happens in tests).
-  if (browser_->GetPrefs()) {
-    throttles.push_back(std::make_unique<PolicyBlocklistNavigationThrottle>(
-        handle, handle->GetWebContents()->GetBrowserContext()));
-  }
-
-  return throttles;
-}
-#endif  // defined(HEADLESS_USE_POLICY)
 
 void HeadlessContentBrowserClient::OnNetworkServiceCreated(
     ::network::mojom::NetworkService* network_service) {

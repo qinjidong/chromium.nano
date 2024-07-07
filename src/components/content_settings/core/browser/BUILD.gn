@@ -68,17 +68,8 @@ static_library("browser") {
     "//url",
   ]
 
-  if (!is_ios) {
-    sources += [
-      "insecure_private_network_policy_handler.cc",
-      "insecure_private_network_policy_handler.h",
-    ]
-  }
-
   if (use_blink) {
     deps += [
-      "//components/policy:generated",
-      "//components/policy/core/browser",
       "//components/privacy_sandbox:privacy_sandbox_prefs",
     ]
   }
@@ -92,12 +83,6 @@ source_set("cookie_settings") {
     "cookie_settings.h",
   ]
 
-  if (!is_ios) {
-    sources += [
-      "cookie_settings_policy_handler.cc",
-      "cookie_settings_policy_handler.h",
-    ]
-  }
   public_deps = [ "//base" ]
 
   deps = [
@@ -106,7 +91,6 @@ source_set("cookie_settings") {
     "//build:chromeos_buildflags",
     "//components/content_settings/core/common",
     "//components/keyed_service/core",
-    "//components/policy/core/browser",
     "//components/pref_registry:pref_registry",
     "//components/prefs",
     "//components/privacy_sandbox:features",
@@ -158,19 +142,6 @@ source_set("unit_tests") {
     "//testing/gtest",
     "//url",
   ]
-
-  if (use_blink) {
-    # Policies haven't been updated for iOS yet since blink
-    # support is only a prototype.
-    if (!is_ios) {
-      sources += [ "cookie_settings_policy_handler_unittest.cc" ]
-    }
-
-    deps += [
-      "//components/policy:generated",
-      "//components/policy/core/browser:test_support",
-    ]
-  }
 }
 
 source_set("test_support") {

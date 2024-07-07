@@ -17,11 +17,6 @@
 #include "components/keyed_service/core/keyed_service.h"
 #include "components/prefs/pref_member.h"
 
-namespace policy {
-class UserCloudPolicyManager;
-class UserPolicySigninService;
-}  // namespace policy
-
 namespace signin {
 class IdentityManager;
 }
@@ -152,10 +147,6 @@ class SigninManagerAndroid : public KeyedService {
   BooleanPrefMember force_browser_signin_;
 
   const raw_ptr<signin::IdentityManager> identity_manager_ = nullptr;
-  const raw_ptr<policy::UserCloudPolicyManager> user_cloud_policy_manager_ =
-      nullptr;
-  const raw_ptr<policy::UserPolicySigninService> user_policy_signin_service_ =
-      nullptr;
 
   // Java-side SigninManager object.
   base::android::ScopedJavaGlobalRef<jobject> java_signin_manager_;

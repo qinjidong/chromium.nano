@@ -60,7 +60,6 @@ namespace syncer {
 class BackendMigrator;
 class SyncAuthManager;
 class SyncFeatureStatusForMigrationsRecorder;
-class SyncPrefsPolicyHandler;
 
 // Look at the SyncService interface for information on how to use this class.
 // You should not need to know about SyncServiceImpl directly.
@@ -432,9 +431,6 @@ class SyncServiceImpl : public SyncService,
 
   // The class that handles getting, setting, and persisting sync preferences.
   SyncPrefs sync_prefs_;
-
-  // The class that updates SyncPrefs when a policy is applied.
-  std::unique_ptr<SyncPrefsPolicyHandler> sync_prefs_policy_handler_;
 
   // Encapsulates user signin - used to set/get the user's authenticated
   // email address and sign-out upon error.

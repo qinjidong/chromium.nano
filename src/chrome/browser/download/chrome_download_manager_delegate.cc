@@ -45,12 +45,8 @@
 #include "chrome/browser/download/download_target_determiner.h"
 #include "chrome/browser/download/insecure_download_blocking.h"
 #include "chrome/browser/download/save_package_file_picker.h"
-#include "chrome/browser/enterprise/connectors/common.h"
-#include "chrome/browser/extensions/api/safe_browsing_private/safe_browsing_private_event_router.h"
-#include "chrome/browser/extensions/api/safe_browsing_private/safe_browsing_private_event_router_factory.h"
 #include "chrome/browser/platform_util.h"
 #include "chrome/browser/profiles/profile.h"
-#include "chrome/browser/safe_browsing/safe_browsing_service.h"
 #include "chrome/browser/ui/chrome_pages.h"
 #include "chrome/browser/ui/scoped_tabbed_browser_displayer.h"
 #include "chrome/common/buildflags.h"
@@ -67,15 +63,9 @@
 #include "components/offline_pages/buildflags/buildflags.h"
 #include "components/pdf/common/constants.h"
 #include "components/pdf/common/pdf_util.h"
-#include "components/policy/core/common/policy_pref_names.h"
 #include "components/pref_registry/pref_registry_syncable.h"
 #include "components/prefs/pref_member.h"
 #include "components/prefs/pref_service.h"
-#include "components/safe_browsing/buildflags.h"
-#include "components/safe_browsing/content/browser/download/download_stats.h"
-#include "components/safe_browsing/content/browser/web_ui/safe_browsing_ui.h"
-#include "components/safe_browsing/content/common/file_type_policies.h"
-#include "components/safe_browsing/core/common/features.h"
 #include "components/safe_search_api/safe_search_util.h"
 #include "components/services/quarantine/public/mojom/quarantine.mojom.h"
 #include "components/services/quarantine/quarantine_impl.h"
@@ -139,24 +129,12 @@
 #include "components/offline_pages/core/client_namespace_constants.h"
 #endif
 
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-#include "chrome/browser/safe_browsing/cloud_content_scanning/binary_upload_service.h"
-#include "chrome/browser/safe_browsing/download_protection/deep_scanning_request.h"
-#include "chrome/browser/safe_browsing/download_protection/download_protection_service.h"
-#include "chrome/browser/safe_browsing/download_protection/download_protection_util.h"
-#endif
-
 using content::BrowserThread;
 using content::DownloadManager;
 using download::DownloadItem;
 using download::DownloadPathReservationTracker;
 using download::PathValidationResult;
-using safe_browsing::DownloadFileType;
 using ConnectionType = net::NetworkChangeNotifier::ConnectionType;
-
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-using safe_browsing::DownloadProtectionService;
-#endif
 
 #if BUILDFLAG(ENABLE_EXTENSIONS)
 using extensions::CrxInstaller;
@@ -196,48 +174,6 @@ base::FilePath GetPlatformDownloadPath(const DownloadItem* download,
     return download->GetTargetFilePath();
   return download->GetFullPath();
 }
-
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-// Callback invoked by DownloadProtectionService::CheckClientDownload.
-// |is_content_check_supported| is true if the SB service supports scanning the
-// download for malicious content.
-// |callback| is invoked with a danger type determined as follows:
-//
-// Danger type is (in order of preference):
-//   * DANGEROUS_URL, if the URL is a known malware site.
-//   * MAYBE_DANGEROUS_CONTENT, if the content will be scanned for
-//         malware. I.e. |is_content_check_supported| is true.
-//   * ALLOWLISTED_BY_POLICY, if the download matches enterprise whitelist.
-//   * NOT_DANGEROUS.
-void CheckDownloadUrlDone(
-    DownloadTargetDeterminerDelegate::CheckDownloadUrlCallback callback,
-    const std::vector<GURL>& download_urls,
-    bool is_content_check_supported,
-    safe_browsing::DownloadCheckResult result) {
-  safe_browsing::WebUIInfoSingleton::GetInstance()->AddToDownloadUrlsChecked(
-      download_urls, result);
-  download::DownloadDangerType danger_type;
-  if (result == safe_browsing::DownloadCheckResult::SAFE ||
-      result == safe_browsing::DownloadCheckResult::UNKNOWN) {
-    // If this type of files is handled by the enhanced SafeBrowsing download
-    // protection, mark it as potentially dangerous content until we are done
-    // with scanning it.
-    if (is_content_check_supported)
-      danger_type = download::DOWNLOAD_DANGER_TYPE_MAYBE_DANGEROUS_CONTENT;
-    else
-      danger_type = download::DOWNLOAD_DANGER_TYPE_NOT_DANGEROUS;
-  } else if (result ==
-             safe_browsing::DownloadCheckResult::ALLOWLISTED_BY_POLICY) {
-    danger_type = download::DOWNLOAD_DANGER_TYPE_ALLOWLISTED_BY_POLICY;
-  } else {
-    // If the URL is malicious, we'll use that as the danger type. The results
-    // of the content check, if one is performed, will be ignored.
-    danger_type = download::DOWNLOAD_DANGER_TYPE_DANGEROUS_URL;
-  }
-  std::move(callback).Run(danger_type);
-}
-
-#endif  // FULL_SAFE_BROWSING
 
 // Called asynchronously to determine the MIME type for |path|.
 std::string GetMimeType(const base::FilePath& path) {
@@ -375,83 +311,7 @@ void MaybeReportDangerousDownloadBlocked(
     DownloadPrefs::DownloadRestriction download_restriction,
     std::string danger_type,
     std::string download_path,
-    download::DownloadItem* download) {
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-  if (download_restriction !=
-          DownloadPrefs::DownloadRestriction::POTENTIALLY_DANGEROUS_FILES &&
-      download_restriction !=
-          DownloadPrefs::DownloadRestriction::DANGEROUS_FILES &&
-      download_restriction !=
-          DownloadPrefs::DownloadRestriction::MALICIOUS_FILES) {
-    return;
-  }
-
-  if (!download) {
-    return;
-  }
-
-  content::BrowserContext* browser_context =
-      content::DownloadItemUtils::GetBrowserContext(download);
-  Profile* profile = Profile::FromBrowserContext(browser_context);
-  if (!profile)
-    return;
-
-  // If |download| has a deep scanning malware verdict, then it means the
-  // dangerous file has already been reported.
-  auto* scan_result = static_cast<enterprise_connectors::ScanResult*>(
-      download->GetUserData(enterprise_connectors::ScanResult::kKey));
-  if (scan_result) {
-    for (const auto& metadata : scan_result->file_metadata) {
-      if (enterprise_connectors::ContainsMalwareVerdict(metadata.scan_response))
-        return;
-    }
-  }
-
-  auto* router =
-      extensions::SafeBrowsingPrivateEventRouterFactory::GetForProfile(profile);
-  if (router) {
-    std::string raw_digest_sha256;
-    if (download->GetState() == DownloadItem::DownloadState::COMPLETE) {
-      raw_digest_sha256 = download->GetHash();
-    }
-    router->OnDangerousDownloadEvent(
-        download->GetURL(), download->GetTabUrl(), download_path,
-        base::HexEncode(raw_digest_sha256), danger_type,
-        download->GetMimeType(), /*scan_id*/ "", download->GetTotalBytes(),
-        safe_browsing::EventResult::BLOCKED);
-  }
-#endif
-}
-
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-download::DownloadDangerType SavePackageDangerType(
-    safe_browsing::DownloadCheckResult result) {
-  switch (result) {
-    case safe_browsing::DownloadCheckResult::ASYNC_SCANNING:
-      return download::DOWNLOAD_DANGER_TYPE_ASYNC_SCANNING;
-    case safe_browsing::DownloadCheckResult::SENSITIVE_CONTENT_WARNING:
-      return download::DOWNLOAD_DANGER_TYPE_SENSITIVE_CONTENT_WARNING;
-    case safe_browsing::DownloadCheckResult::UNKNOWN:
-      // Failed scans with an unknown result should fail-open, so treat them as
-      // if they're not dangerous.
-      return download::DOWNLOAD_DANGER_TYPE_NOT_DANGEROUS;
-    case safe_browsing::DownloadCheckResult::DEEP_SCANNED_SAFE:
-      return download::DOWNLOAD_DANGER_TYPE_DEEP_SCANNED_SAFE;
-    case safe_browsing::DownloadCheckResult::BLOCKED_PASSWORD_PROTECTED:
-      return download::DOWNLOAD_DANGER_TYPE_BLOCKED_PASSWORD_PROTECTED;
-    case safe_browsing::DownloadCheckResult::BLOCKED_TOO_LARGE:
-      return download::DOWNLOAD_DANGER_TYPE_BLOCKED_TOO_LARGE;
-    case safe_browsing::DownloadCheckResult::SENSITIVE_CONTENT_BLOCK:
-      return download::DOWNLOAD_DANGER_TYPE_SENSITIVE_CONTENT_BLOCK;
-    case safe_browsing::DownloadCheckResult::BLOCKED_SCAN_FAILED:
-      return download::DOWNLOAD_DANGER_TYPE_BLOCKED_SCAN_FAILED;
-
-    default:
-      NOTREACHED_IN_MIGRATION();
-      return download::DOWNLOAD_DANGER_TYPE_NOT_DANGEROUS;
-  }
-}
-#endif  // BUILDFLAG(FULL_SAFE_BROWSING)
+    download::DownloadItem* download) {}
 
 #if !BUILDFLAG(IS_ANDROID)
 // Events related to ephemeral warning cancellation.
@@ -503,13 +363,6 @@ void ChromeDownloadManagerDelegate::SetDownloadManager(DownloadManager* dm) {
   }
 
   download_manager_ = dm;
-
-  safe_browsing::SafeBrowsingService* sb_service =
-      g_browser_process->safe_browsing_service();
-  if (sb_service && !profile_->IsOffTheRecord()) {
-    // Include this download manager in the set monitored by safe browsing.
-    sb_service->AddDownloadManager(dm);
-  }
 
   if (download_manager_) {
     download_manager_->AddObserver(this);
@@ -671,16 +524,6 @@ bool ChromeDownloadManagerDelegate::ShouldAutomaticallyOpenFile(
 #endif
 
   bool should_open = download_prefs_->IsAutoOpenEnabled(url, path);
-  int64_t file_type_uma_value =
-      safe_browsing::FileTypePolicies::GetInstance()->UmaValueForFile(path);
-  if (should_open) {
-    base::UmaHistogramSparse("SBClientDownload.AutoOpenEnabledFileType",
-                             file_type_uma_value);
-  } else {
-    base::UmaHistogramSparse("SBClientDownload.AutoOpenDisabledFileType",
-                             file_type_uma_value);
-  }
-
   return should_open;
 }
 
@@ -702,19 +545,7 @@ bool ChromeDownloadManagerDelegate::ShouldAutomaticallyOpenFileByPolicy(
 
 // static
 void ChromeDownloadManagerDelegate::DisableSafeBrowsing(DownloadItem* item) {
-  DCHECK_CURRENTLY_ON(BrowserThread::UI);
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-  SafeBrowsingState* state = static_cast<SafeBrowsingState*>(
-      item->GetUserData(&SafeBrowsingState::kSafeBrowsingUserDataKey));
-  if (!state) {
-    auto new_state = std::make_unique<SafeBrowsingState>();
-    state = new_state.get();
-    item->SetUserData(&SafeBrowsingState::kSafeBrowsingUserDataKey,
-                      std::move(new_state));
-  }
-  state->CompleteDownload();
-#endif
-}
+  DCHECK_CURRENTLY_ON(BrowserThread::UI);}
 
 // static
 bool ChromeDownloadManagerDelegate::IsDangerTypeBlocked(
@@ -731,77 +562,6 @@ bool ChromeDownloadManagerDelegate::IsDownloadReadyForCompletion(
     DownloadItem* item,
     base::OnceClosure internal_complete_callback) {
   DCHECK_CURRENTLY_ON(BrowserThread::UI);
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-  // If this is a chrome triggered download, return true;
-  if (!item->RequireSafetyChecks()) {
-    return true;
-  }
-
-  if (!download_prefs_->safebrowsing_for_trusted_sources_enabled() &&
-      download_prefs_->IsFromTrustedSource(*item) &&
-      !safe_browsing::DeepScanningRequest::ShouldUploadBinary(item)
-           .has_value()) {
-    return true;
-  }
-
-  SafeBrowsingState* state = static_cast<SafeBrowsingState*>(
-      item->GetUserData(&SafeBrowsingState::kSafeBrowsingUserDataKey));
-  if (!state) {
-    // Begin the safe browsing download protection check.
-    state = new SafeBrowsingState();
-    state->set_callback(std::move(internal_complete_callback));
-    item->SetUserData(&SafeBrowsingState::kSafeBrowsingUserDataKey,
-                      base::WrapUnique(state));
-    DownloadProtectionService* service = GetDownloadProtectionService();
-    if (service) {
-      DVLOG(2) << __func__ << "() Start SB download check for download = "
-               << item->DebugString(false);
-      if (service->MaybeCheckClientDownload(
-              item, base::BindRepeating(
-                        &ChromeDownloadManagerDelegate::CheckClientDownloadDone,
-                        weak_ptr_factory_.GetWeakPtr(), item->GetId()))) {
-        return false;
-      }
-    }
-
-    // In case the service was disabled between the download starting and now,
-    // we need to restore the danger state.
-    download::DownloadDangerType danger_type = item->GetDangerType();
-    if (DownloadItemModel(item).GetDangerLevel() !=
-            DownloadFileType::NOT_DANGEROUS &&
-        (danger_type == download::DOWNLOAD_DANGER_TYPE_NOT_DANGEROUS ||
-         danger_type ==
-             download::DOWNLOAD_DANGER_TYPE_MAYBE_DANGEROUS_CONTENT)) {
-      DVLOG(2) << __func__
-               << "() SB service disabled. Marking download as DANGEROUS FILE";
-      if (ShouldBlockFile(item,
-                          download::DOWNLOAD_DANGER_TYPE_DANGEROUS_FILE)) {
-        MaybeReportDangerousDownloadBlocked(
-            download_prefs_->download_restriction(), "DANGEROUS_FILE_TYPE",
-            item->GetTargetFilePath().AsUTF8Unsafe(), item);
-
-        item->OnContentCheckCompleted(
-            // Specifying a dangerous type here would take precedence over the
-            // blocking of the file.
-            download::DOWNLOAD_DANGER_TYPE_NOT_DANGEROUS,
-            download::DOWNLOAD_INTERRUPT_REASON_FILE_BLOCKED);
-      } else {
-        item->OnContentCheckCompleted(
-            download::DOWNLOAD_DANGER_TYPE_DANGEROUS_FILE,
-            download::DOWNLOAD_INTERRUPT_REASON_NONE);
-      }
-      state->CompleteDownload();
-      return false;
-    }
-  } else if (!state->is_complete() &&
-             item->GetDangerType() !=
-                 download::DOWNLOAD_DANGER_TYPE_USER_VALIDATED) {
-    // Don't complete the download until we have an answer.
-    state->set_callback(std::move(internal_complete_callback));
-    return false;
-  }
-
-#endif
   return true;
 }
 
@@ -944,30 +704,10 @@ void ChromeDownloadManagerDelegate::ChooseSavePath(
 
 void ChromeDownloadManagerDelegate::SanitizeSavePackageResourceName(
     base::FilePath* filename,
-    const GURL& source_url) {
-  safe_browsing::FileTypePolicies* file_type_policies =
-      safe_browsing::FileTypePolicies::GetInstance();
-
-  const PrefService* prefs = profile_->GetPrefs();
-  if (file_type_policies->GetFileDangerLevel(*filename, source_url, prefs) ==
-      safe_browsing::DownloadFileType::NOT_DANGEROUS)
-    return;
-
-  base::FilePath default_filename = base::FilePath::FromUTF8Unsafe(
-      l10n_util::GetStringUTF8(IDS_DEFAULT_DOWNLOAD_FILENAME));
-  *filename = filename->AddExtension(default_filename.BaseName().value());
-}
+    const GURL& source_url) {}
 
 void ChromeDownloadManagerDelegate::SanitizeDownloadParameters(
-    download::DownloadUrlParameters* params) {
-  if (profile_->GetPrefs()->GetBoolean(
-          policy::policy_prefs::kForceGoogleSafeSearch)) {
-    GURL safe_url;
-    safe_search_api::ForceGoogleSafeSearch(params->url(), &safe_url);
-    if (!safe_url.is_empty())
-      params->set_url(std::move(safe_url));
-  }
-}
+    download::DownloadUrlParameters* params) {}
 
 void ChromeDownloadManagerDelegate::OpenDownloadUsingPlatformHandler(
     DownloadItem* download) {
@@ -1073,19 +813,6 @@ ChromeDownloadManagerDelegate::ApplicationClientIdForFileScanning() {
   return std::string(chrome::kApplicationClientIDStringForAVScanning);
 }
 
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-DownloadProtectionService*
-ChromeDownloadManagerDelegate::GetDownloadProtectionService() {
-  DCHECK_CURRENTLY_ON(BrowserThread::UI);
-  safe_browsing::SafeBrowsingService* sb_service =
-      g_browser_process->safe_browsing_service();
-  if (sb_service && sb_service->download_protection_service()) {
-    return sb_service->download_protection_service();
-  }
-
-  return nullptr;
-}
-#endif
 
 void ChromeDownloadManagerDelegate::GetInsecureDownloadStatus(
     download::DownloadItem* download,
@@ -1359,23 +1086,6 @@ void ChromeDownloadManagerDelegate::CheckDownloadUrl(
     CheckDownloadUrlCallback callback) {
   DCHECK_CURRENTLY_ON(BrowserThread::UI);
 
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-  safe_browsing::DownloadProtectionService* service =
-      GetDownloadProtectionService();
-  if (service) {
-    bool is_content_check_supported =
-        service->IsSupportedDownload(*download, suggested_path);
-    DVLOG(2) << __func__ << "() Start SB URL check for download = "
-             << download->DebugString(false);
-    if (service->ShouldCheckDownloadUrl(download)) {
-      service->CheckDownloadUrl(
-          download,
-          base::BindOnce(&CheckDownloadUrlDone, std::move(callback),
-                         download->GetUrlChain(), is_content_check_supported));
-      return;
-    }
-  }
-#endif
   std::move(callback).Run(download::DOWNLOAD_DANGER_TYPE_NOT_DANGEROUS);
 }
 
@@ -1387,259 +1097,6 @@ void ChromeDownloadManagerDelegate::GetFileMimeType(
       FROM_HERE, {base::MayBlock()}, base::BindOnce(&GetMimeType, path),
       std::move(callback));
 }
-
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-void ChromeDownloadManagerDelegate::CheckClientDownloadDone(
-    uint32_t download_id,
-    safe_browsing::DownloadCheckResult result) {
-  if (!download_manager_)
-    return;
-  DownloadItem* item = download_manager_->GetDownload(download_id);
-  if (!item ||
-      (item->GetState() != DownloadItem::IN_PROGRESS &&
-       item->GetDangerType() != download::DOWNLOAD_DANGER_TYPE_ASYNC_SCANNING &&
-       item->GetDangerType() !=
-           download::DOWNLOAD_DANGER_TYPE_ASYNC_LOCAL_PASSWORD_SCANNING)) {
-    return;
-  }
-
-  DVLOG(2) << __func__ << "() download = " << item->DebugString(false)
-           << " verdict = " << static_cast<int>(result);
-
-  // Indicates whether we expect future verdicts on this download. For example,
-  // if Safe Browsing is performing deep scanning, we will receive a more
-  // specific verdict later.
-  bool is_pending_scanning = false;
-
-  // We only mark the content as being dangerous if the download's safety state
-  // has not been set to DANGEROUS yet.  We don't want to show two warnings.
-  if (item->GetDangerType() == download::DOWNLOAD_DANGER_TYPE_NOT_DANGEROUS ||
-      item->GetDangerType() ==
-          download::DOWNLOAD_DANGER_TYPE_MAYBE_DANGEROUS_CONTENT ||
-      item->GetDangerType() == download::DOWNLOAD_DANGER_TYPE_ASYNC_SCANNING ||
-      item->GetDangerType() ==
-          download::DOWNLOAD_DANGER_TYPE_ASYNC_LOCAL_PASSWORD_SCANNING ||
-      item->GetDangerType() ==
-          download::DOWNLOAD_DANGER_TYPE_PROMPT_FOR_SCANNING ||
-      item->GetDangerType() ==
-          download::DOWNLOAD_DANGER_TYPE_PROMPT_FOR_LOCAL_PASSWORD_SCANNING) {
-    download::DownloadDangerType danger_type =
-        download::DOWNLOAD_DANGER_TYPE_NOT_DANGEROUS;
-    switch (result) {
-      case safe_browsing::DownloadCheckResult::UNKNOWN:
-      case safe_browsing::DownloadCheckResult::SAFE:
-        // For DANGEROUS file types, we still want to warn the user, even if
-        // Safe Browsing is unsure about the file.
-        if (DownloadItemModel(item).GetDangerLevel() ==
-            DownloadFileType::DANGEROUS) {
-          danger_type = download::DOWNLOAD_DANGER_TYPE_DANGEROUS_FILE;
-        }
-        break;
-      case safe_browsing::DownloadCheckResult::DANGEROUS:
-        danger_type = download::DOWNLOAD_DANGER_TYPE_DANGEROUS_CONTENT;
-        break;
-      case safe_browsing::DownloadCheckResult::UNCOMMON:
-        danger_type = download::DOWNLOAD_DANGER_TYPE_UNCOMMON_CONTENT;
-        break;
-      case safe_browsing::DownloadCheckResult::DANGEROUS_HOST:
-        danger_type = download::DOWNLOAD_DANGER_TYPE_DANGEROUS_HOST;
-        break;
-      case safe_browsing::DownloadCheckResult::POTENTIALLY_UNWANTED:
-        danger_type = download::DOWNLOAD_DANGER_TYPE_POTENTIALLY_UNWANTED;
-        break;
-      case safe_browsing::DownloadCheckResult::ALLOWLISTED_BY_POLICY:
-        danger_type = download::DOWNLOAD_DANGER_TYPE_ALLOWLISTED_BY_POLICY;
-        break;
-      case safe_browsing::DownloadCheckResult::ASYNC_SCANNING:
-        is_pending_scanning = true;
-        danger_type = download::DOWNLOAD_DANGER_TYPE_ASYNC_SCANNING;
-        break;
-      case safe_browsing::DownloadCheckResult::ASYNC_LOCAL_PASSWORD_SCANNING:
-        is_pending_scanning = true;
-        danger_type =
-            download::DOWNLOAD_DANGER_TYPE_ASYNC_LOCAL_PASSWORD_SCANNING;
-        break;
-      case safe_browsing::DownloadCheckResult::BLOCKED_PASSWORD_PROTECTED:
-        danger_type = download::DOWNLOAD_DANGER_TYPE_BLOCKED_PASSWORD_PROTECTED;
-        break;
-      case safe_browsing::DownloadCheckResult::BLOCKED_TOO_LARGE:
-        danger_type = download::DOWNLOAD_DANGER_TYPE_BLOCKED_TOO_LARGE;
-        break;
-      case safe_browsing::DownloadCheckResult::SENSITIVE_CONTENT_WARNING:
-        danger_type = download::DOWNLOAD_DANGER_TYPE_SENSITIVE_CONTENT_WARNING;
-        break;
-      case safe_browsing::DownloadCheckResult::SENSITIVE_CONTENT_BLOCK:
-        danger_type = download::DOWNLOAD_DANGER_TYPE_SENSITIVE_CONTENT_BLOCK;
-        break;
-      case safe_browsing::DownloadCheckResult::DEEP_SCANNED_SAFE:
-        danger_type = download::DOWNLOAD_DANGER_TYPE_DEEP_SCANNED_SAFE;
-        break;
-      case safe_browsing::DownloadCheckResult::PROMPT_FOR_SCANNING:
-        danger_type = download::DOWNLOAD_DANGER_TYPE_PROMPT_FOR_SCANNING;
-        is_pending_scanning = true;
-        break;
-      case safe_browsing::DownloadCheckResult::DANGEROUS_ACCOUNT_COMPROMISE:
-        danger_type =
-            download::DOWNLOAD_DANGER_TYPE_DANGEROUS_ACCOUNT_COMPROMISE;
-        break;
-      case safe_browsing::DownloadCheckResult::DEEP_SCANNED_FAILED:
-        danger_type = download::DOWNLOAD_DANGER_TYPE_DEEP_SCANNED_FAILED;
-        break;
-      case safe_browsing::DownloadCheckResult::
-          PROMPT_FOR_LOCAL_PASSWORD_SCANNING:
-        is_pending_scanning = true;
-        danger_type =
-            download::DOWNLOAD_DANGER_TYPE_PROMPT_FOR_LOCAL_PASSWORD_SCANNING;
-        break;
-      case safe_browsing::DownloadCheckResult::BLOCKED_SCAN_FAILED:
-        danger_type = download::DOWNLOAD_DANGER_TYPE_BLOCKED_SCAN_FAILED;
-        break;
-      case safe_browsing::DownloadCheckResult::IMMEDIATE_DEEP_SCAN:
-        safe_browsing::DownloadProtectionService::UploadForConsumerDeepScanning(
-            item,
-            DownloadItemWarningData::DeepScanTrigger::
-                TRIGGER_IMMEDIATE_DEEP_SCAN,
-            /*password=*/std::nullopt);
-        // We return early because starting deep scanning immediately triggers
-        // this function with a `DownloadCheckResult` of `ASYNC_SCANNING`. Doing
-        // two updates would lead to two announced accessible alerts. See
-        // https://crbug.com/40926583.
-        return;
-    }
-    DCHECK_NE(danger_type,
-              download::DOWNLOAD_DANGER_TYPE_MAYBE_DANGEROUS_CONTENT);
-
-    if (item->GetState() == DownloadItem::COMPLETE &&
-        (item->GetDangerType() ==
-             download::DOWNLOAD_DANGER_TYPE_ASYNC_SCANNING ||
-         item->GetDangerType() ==
-             download::DOWNLOAD_DANGER_TYPE_ASYNC_LOCAL_PASSWORD_SCANNING)) {
-      // If the file was opened during async scanning, we override the danger
-      // type, since the user can no longer discard the download.
-      if (danger_type != download::DOWNLOAD_DANGER_TYPE_NOT_DANGEROUS) {
-        item->OnAsyncScanningCompleted(
-            download::DOWNLOAD_DANGER_TYPE_DEEP_SCANNED_OPENED_DANGEROUS);
-
-        // Because the file has been opened before the verdict was available,
-        // the reporter must be manually notified that it needs to record the
-        // bypass. This is because the bypass wasn't reported on open to avoid
-        // sending a bypass event for a non-dangerous/sensitive file.
-        GetDownloadProtectionService()->ReportDelayedBypassEvent(item,
-                                                                 danger_type);
-      } else {
-        item->OnAsyncScanningCompleted(danger_type);
-      }
-    } else if (ShouldBlockFile(item, danger_type)) {
-      // Specifying a dangerous type here would take precedence over the
-      // blocking of the file. For BLOCKED_TOO_LARGE and
-      // BLOCKED_PASSWORD_PROTECTED, we want to display more clear UX, so
-      // allow those danger types.
-      if (!IsDangerTypeBlocked(danger_type)) {
-        danger_type = download::DOWNLOAD_DANGER_TYPE_NOT_DANGEROUS;
-        MaybeReportDangerousDownloadBlocked(
-            download_prefs_->download_restriction(), "DANGEROUS_FILE_TYPE",
-            item->GetTargetFilePath().AsUTF8Unsafe(), item);
-      }
-      item->OnContentCheckCompleted(
-          danger_type, download::DOWNLOAD_INTERRUPT_REASON_FILE_BLOCKED);
-    } else {
-      item->OnContentCheckCompleted(danger_type,
-                                    download::DOWNLOAD_INTERRUPT_REASON_NONE);
-    }
-  }
-
-  if (!is_pending_scanning) {
-    SafeBrowsingState* state = static_cast<SafeBrowsingState*>(
-        item->GetUserData(&SafeBrowsingState::kSafeBrowsingUserDataKey));
-    state->CompleteDownload();
-  }
-}
-
-void ChromeDownloadManagerDelegate::CheckSavePackageScanningDone(
-    uint32_t download_id,
-    safe_browsing::DownloadCheckResult result) {
-  if (!download_manager_)
-    return;
-  DownloadItem* item = download_manager_->GetDownload(download_id);
-  if (!item || (item->GetState() != DownloadItem::IN_PROGRESS &&
-                item->GetDangerType() !=
-                    download::DOWNLOAD_DANGER_TYPE_ASYNC_SCANNING)) {
-    return;
-  }
-
-  // We only mark the content as being sensitive if the download's danger state
-  // has not been set yet.  We don't want to show two warnings.
-  if (item->GetDangerType() == download::DOWNLOAD_DANGER_TYPE_NOT_DANGEROUS ||
-      item->GetDangerType() ==
-          download::DOWNLOAD_DANGER_TYPE_MAYBE_DANGEROUS_CONTENT ||
-      item->GetDangerType() == download::DOWNLOAD_DANGER_TYPE_ASYNC_SCANNING ||
-      item->GetDangerType() ==
-          download::DOWNLOAD_DANGER_TYPE_PROMPT_FOR_SCANNING) {
-    download::DownloadDangerType danger_type = SavePackageDangerType(result);
-    if (item->GetState() == DownloadItem::COMPLETE &&
-        item->GetDangerType() ==
-            download::DOWNLOAD_DANGER_TYPE_ASYNC_SCANNING) {
-      // If the save package was opened during async scanning, we override the
-      // danger type, since the user can no longer discard the download.
-      if (danger_type != download::DOWNLOAD_DANGER_TYPE_NOT_DANGEROUS) {
-        item->OnAsyncScanningCompleted(
-            download::DOWNLOAD_DANGER_TYPE_DEEP_SCANNED_OPENED_DANGEROUS);
-
-        // Because the file has been opened before the verdict was available,
-        // the reporter must be manually notified that it needs to record the
-        // bypass. This is because the bypass wasn't reported on open to avoid
-        // sending a bypass event for a non-dangerous/sensitive file.
-        GetDownloadProtectionService()->ReportDelayedBypassEvent(item,
-                                                                 danger_type);
-      } else {
-        item->OnAsyncScanningCompleted(danger_type);
-      }
-    } else if (IsDangerTypeBlocked(danger_type)) {
-      item->OnContentCheckCompleted(
-          danger_type, download::DOWNLOAD_INTERRUPT_REASON_FILE_BLOCKED);
-    } else {
-      item->OnContentCheckCompleted(danger_type,
-                                    download::DOWNLOAD_INTERRUPT_REASON_NONE);
-    }
-  }
-
-  // RunSavePackageScanningCallback is called after OnAsyncScanningCompleted or
-  // OnContentCheckCompleted so that the package completes correctly after a
-  // scanning-specific UI has been applied to `item`.
-  switch (result) {
-    // These results imply the scanning is either not done or that the Save
-    // Package being allowed/blocked depends on user action following a
-    // warning, so the callback doesn't need to run.
-    case safe_browsing::DownloadCheckResult::ASYNC_SCANNING:
-    case safe_browsing::DownloadCheckResult::SENSITIVE_CONTENT_WARNING:
-      break;
-
-    case safe_browsing::DownloadCheckResult::UNKNOWN:
-    case safe_browsing::DownloadCheckResult::DEEP_SCANNED_SAFE:
-      enterprise_connectors::RunSavePackageScanningCallback(item,
-                                                            /*allowed*/ true);
-      break;
-
-    case safe_browsing::DownloadCheckResult::BLOCKED_PASSWORD_PROTECTED:
-    case safe_browsing::DownloadCheckResult::BLOCKED_TOO_LARGE:
-    case safe_browsing::DownloadCheckResult::SENSITIVE_CONTENT_BLOCK:
-    case safe_browsing::DownloadCheckResult::BLOCKED_SCAN_FAILED:
-      enterprise_connectors::RunSavePackageScanningCallback(item,
-                                                            /*allowed*/ false);
-      break;
-
-    default:
-      // These other results should never be returned, but if they are somehow
-      // then scanning policies are fail-open, so the save package should be
-      // allowed to complete.
-      NOTREACHED_IN_MIGRATION();
-      enterprise_connectors::RunSavePackageScanningCallback(item,
-                                                            /*allowed*/ true);
-      break;
-  }
-
-}
-#endif  // FULL_SAFE_BROWSING
 
 #if BUILDFLAG(ENABLE_EXTENSIONS)
 void ChromeDownloadManagerDelegate::OnInstallerDone(
@@ -1662,15 +1119,13 @@ void ChromeDownloadManagerDelegate::OnInstallerDone(
 void ChromeDownloadManagerDelegate::OnDownloadTargetDetermined(
     uint32_t download_id,
     download::DownloadTargetCallback callback,
-    download::DownloadTargetInfo target_info,
-    safe_browsing::DownloadFileType::DangerLevel danger_level) {
+    download::DownloadTargetInfo target_info) {
   DCHECK_CURRENTLY_ON(BrowserThread::UI);
   DownloadItem* item = download_manager_->GetDownload(download_id);
   if (item) {
     DownloadItemModel model(item);
     model.DetermineAndSetShouldPreferOpeningInBrowser(
         target_info.target_path, target_info.is_filetype_handled_safely);
-    model.SetDangerLevel(danger_level);
   }
   if (ShouldBlockFile(item, target_info.danger_type)) {
     MaybeReportDangerousDownloadBlocked(
@@ -1752,108 +1207,16 @@ bool ChromeDownloadManagerDelegate::ShouldBlockFile(
     download::DownloadItem* item,
     download::DownloadDangerType danger_type) const {
   // Chrome-initiated background downloads should not be blocked.
-  if (item && !item->RequireSafetyChecks()) {
-    return false;
-  }
-
-  DownloadPrefs::DownloadRestriction download_restriction =
-      download_prefs_->download_restriction();
-
-  if (IsDangerTypeBlocked(danger_type))
-    return true;
-
-  bool file_type_dangerous =
-      (item && DownloadItemModel(item).GetDangerLevel() !=
-                   DownloadFileType::NOT_DANGEROUS);
-
-  switch (download_restriction) {
-    case (DownloadPrefs::DownloadRestriction::NONE):
-      return false;
-
-    case (DownloadPrefs::DownloadRestriction::POTENTIALLY_DANGEROUS_FILES):
-      return danger_type != download::DOWNLOAD_DANGER_TYPE_NOT_DANGEROUS ||
-             file_type_dangerous;
-
-    case (DownloadPrefs::DownloadRestriction::DANGEROUS_FILES): {
-      return (danger_type == download::DOWNLOAD_DANGER_TYPE_DANGEROUS_CONTENT ||
-              danger_type == download::DOWNLOAD_DANGER_TYPE_DANGEROUS_FILE ||
-              danger_type == download::DOWNLOAD_DANGER_TYPE_DANGEROUS_URL ||
-              danger_type ==
-                  download::DOWNLOAD_DANGER_TYPE_DANGEROUS_ACCOUNT_COMPROMISE ||
-              file_type_dangerous);
-    }
-
-    case (DownloadPrefs::DownloadRestriction::MALICIOUS_FILES): {
-      return (danger_type == download::DOWNLOAD_DANGER_TYPE_DANGEROUS_CONTENT ||
-              danger_type == download::DOWNLOAD_DANGER_TYPE_DANGEROUS_HOST ||
-              danger_type == download::DOWNLOAD_DANGER_TYPE_DANGEROUS_URL ||
-              danger_type ==
-                  download::DOWNLOAD_DANGER_TYPE_DANGEROUS_ACCOUNT_COMPROMISE);
-    }
-
-    case (DownloadPrefs::DownloadRestriction::ALL_FILES):
-      return true;
-
-    default:
-      LOG(ERROR) << "Invalid download restriction value: "
-                 << static_cast<int>(download_restriction);
-  }
-
   return false;
 }
 
 void ChromeDownloadManagerDelegate::MaybeSendDangerousDownloadOpenedReport(
     DownloadItem* download,
-    bool show_download_in_folder) {
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-  safe_browsing::DownloadProtectionService* service =
-      GetDownloadProtectionService();
-  if (service) {
-    service->MaybeSendDangerousDownloadOpenedReport(download,
-                                                    show_download_in_folder);
-  }
-#endif
-  if (!download->GetAutoOpened()) {
-    download::DownloadContent download_content =
-        download::DownloadContentFromMimeType(download->GetMimeType(), false);
-    safe_browsing::RecordDownloadOpenedLatency(
-        download->GetDangerType(), download_content, base::Time::Now(),
-        download->GetEndTime(), show_download_in_folder);
-  }
-}
+    bool show_download_in_folder) {}
 
 void ChromeDownloadManagerDelegate::MaybeSendDangerousDownloadCanceledReport(
     DownloadItem* download,
-    bool is_shutdown) {
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-  if (!DownloadProtectionService::ShouldSendDangerousDownloadReport(download) ||
-      !base::FeatureList::IsEnabled(
-          safe_browsing::kDownloadReportWithoutUserDecision)) {
-    return;
-  }
-  safe_browsing::SafeBrowsingService* sb_service =
-      g_browser_process->safe_browsing_service();
-  if (!sb_service) {
-    return;
-  }
-  // Note: We cannot go through download_protection_service here, because this
-  // function may be called at shutdown. The download_protection_service
-  // object may already be deleted at this point.
-  if (is_shutdown) {
-    sb_service->PersistDownloadReportAndSendOnNextStartup(
-        download,
-        safe_browsing::ClientSafeBrowsingReportRequest::
-            DANGEROUS_DOWNLOAD_PROFILE_CLOSED,
-        /*did_proceed=*/false, std::nullopt);
-  } else {
-    sb_service->SendDownloadReport(
-        download,
-        safe_browsing::ClientSafeBrowsingReportRequest::
-            DANGEROUS_DOWNLOAD_AUTO_DELETED,
-        /*did_proceed=*/false, std::nullopt);
-  }
-#endif
-}
+    bool is_shutdown) {}
 
 void ChromeDownloadManagerDelegate::CheckDownloadAllowed(
     const content::WebContents::Getter& web_contents_getter,
@@ -1917,32 +1280,6 @@ void ChromeDownloadManagerDelegate::CheckSavePackageAllowed(
   DCHECK(download_item);
   DCHECK(download_item->IsSavePackageDownload());
 
-#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS) || \
-    BUILDFLAG(IS_MAC)
-  std::optional<enterprise_connectors::AnalysisSettings> settings =
-      safe_browsing::DeepScanningRequest::ShouldUploadBinary(download_item);
-
-  if (settings.has_value()) {
-    DownloadProtectionService* service = GetDownloadProtectionService();
-    // Save package never need malware scans, so exempt them from scanning if
-    // there are no other tags.
-    settings->tags.erase("malware");
-    if (!settings->tags.empty() && service) {
-      download_item->SetUserData(
-          enterprise_connectors::SavePackageScanningData::kKey,
-          std::make_unique<enterprise_connectors::SavePackageScanningData>(
-              std::move(callback)));
-
-      service->UploadSavePackageForDeepScanning(
-          download_item, std::move(save_package_files),
-          base::BindRepeating(
-              &ChromeDownloadManagerDelegate::CheckSavePackageScanningDone,
-              weak_ptr_factory_.GetWeakPtr(), download_item->GetId()),
-          std::move(settings.value()));
-      return;
-    }
-  }
-#endif
   std::move(callback).Run(true);
 }
 
@@ -2001,13 +1338,6 @@ bool ChromeDownloadManagerDelegate::ShouldOpenPdfInline() {
   return Java_PdfUtils_shouldOpenPdfInline(env);
 }
 #endif  // BUILDFLAG(IS_ANDROID)
-
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-ChromeDownloadManagerDelegate::SafeBrowsingState::~SafeBrowsingState() {}
-
-const char ChromeDownloadManagerDelegate::SafeBrowsingState::
-    kSafeBrowsingUserDataKey[] = "Safe Browsing ID";
-#endif  // FULL_SAFE_BROWSING
 
 base::WeakPtr<ChromeDownloadManagerDelegate>
 ChromeDownloadManagerDelegate::GetWeakPtr() {

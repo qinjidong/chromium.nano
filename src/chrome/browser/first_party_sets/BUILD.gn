@@ -13,8 +13,6 @@ source_set("first_party_sets") {
     "//chrome/test:*",
   ]
   sources = [
-    "first_party_sets_overrides_policy_handler.cc",
-    "first_party_sets_overrides_policy_handler.h",
     "first_party_sets_pref_names.cc",
     "first_party_sets_pref_names.h",
     "scoped_mock_first_party_sets_handler.cc",
@@ -26,11 +24,6 @@ source_set("first_party_sets") {
     "//chrome/browser/profiles:profile",
     "//chrome/browser/profiles:profiles",
     "//components/keyed_service/content",
-    "//components/policy:generated",
-    "//components/policy:policy_code_generate",
-    "//components/policy/content/",
-    "//components/policy/core/browser",
-    "//components/policy/proto",
     "//components/pref_registry",
     "//components/prefs:prefs",
     "//components/privacy_sandbox:privacy_sandbox",
@@ -38,22 +31,4 @@ source_set("first_party_sets") {
     "//components/strings:components_strings_grit",
   ]
   public_deps = [ "//content/public/browser" ]
-}
-
-fuzzer_test("first_party_sets_overrides_policy_handler_fuzzer") {
-  sources = [ "test/first_party_sets_overrides_policy_handler_fuzzer.cc" ]
-  deps = [
-    ":first_party_sets",
-    "//base",
-    "//base:i18n",
-    "//components/policy:generated",
-    "//components/policy/core/browser",
-    "//testing/libfuzzer/proto:json_proto",
-    "//testing/libfuzzer/proto:json_proto_converter",
-    "//third_party/libprotobuf-mutator",
-  ]
-
-  if (is_chromeos) {
-    deps += [ "//chromeos/ash/components/dbus/cros_disks" ]
-  }
 }

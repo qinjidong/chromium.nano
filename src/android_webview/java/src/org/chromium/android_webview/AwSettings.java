@@ -30,7 +30,6 @@ import org.chromium.android_webview.common.AwFeatures;
 import org.chromium.android_webview.common.AwSwitches;
 import org.chromium.android_webview.common.Lifetime;
 import org.chromium.android_webview.common.MediaIntegrityApiStatus;
-import org.chromium.android_webview.safe_browsing.AwSafeBrowsingConfigHelper;
 import org.chromium.android_webview.settings.AttributionBehavior;
 import org.chromium.android_webview.settings.ForceDarkBehavior;
 import org.chromium.android_webview.settings.ForceDarkMode;
@@ -186,9 +185,6 @@ public class AwSettings {
 
     // Although this bit is stored on AwSettings it is actually controlled via the CookieManager.
     private boolean mAcceptThirdPartyCookies;
-
-    // if null, default to AwSafeBrowsingConfigHelper.getSafeBrowsingEnabledByManifest()
-    private Boolean mSafeBrowsingEnabled;
 
     private final boolean mSupportLegacyQuirks;
     private final boolean mAllowEmptyDocumentPersistence;
@@ -515,20 +511,6 @@ public class AwSettings {
     }
 
     /**
-     * Enable/Disable SafeBrowsing per WebView
-     *
-     * @param enabled true if this WebView should have SafeBrowsing
-     */
-    public void setSafeBrowsingEnabled(boolean enabled) {
-        synchronized (mAwSettingsLock) {
-            if (mSafeBrowsingEnabled == null || mSafeBrowsingEnabled != enabled) {
-                flushBackForwardCacheOnUiThreadLocked();
-            }
-            mSafeBrowsingEnabled = enabled;
-        }
-    }
-
-    /**
      * Return whether third party cookies are enabled for an AwContents
      * @return true if accept third party cookies
      */
@@ -542,19 +524,6 @@ public class AwSettings {
     private boolean getAcceptThirdPartyCookiesLocked() {
         assert Thread.holdsLock(mAwSettingsLock);
         return mAcceptThirdPartyCookies;
-    }
-
-    /**
-     * Return whether Safe Browsing has been enabled for the current WebView
-     * @return true if SafeBrowsing is enabled
-     */
-    public boolean getSafeBrowsingEnabled() {
-        synchronized (mAwSettingsLock) {
-            if (mSafeBrowsingEnabled == null) {
-                return AwSafeBrowsingConfigHelper.getSafeBrowsingEnabledByManifest();
-            }
-            return mSafeBrowsingEnabled;
-        }
     }
 
     /** See {@link android.webkit.WebSettings#setAllowFileAccess}. */

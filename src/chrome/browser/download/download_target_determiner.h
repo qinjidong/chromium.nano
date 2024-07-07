@@ -19,7 +19,6 @@
 #include "components/download/public/common/download_item.h"
 #include "components/download/public/common/download_path_reservation_tracker.h"
 #include "components/download/public/common/download_target_info.h"
-#include "components/safe_browsing/content/common/proto/download_file_types.pb.h"
 #include "content/public/browser/download_manager_delegate.h"
 
 class Profile;
@@ -80,8 +79,7 @@ class DownloadTargetDeterminer : public download::DownloadItem::Observer {
   //       SafeBrowsing may flag the file as being malicious, in which case the
   //       malicious classification should take precedence.
   using CompletionCallback = base::OnceCallback<void(
-      download::DownloadTargetInfo target_info,
-      safe_browsing::DownloadFileType::DangerLevel danger_level)>;
+      download::DownloadTargetInfo target_info)>;
 
   DownloadTargetDeterminer(const DownloadTargetDeterminer&) = delete;
   DownloadTargetDeterminer& operator=(const DownloadTargetDeterminer&) = delete;
@@ -375,16 +373,6 @@ class DownloadTargetDeterminer : public download::DownloadItem::Observer {
   // operation.
   bool HasPromptedForPath() const;
 
-  // Returns true if this download should show the "dangerous file" warning.
-  // Various factors are considered, such as the type of the file, whether a
-  // user action initiated the download, and whether the user has explicitly
-  // marked the file type as "auto open". Protected virtual for testing.
-  //
-  // If |require_explicit_consent| is non-null then the pointed bool will be set
-  // to true if the download requires explicit user consent.
-  safe_browsing::DownloadFileType::DangerLevel GetDangerLevel(
-      PriorVisitsToReferrer visits) const;
-
   // Returns the timestamp of the last download bypass.
   std::optional<base::Time> GetLastDownloadBypassTimestamp() const;
 
@@ -403,7 +391,6 @@ class DownloadTargetDeterminer : public download::DownloadItem::Observer {
   download::DownloadPathReservationTracker::FilenameConflictAction
       conflict_action_;
   download::DownloadDangerType danger_type_;
-  safe_browsing::DownloadFileType::DangerLevel danger_level_;
   base::FilePath virtual_path_;
   base::FilePath local_path_;
   base::FilePath intermediate_path_;

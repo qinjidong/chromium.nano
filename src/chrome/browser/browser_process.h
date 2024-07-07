@@ -55,14 +55,6 @@ class NetworkQualityTracker;
 class SharedURLLoaderFactory;
 }
 
-namespace safe_browsing {
-class SafeBrowsingService;
-}
-
-namespace subresource_filter {
-class RulesetService;
-}
-
 namespace variations {
 class VariationsService;
 }
@@ -94,11 +86,6 @@ class NetworkTimeTracker;
 namespace os_crypt_async {
 class KeyProvider;
 class OSCryptAsync;
-}
-
-namespace policy {
-class ChromeBrowserPolicyConnector;
-class PolicyService;
 }
 
 namespace printing {
@@ -171,13 +158,6 @@ class BrowserProcess {
   // network quality change events.
   virtual network::NetworkQualityTracker* network_quality_tracker() = 0;
 
-  // Starts and manages the policy system.
-  virtual policy::ChromeBrowserPolicyConnector* browser_policy_connector() = 0;
-
-  // This is the main interface for chromium components to retrieve policy
-  // information from the policy system.
-  virtual policy::PolicyService* policy_service() = 0;
-
   virtual IconManager* icon_manager() = 0;
 
   virtual GpuModeManager* gpu_mode_manager() = 0;
@@ -222,19 +202,6 @@ class BrowserProcess {
   // in the system status tray. Returns NULL if status icons are not supported
   // on this platform (or this is a unit test).
   virtual StatusTray* status_tray() = 0;
-
-  // Returns the SafeBrowsing service.
-  virtual safe_browsing::SafeBrowsingService* safe_browsing_service() = 0;
-
-  // Returns the service providing versioned storage for rules used by the Safe
-  // Browsing subresource filter.
-  virtual subresource_filter::RulesetService*
-  subresource_filter_ruleset_service() = 0;
-
-  // Returns the service providing versioned storage for rules used by the
-  // Fingerprinting Protection subresource filter.
-  virtual subresource_filter::RulesetService*
-  fingerprinting_protection_ruleset_service() = 0;
 
   // Returns the StartupData which owns any pre-created objects in //chrome
   // before the full browser starts.

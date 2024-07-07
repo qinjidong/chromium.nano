@@ -10,7 +10,6 @@
 
 #include "base/memory/raw_ptr.h"
 #include "base/values.h"
-#include "components/policy/core/common/policy_service.h"
 #include "components/prefs/pref_change_registrar.h"
 #include "content/public/browser/web_ui_message_handler.h"
 
@@ -21,8 +20,7 @@ class WebUIDataSource;
 
 class Profile;
 
-class ManagedUIHandler : public content::WebUIMessageHandler,
-                         public policy::PolicyService::Observer {
+class ManagedUIHandler : public content::WebUIMessageHandler {
  public:
   explicit ManagedUIHandler(Profile* profile);
 
@@ -46,11 +44,6 @@ class ManagedUIHandler : public content::WebUIMessageHandler,
                                  Profile* profile);
 
  private:
-  // policy::PolicyService::Observer
-  void OnPolicyUpdated(const policy::PolicyNamespace& ns,
-                       const policy::PolicyMap& previous,
-                       const policy::PolicyMap& current) override;
-
   // content::WebUIMessageHandler:
   void RegisterMessages() override;
   void OnJavascriptDisallowed() override;

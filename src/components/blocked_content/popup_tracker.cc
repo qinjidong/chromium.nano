@@ -54,13 +54,6 @@ PopupTracker::PopupTracker(content::WebContents* contents,
       window_open_disposition_(disposition) {
   if (auto* popup_opener = PopupOpenerTabHelper::FromWebContents(opener))
     popup_opener->OnOpenedPopup(this);
-
-  auto* observation_manager =
-      subresource_filter::SubresourceFilterObserverManager::FromWebContents(
-          contents);
-  if (observation_manager) {
-    scoped_observation_.Observe(observation_manager);
-  }
 }
 
 void PopupTracker::WebContentsDestroyed() {
@@ -130,35 +123,6 @@ void PopupTracker::DidGetUserInteraction(const blink::WebInputEvent& event) {
   } else {
     num_activation_events_++;
   }
-}
-
-// This method will always be called before the DidFinishNavigation associated
-// with this handle.
-// The exception is a navigation restoring a page from back-forward cache --
-// in that case don't issue any requests, therefore we don't get any
-// safe browsing callbacks. See the comment above for the mitigation.
-void PopupTracker::OnSafeBrowsingChecksComplete(
-    content::NavigationHandle* navigation_handle,
-    const subresource_filter::SubresourceFilterSafeBrowsingClient::CheckResult&
-        result) {
-  DCHECK(navigation_handle->IsInMainFrame());
-  if (!navigation_handle->IsInPrimaryMainFrame())
-    return;
-
-  safe_browsing_status_ = PopupSafeBrowsingStatus::kSafe;
-  if (result.threat_type ==
-          safe_browsing::SBThreatType::SB_THREAT_TYPE_URL_PHISHING ||
-      result.threat_type == safe_browsing::SBThreatType::
-                                SB_THREAT_TYPE_URL_CLIENT_SIDE_PHISHING ||
-      result.threat_type ==
-          safe_browsing::SBThreatType::SB_THREAT_TYPE_SUBRESOURCE_FILTER) {
-    safe_browsing_status_ = PopupSafeBrowsingStatus::kUnsafe;
-  }
-}
-
-void PopupTracker::OnSubresourceFilterGoingAway() {
-  DCHECK(scoped_observation_.IsObserving());
-  scoped_observation_.Reset();
 }
 
 WEB_CONTENTS_USER_DATA_KEY_IMPL(PopupTracker);

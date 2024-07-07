@@ -13,7 +13,6 @@
 #include "base/values.h"
 #include "build/chromeos_buildflags.h"
 #include "chrome/common/url_constants.h"
-#include "components/policy/core/common/policy_service.h"
 #include "components/prefs/pref_change_registrar.h"
 #include "content/public/browser/web_ui.h"
 #include "content/public/browser/web_ui_data_source.h"
@@ -27,10 +26,6 @@ namespace extensions {
 class Extension;
 }  // namespace extensions
 
-namespace policy {
-class PolicyService;
-}  // namespace policy
-
 #if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC) || BUILDFLAG(IS_LINUX)
 namespace device_signals {
 class UserPermissionService;
@@ -41,8 +36,7 @@ class Profile;
 
 // The JavaScript message handler for the chrome://management page.
 class ManagementUIHandler : public content::WebUIMessageHandler,
-                            public extensions::ExtensionRegistryObserver,
-                            public policy::PolicyService::Observer {
+                            public extensions::ExtensionRegistryObserver {
  public:
   explicit ManagementUIHandler(Profile* profile);
 
@@ -71,10 +65,6 @@ class ManagementUIHandler : public content::WebUIMessageHandler,
   base::Value::Dict GetThreatProtectionInfo(Profile* profile);
   base::Value::List GetManagedWebsitesInfo(Profile* profile) const;
   base::Value::List GetApplicationsInfo(Profile* profile) const;
-  virtual policy::PolicyService* GetPolicyService();
-#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC) || BUILDFLAG(IS_LINUX)
-  virtual device_signals::UserPermissionService* GetUserPermissionService();
-#endif  // BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC) || BUILDFLAG(IS_LINUX)
 
   bool account_managed() const { return account_managed_; }
   virtual bool managed() const;
@@ -119,12 +109,6 @@ class ManagementUIHandler : public content::WebUIMessageHandler,
   void OnExtensionUnloaded(content::BrowserContext* browser_context,
                            const extensions::Extension* extension,
                            extensions::UnloadedExtensionReason reason) override;
-
-
-  // policy::PolicyService::Observer
-  void OnPolicyUpdated(const policy::PolicyNamespace& ns,
-                       const policy::PolicyMap& previous,
-                       const policy::PolicyMap& current) override;
 
   void AddObservers();
   void RemoveObservers();

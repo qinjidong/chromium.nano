@@ -12,7 +12,6 @@
 #include "components/history/core/browser/features.h"
 #include "components/metrics/persistent_histograms.h"
 #include "components/permissions/features.h"
-#include "components/safe_browsing/core/common/features.h"
 #include "components/translate/core/common/translate_util.h"
 #include "components/viz/common/features.h"
 #include "content/public/common/content_features.h"
@@ -205,8 +204,4 @@ void AwFieldTrials::RegisterFeatureOverrides(base::FeatureList* feature_list) {
   // AwContents to leak in apps that don't call destroy().
   aw_feature_overrides.DisableFeature(blink::features::kDevicePosture);
   aw_feature_overrides.DisableFeature(blink::features::kViewportSegments);
-
-  // New Safe Browsing API is still being rolled out on WebView.
-  aw_feature_overrides.DisableFeature(
-      safe_browsing::kSafeBrowsingNewGmsApiForBrowseUrlDatabaseCheck);
 }

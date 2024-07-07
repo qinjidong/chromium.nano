@@ -25,7 +25,6 @@
 #include "components/password_manager/core/browser/password_store/password_store_backend_error.h"
 #include "components/password_manager/core/browser/webauthn_credentials_delegate.h"
 #include "components/profile_metrics/browser_profile_type.h"
-#include "components/safe_browsing/buildflags.h"
 #include "components/sync/service/sync_service.h"
 #include "net/cert/cert_status_flags.h"
 
@@ -70,10 +69,6 @@ class Origin;
 }
 
 class GURL;
-
-namespace safe_browsing {
-class PasswordProtectionService;
-}
 
 namespace device_reauth {
 class DeviceAuthenticator;
@@ -408,10 +403,6 @@ class PasswordManagerClient {
 
   // Returns the current best guess as to the page's display language.
   virtual autofill::LanguageCode GetPageLanguage() const;
-
-  // Return the PasswordProtectionService associated with this instance.
-  virtual safe_browsing::PasswordProtectionService*
-  GetPasswordProtectionService() const = 0;
 
 #if defined(ON_FOCUS_PING_ENABLED)
   // Checks the safe browsing reputation of the webpage when the

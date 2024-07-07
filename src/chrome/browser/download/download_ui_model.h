@@ -19,8 +19,6 @@
 #include "build/build_config.h"
 #include "components/download/public/common/download_item.h"
 #include "components/offline_items_collection/core/offline_item.h"
-#include "components/safe_browsing/buildflags.h"
-#include "components/safe_browsing/content/common/proto/download_file_types.pb.h"
 #include "ui/base/models/image_model.h"
 #include "ui/color/color_id.h"
 #include "ui/gfx/vector_icon_types.h"
@@ -316,15 +314,6 @@ class DownloadUIModel {
   // Change what's returned by ShouldPreferOpeningInBrowser to |preference|.
   virtual void SetShouldPreferOpeningInBrowser(bool preference);
 
-  // Return the danger level determined during download target determination.
-  // The value returned here is independent of the danger level as determined by
-  // the Safe Browsing.
-  virtual safe_browsing::DownloadFileType::DangerLevel GetDangerLevel() const;
-
-  // Change what's returned by GetDangerLevel().
-  virtual void SetDangerLevel(
-      safe_browsing::DownloadFileType::DangerLevel danger_level);
-
   // Return the mixed content status determined during download target
   // determination.
   virtual download::DownloadItem::InsecureDownloadStatus
@@ -490,14 +479,6 @@ class DownloadUIModel {
   // user has not acted on them, and later deleted altogether. Is this that kind
   // of warning?
   virtual bool IsEphemeralWarning() const;
-#endif
-
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-  // Complete the Safe Browsing scan early.
-  virtual void CompleteSafeBrowsingScan();
-
-  // Open a dialog to review a scan verdict.
-  virtual void ReviewScanningVerdict(content::WebContents* web_contents);
 #endif
 
   // Whether the dropdown menu button should be shown or not.

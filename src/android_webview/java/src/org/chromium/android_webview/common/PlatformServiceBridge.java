@@ -78,13 +78,6 @@ public abstract class PlatformServiceBridge {
         return 0;
     }
 
-    // Overriding implementations may call "callback" asynchronously, on any thread.
-    public void querySafeBrowsingUserConsent(@NonNull final Callback<Boolean> callback) {
-        // User opt-in preference depends on a SafetyNet API. In purely upstream builds (which don't
-        // communicate with GMS), assume the user has not opted in.
-        callback.onResult(false);
-    }
-
     // Overriding implementations should not call "callback" synchronously, even if the result is
     // already known. The callback should be posted to the UI thread to run at the next opportunity,
     // to avoid blocking the critical path for startup.
@@ -94,14 +87,6 @@ public abstract class PlatformServiceBridge {
                 () -> {
                     callback.onResult(false);
                 });
-    }
-
-    public void setSafeBrowsingHandler() {
-        // We don't have this specialized service.
-    }
-
-    public void warmUpSafeBrowsing(Context context, @NonNull final Callback<Boolean> callback) {
-        callback.onResult(false);
     }
 
     // Takes an uncompressed, serialized UMA proto and logs it via a platform-specific mechanism.

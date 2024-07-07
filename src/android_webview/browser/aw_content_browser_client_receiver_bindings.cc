@@ -6,7 +6,6 @@
 #include "android_webview/browser/aw_content_browser_client.h"
 #include "android_webview/browser/aw_print_manager.h"
 #include "android_webview/browser/renderer_host/aw_render_view_host_ext.h"
-#include "android_webview/browser/safe_browsing/aw_url_checker_delegate_impl.h"
 #include "android_webview/common/aw_features.h"
 #include "android_webview/common/mojom/render_message_filter.mojom.h"
 #include "base/feature_list.h"
@@ -16,8 +15,6 @@
 #include "components/network_hints/browser/simple_network_hints_handler_impl.h"
 #include "components/page_load_metrics/browser/metrics_web_contents_observer.h"
 #include "components/prefs/pref_service.h"
-#include "components/safe_browsing/content/browser/mojo_safe_browsing_impl.h"
-#include "components/safe_browsing/core/common/features.h"
 #include "components/security_interstitials/content/security_interstitial_tab_helper.h"
 #include "components/spellcheck/spellcheck_buildflags.h"
 #include "content/public/browser/browser_thread.h"
@@ -76,26 +73,6 @@ void CreateMediaDrmStorage(
       base::BindRepeating(&AllowEmptyOriginIdCB), std::move(receiver));
 }
 #endif  // BUILDFLAG(ENABLE_MOJO_CDM)
-
-// Helper method that checks the RenderProcessHost is still alive before hopping
-// over to the IO thread.
-void MaybeCreateSafeBrowsing(
-    int rph_id,
-    base::WeakPtr<content::ResourceContext> resource_context,
-    base::RepeatingCallback<scoped_refptr<safe_browsing::UrlCheckerDelegate>()>
-        get_checker_delegate,
-    mojo::PendingReceiver<safe_browsing::mojom::SafeBrowsing> receiver) {
-  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
-
-  content::RenderProcessHost* render_process_host =
-      content::RenderProcessHost::FromID(rph_id);
-  if (!render_process_host)
-    return;
-
-  safe_browsing::MojoSafeBrowsingImpl::MaybeCreate(
-      rph_id, std::move(resource_context), std::move(get_checker_delegate),
-      std::move(receiver));
-}
 
 void BindNetworkHintsHandler(
     content::RenderFrameHost* frame_host,
@@ -241,17 +218,6 @@ void AwContentBrowserClient::ExposeInterfacesToRenderer(
     service_manager::BinderRegistry* registry,
     blink::AssociatedInterfaceRegistry* associated_registry,
     content::RenderProcessHost* render_process_host) {
-  content::ResourceContext* resource_context =
-      render_process_host->GetBrowserContext()->GetResourceContext();
-  registry->AddInterface<safe_browsing::mojom::SafeBrowsing>(
-      base::BindRepeating(
-          &MaybeCreateSafeBrowsing, render_process_host->GetID(),
-          resource_context->GetWeakPtr(),
-          base::BindRepeating(
-              &AwContentBrowserClient::GetSafeBrowsingUrlCheckerDelegate,
-              base::Unretained(this))),
-      content::GetUIThreadTaskRunner({}));
-
   // Add the RenderMessageFilter creation callback, the callbkack will happen on
   // the IO thread.
   registry->AddInterface<mojom::RenderMessageFilter>(base::BindRepeating(

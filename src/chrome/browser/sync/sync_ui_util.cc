@@ -36,10 +36,6 @@
 #include "ash/constants/ash_features.h"
 #endif
 
-#if BUILDFLAG(IS_CHROMEOS)
-#include "chrome/browser/ui/webui/trusted_vault/trusted_vault_dialog_delegate.h"
-#endif
-
 namespace {
 
 SyncStatusLabels GetStatusForUnrecoverableError(
@@ -128,16 +124,6 @@ SyncStatusLabels GetSyncStatusLabelsImpl(
               SyncStatusActionType::kEnterPassphrase};
     }
 
-    if (service->IsSyncFeatureActive() &&
-        service->GetUserSettings()
-            ->IsTrustedVaultKeyRequiredForPreferredDataTypes()) {
-      return {service->GetUserSettings()->IsEncryptEverythingEnabled()
-                  ? SyncStatusMessageType::kSyncError
-                  : SyncStatusMessageType::kPasswordsOnlySyncError,
-              IDS_SETTINGS_EMPTY_STRING, IDS_SYNC_STATUS_NEEDS_KEYS_BUTTON,
-              SyncStatusActionType::kRetrieveTrustedVaultKeys};
-    }
-
     // At this point, there is no Sync error.
     if (service->IsSyncFeatureActive()) {
       return {SyncStatusMessageType::kSynced,
@@ -186,21 +172,6 @@ void OpenTabForSyncTrustedVaultUserAction(Browser* browser, const GURL& url) {
 
 std::optional<AvatarSyncErrorType> GetTrustedVaultError(
     const syncer::SyncService* sync_service) {
-  if (sync_service->GetUserSettings()
-          ->IsTrustedVaultKeyRequiredForPreferredDataTypes()) {
-    return sync_service->GetUserSettings()->IsEncryptEverythingEnabled()
-               ? AvatarSyncErrorType::kTrustedVaultKeyMissingForEverythingError
-               : AvatarSyncErrorType::kTrustedVaultKeyMissingForPasswordsError;
-  }
-
-  if (sync_service->GetUserSettings()->IsTrustedVaultRecoverabilityDegraded()) {
-    return sync_service->GetUserSettings()->IsEncryptEverythingEnabled()
-               ? AvatarSyncErrorType::
-                     kTrustedVaultRecoverabilityDegradedForEverythingError
-               : AvatarSyncErrorType::
-                     kTrustedVaultRecoverabilityDegradedForPasswordsError;
-  }
-
   return std::nullopt;
 }
 
@@ -279,12 +250,6 @@ std::optional<AvatarSyncErrorType> GetAvatarSyncErrorType(Profile* profile) {
 
   if (ShouldShowSyncPassphraseError(service)) {
     return AvatarSyncErrorType::kPassphraseError;
-  }
-
-  const std::optional<AvatarSyncErrorType> trusted_vault_error =
-      GetTrustedVaultError(service);
-  if (trusted_vault_error) {
-    return trusted_vault_error;
   }
 
   if (ShouldRequestSyncConfirmation(service)) {
@@ -366,23 +331,3 @@ void OpenTabForSyncKeyRecoverabilityDegraded(
   }
   OpenTabForSyncTrustedVaultUserAction(browser, url);
 }
-
-#if BUILDFLAG(IS_CHROMEOS)
-void OpenDialogForSyncKeyRetrieval(
-    Profile* profile,
-    syncer::TrustedVaultUserActionTriggerForUMA trigger) {
-  RecordKeyRetrievalTrigger(trigger);
-  TrustedVaultDialogDelegate::ShowDialogForProfile(
-      profile,
-      GaiaUrls::GetInstance()->signin_chrome_sync_keys_retrieval_url());
-}
-
-void OpenDialogForSyncKeyRecoverabilityDegraded(
-    Profile* profile,
-    syncer::TrustedVaultUserActionTriggerForUMA trigger) {
-  RecordRecoverabilityDegradedFixTrigger(trigger);
-  TrustedVaultDialogDelegate::ShowDialogForProfile(
-      profile, GaiaUrls::GetInstance()
-                   ->signin_chrome_sync_keys_recoverability_degraded_url());
-}
-#endif

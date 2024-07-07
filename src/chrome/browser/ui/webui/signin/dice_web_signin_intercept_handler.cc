@@ -12,7 +12,6 @@
 #include "base/notreached.h"
 #include "base/strings/utf_string_conversions.h"
 #include "chrome/browser/browser_process.h"
-#include "chrome/browser/enterprise/browser_management/management_service_factory.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/profiles/profile_attributes_entry.h"
 #include "chrome/browser/profiles/profile_attributes_storage.h"
@@ -25,7 +24,6 @@
 #include "chrome/grit/branded_strings.h"
 #include "chrome/grit/generated_resources.h"
 #include "components/google/core/common/google_util.h"
-#include "components/policy/core/common/management/management_service.h"
 #include "components/signin/public/base/signin_switches.h"
 #include "components/signin/public/identity_manager/account_info.h"
 #include "content/public/browser/web_ui.h"
@@ -277,10 +275,7 @@ bool DiceWebSigninInterceptHandler::ShouldShowManagedDeviceVersion() {
   // - or anticipating that the user may enable Sync in the new profile and
   //   check the cloud policies attached to the intercepted account (requires
   //   network requests).
-  return policy::ManagementServiceFactory::GetForProfile(
-             Profile::FromWebUI(web_ui()))
-             ->IsManaged() ||
-         policy::ManagementServiceFactory::GetForPlatform()->IsManaged();
+  return false;
 }
 
 std::string DiceWebSigninInterceptHandler::GetHeaderText() {

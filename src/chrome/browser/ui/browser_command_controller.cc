@@ -79,7 +79,6 @@
 #include "components/lens/lens_features.h"
 #include "components/password_manager/core/browser/manage_passwords_referrer.h"
 #include "components/performance_manager/public/features.h"
-#include "components/policy/core/common/policy_pref_names.h"
 #include "components/prefs/pref_service.h"
 #include "components/sessions/content/session_tab_helper.h"
 #include "components/sessions/core/tab_restore_service.h"
@@ -223,11 +222,6 @@ BrowserCommandController::BrowserCommandController(Browser* browser)
       bookmarks::prefs::kShowBookmarkBar,
       base::BindRepeating(
           &BrowserCommandController::UpdateCommandsForBookmarkBar,
-          base::Unretained(this)));
-  profile_pref_registrar_.Add(
-      policy::policy_prefs::kIncognitoModeAvailability,
-      base::BindRepeating(
-          &BrowserCommandController::UpdateCommandsForIncognitoAvailability,
           base::Unretained(this)));
 #if BUILDFLAG(ENABLE_PRINTING)
   profile_pref_registrar_.Add(
@@ -921,10 +915,6 @@ bool BrowserCommandController::ExecuteCommandWithDisposition(
     case IDC_UPGRADE_DIALOG:
       OpenUpdateChromeDialog(browser_);
       break;
-    case IDC_OPEN_SAFETY_HUB:
-      ShowSettingsSubPage(browser_->GetBrowserForOpeningWebUi(),
-                          chrome::kSafetyHubSubPage);
-      break;
 
 #if BUILDFLAG(IS_CHROMEOS_ASH)
     case IDC_LACROS_DATA_MIGRATION: {
@@ -1490,23 +1480,11 @@ void BrowserCommandController::InitCommandState() {
 void BrowserCommandController::UpdateSharedCommandsForIncognitoAvailability(
     CommandUpdater* command_updater,
     Profile* profile) {
-  policy::IncognitoModeAvailability incognito_availability =
-      IncognitoModePrefs::GetAvailability(profile->GetPrefs());
-  command_updater->UpdateCommandEnabled(
-      IDC_NEW_WINDOW,
-      incognito_availability != policy::IncognitoModeAvailability::kForced);
-  command_updater->UpdateCommandEnabled(
-      IDC_NEW_INCOGNITO_WINDOW,
-      incognito_availability != policy::IncognitoModeAvailability::kDisabled &&
-          !profile->IsGuestSession());
-
-  const bool forced_incognito =
-      incognito_availability == policy::IncognitoModeAvailability::kForced;
   const bool is_guest = profile->IsGuestSession();
 
   command_updater->UpdateCommandEnabled(
       IDC_SHOW_BOOKMARK_MANAGER,
-      browser_defaults::bookmarks_enabled && !forced_incognito && !is_guest);
+      browser_defaults::bookmarks_enabled && !is_guest);
   extensions::ExtensionService* extension_service =
       extensions::ExtensionSystem::Get(profile)->extension_service();
   const bool enable_extensions =
@@ -1518,14 +1496,11 @@ void BrowserCommandController::UpdateSharedCommandsForIncognitoAvailability(
   // mode. For this reason we disable these commands when incognito is forced.
   command_updater->UpdateCommandEnabled(
       IDC_MANAGE_EXTENSIONS,
-      enable_extensions && !forced_incognito && !is_guest);
+      enable_extensions && !is_guest);
 
-  command_updater->UpdateCommandEnabled(IDC_IMPORT_SETTINGS,
-                                        !forced_incognito && !is_guest);
-  command_updater->UpdateCommandEnabled(IDC_OPTIONS,
-                                        !forced_incognito || is_guest);
-  command_updater->UpdateCommandEnabled(IDC_PERFORMANCE,
-                                        !forced_incognito && !is_guest);
+  command_updater->UpdateCommandEnabled(IDC_IMPORT_SETTINGS, !is_guest);
+  command_updater->UpdateCommandEnabled(IDC_OPTIONS, true);
+  command_updater->UpdateCommandEnabled(IDC_PERFORMANCE, !is_guest);
 }
 
 void BrowserCommandController::UpdateCommandsForIncognitoAvailability() {

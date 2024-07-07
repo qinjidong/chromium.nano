@@ -21,7 +21,6 @@
 #include "components/omnibox/browser/omnibox_prefs.h"
 #include "components/password_manager/core/common/password_manager_pref_names.h"
 #include "components/payments/core/payment_prefs.h"
-#include "components/safe_browsing/core/common/safe_browsing_prefs.h"
 #include "components/saved_tab_groups/pref_names.h"
 #include "components/search_engines/search_engines_pref_names.h"
 #include "components/translate/core/browser/translate_pref_names.h"
@@ -207,15 +206,8 @@ constexpr auto kCommonSyncablePrefsAllowlist =
         {payments::kCanMakePaymentEnabled,
          {syncable_prefs_ids::kCanMakePaymentEnabled, syncer::PREFERENCES,
           PrefSensitivity::kNone, MergeBehavior::kNone}},
-        {prefs::kAccountTailoredSecurityUpdateTimestamp,
-         {syncable_prefs_ids::kAccountTailoredSecurityUpdateTimestamp,
-          syncer::PRIORITY_PREFERENCES, PrefSensitivity::kNone,
-          MergeBehavior::kNone}},
         {prefs::kCookieControlsMode,
          {syncable_prefs_ids::kCookieControlsMode, syncer::PREFERENCES,
-          PrefSensitivity::kNone, MergeBehavior::kNone}},
-        {prefs::kSafeBrowsingEnabled,
-         {syncable_prefs_ids::kSafeBrowsingEnabled, syncer::PREFERENCES,
           PrefSensitivity::kNone, MergeBehavior::kNone}},
 // TODO(crbug.com/40904479): Maybe move to chrome_syncable_prefs_database.cc,
 // see bug.

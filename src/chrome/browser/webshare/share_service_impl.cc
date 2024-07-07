@@ -15,10 +15,7 @@
 #include "build/build_config.h"
 #include "chrome/browser/bad_message.h"
 #include "chrome/browser/browser_process.h"
-#include "chrome/browser/safe_browsing/safe_browsing_service.h"
 #include "chrome/common/chrome_features.h"
-#include "components/safe_browsing/content/common/file_type_policies.h"
-#include "components/safe_browsing/core/browser/db/database_manager.h"
 #include "content/public/browser/web_contents.h"
 #include "mojo/public/cpp/bindings/self_owned_receiver.h"
 #include "third_party/blink/public/mojom/permissions_policy/permissions_policy_feature.mojom.h"
@@ -190,7 +187,6 @@ void ShareServiceImpl::Share(const std::string& title,
     return;
   }
 
-  bool should_check_url = false;
   for (auto& file : files) {
     if (!file || !file->blob || !file->blob->blob) {
       mojo::ReportBadMessage("Invalid file to share()");
@@ -206,92 +202,10 @@ void ShareServiceImpl::Share(const std::string& title,
       return;
     }
 
-    // Check if at least one file is marked by the download protection service
-    // to send a ping to check this file type.
-    if (!should_check_url &&
-        safe_browsing::FileTypePolicies::GetInstance()->IsCheckedBinaryFile(
-            path)) {
-      should_check_url = true;
-    }
-
     // In the case where the original blob handle was to a native file (of
     // unknown size), the serialized data does not contain an accurate file
     // size. To handle this, the comparison against kMaxSharedFileBytes should
     // be done by the platform-specific implementations as part of processing
     // the blobs.
   }
-
-  DCHECK(!safe_browsing_request_);
-  if (should_check_url && g_browser_process->safe_browsing_service()) {
-    safe_browsing_request_.emplace(
-        g_browser_process->safe_browsing_service()->database_manager(),
-        web_contents->GetLastCommittedURL(),
-        base::BindOnce(&ShareServiceImpl::OnSafeBrowsingResultReceived,
-                       weak_factory_.GetWeakPtr(), title, text, share_url,
-                       std::move(files), std::move(callback)));
-    return;
-  }
-
-  OnSafeBrowsingResultReceived(title, text, share_url, std::move(files),
-                               std::move(callback),
-                               /*is_url_safe=*/true);
-}
-
-void ShareServiceImpl::OnSafeBrowsingResultReceived(
-    const std::string& title,
-    const std::string& text,
-    const GURL& share_url,
-    std::vector<blink::mojom::SharedFilePtr> files,
-    ShareCallback callback,
-    bool is_url_safe) {
-  safe_browsing_request_.reset();
-
-  content::WebContents* const web_contents =
-      content::WebContents::FromRenderFrameHost(&render_frame_host());
-  if (!web_contents) {
-    VLOG(1) << "Cannot share after navigating away";
-    std::move(callback).Run(blink::mojom::ShareError::PERMISSION_DENIED);
-    return;
-  }
-
-  if (!is_url_safe) {
-    VLOG(1) << "File not safe to share from this website";
-    std::move(callback).Run(blink::mojom::ShareError::PERMISSION_DENIED);
-    return;
-  }
-
-#if BUILDFLAG(IS_CHROMEOS)
-  sharesheet_client_.Share(title, text, share_url, std::move(files),
-                           std::move(callback));
-#elif BUILDFLAG(IS_MAC)
-  auto sharing_service_operation =
-      std::make_unique<webshare::SharingServiceOperation>(
-          title, text, share_url, std::move(files), web_contents);
-
-  // grab a safe reference to |sharing_service_operation| before calling move on
-  // it.
-  webshare::SharingServiceOperation* sharing_service_operation_ptr =
-      sharing_service_operation.get();
-
-  // Wrap the |callback| in a binding that owns the |sharing_service_operation|
-  // so its lifetime can be preserved till its done.
-  sharing_service_operation_ptr->Share(base::BindOnce(
-      [](std::unique_ptr<webshare::SharingServiceOperation>
-             sharing_service_operation,
-         ShareCallback callback,
-         blink::mojom::ShareError result) { std::move(callback).Run(result); },
-      std::move(sharing_service_operation), std::move(callback)));
-#elif BUILDFLAG(IS_WIN)
-  auto share_operation = std::make_unique<webshare::ShareOperation>(
-      title, text, share_url, std::move(files), web_contents);
-  auto* const share_operation_ptr = share_operation.get();
-  share_operation_ptr->Run(base::BindOnce(
-      [](std::unique_ptr<webshare::ShareOperation> share_operation,
-         ShareCallback callback,
-         blink::mojom::ShareError result) { std::move(callback).Run(result); },
-      std::move(share_operation), std::move(callback)));
-#else
-  NOTREACHED_IN_MIGRATION();
-  std::move(callback).Run(blink::mojom::ShareError::INTERNAL_ERROR);
-#endif
 }

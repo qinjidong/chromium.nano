@@ -70,13 +70,6 @@ import org.chromium.chrome.browser.privacy_sandbox.TopicsManageFragment;
 import org.chromium.chrome.browser.profiles.Profile;
 import org.chromium.chrome.browser.profiles.ProfileManager;
 import org.chromium.chrome.browser.profiles.ProfileManagerUtils;
-import org.chromium.chrome.browser.safe_browsing.settings.SafeBrowsingSettingsFragmentBase;
-import org.chromium.chrome.browser.safety_check.SafetyCheckBridge;
-import org.chromium.chrome.browser.safety_check.SafetyCheckCoordinator;
-import org.chromium.chrome.browser.safety_check.SafetyCheckSettingsFragment;
-import org.chromium.chrome.browser.safety_check.SafetyCheckUpdatesDelegateImpl;
-import org.chromium.chrome.browser.safety_hub.SafetyHubFragment;
-import org.chromium.chrome.browser.safety_hub.SafetyHubModuleDelegateImpl;
 import org.chromium.chrome.browser.search_engines.settings.SearchEngineSettings;
 import org.chromium.chrome.browser.signin.SyncConsentActivityLauncherImpl;
 import org.chromium.chrome.browser.site_settings.ChromeSiteSettingsDelegate;
@@ -547,18 +540,6 @@ public class SettingsActivity extends ChromeBaseAppCompatActivity
             baseSiteSettingsFragment.setCustomTabIntentHelper(
                     LaunchIntentDispatcher::createCustomTabActivityIntent);
         }
-        if (fragment instanceof SafetyCheckSettingsFragment) {
-            SafetyCheckCoordinator.create(
-                    (SafetyCheckSettingsFragment) fragment,
-                    new SafetyCheckUpdatesDelegateImpl(),
-                    new SafetyCheckBridge(mProfile),
-                    mSettingsLauncher,
-                    SyncConsentActivityLauncherImpl.get(),
-                    getModalDialogManagerSupplier(),
-                    SyncServiceFactory.getForProfile(mProfile),
-                    UserPrefs.get(mProfile),
-                    PasswordManagerHelper.getForProfile(mProfile));
-        }
         if (fragment instanceof PasswordCheckFragmentView) {
             PasswordCheckComponentUiFactory.create(
                     (PasswordCheckFragmentView) fragment,
@@ -603,12 +584,6 @@ public class SettingsActivity extends ChromeBaseAppCompatActivity
                         SiteSettingsHelper.showCategorySettings(
                                 context, SiteSettingsCategory.Type.THIRD_PARTY_COOKIES);
                     });
-        }
-        if (fragment instanceof SafeBrowsingSettingsFragmentBase) {
-            SafeBrowsingSettingsFragmentBase safeBrowsingFragment =
-                    (SafeBrowsingSettingsFragmentBase) fragment;
-            safeBrowsingFragment.setCustomTabIntentHelper(
-                    LaunchIntentDispatcher::createCustomTabActivityIntent);
         }
         if (fragment instanceof LanguageSettings) {
             ((LanguageSettings) fragment)
@@ -668,12 +643,6 @@ public class SettingsActivity extends ChromeBaseAppCompatActivity
         if (fragment instanceof AutofillIbanEditor) {
             ((AutofillIbanEditor) fragment)
                     .setModalDialogManagerSupplier(getModalDialogManagerSupplier());
-        }
-        if (fragment instanceof SafetyHubFragment) {
-            ((SafetyHubFragment) fragment)
-                    .setDelegate(
-                            new SafetyHubModuleDelegateImpl(
-                                    mProfile, getModalDialogManagerSupplier()));
         }
     }
 

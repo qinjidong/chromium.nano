@@ -26,7 +26,6 @@
 #include "components/content_settings/core/common/pref_names.h"
 #include "components/prefs/pref_service.h"
 #include "components/privacy_sandbox/tracking_protection_prefs.h"
-#include "components/safe_browsing/core/common/safe_browsing_prefs.h"
 #include "extensions/browser/api/content_settings/content_settings_service.h"
 #include "extensions/browser/extension_pref_value_map.h"
 #include "extensions/browser/extension_pref_value_map_factory.h"
@@ -697,18 +696,6 @@ ExtensionFunction::ResponseAction SetPreferenceFunction::Run() {
         base::Value(browser_pref_value->GetBool()));
   }
 
-  // Whenever an extension takes control of the |kSafeBrowsingEnabled|
-  // preference, it must also set |kSafeBrowsingEnhanced| to false.
-  // See crbug.com/1064722 for more background.
-  //
-  // TODO(crbug.com/40681445): Consider extending
-  // chrome.privacy.services.safeBrowsingEnabled to a three-state enum.
-  if (prefs::kSafeBrowsingEnabled == browser_pref) {
-    prefs_helper->SetExtensionControlledPref(extension_id(),
-                                             prefs::kSafeBrowsingEnhanced,
-                                             scope, base::Value(false));
-  }
-
   // TODO(https://b/333527273): Remove this logic &
   // CookieControlsModeTransformer and replace with a transformer for this pref.
   if (prefs::kCookieControlsMode == browser_pref && !value->GetBool()) {
@@ -803,16 +790,6 @@ ExtensionFunction::ResponseAction ClearPreferenceFunction::Run() {
   prefs_helper->RemoveExtensionControlledPref(extension_id(), browser_pref,
                                               scope);
 
-  // Whenever an extension clears the |kSafeBrowsingEnabled| preference,
-  // it must also clear |kSafeBrowsingEnhanced|. See crbug.com/1064722 for
-  // more background.
-  //
-  // TODO(crbug.com/40681445): Consider extending
-  // chrome.privacy.services.safeBrowsingEnabled to a three-state enum.
-  if (prefs::kSafeBrowsingEnabled == browser_pref) {
-    prefs_helper->RemoveExtensionControlledPref(
-        extension_id(), prefs::kSafeBrowsingEnhanced, scope);
-  }
 #if BUILDFLAG(IS_CHROMEOS_LACROS)
   if (!IsBrowserScopePrefOperation(pref_path, profile) &&
       did_just_control_pref) {

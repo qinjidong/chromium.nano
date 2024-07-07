@@ -43,7 +43,6 @@
 #include "chrome/browser/extensions/api/terminal/startup_status.h"
 #include "chrome/browser/extensions/extension_service.h"
 #include "chrome/browser/extensions/extension_tab_util.h"
-#include "chrome/browser/policy/system_features_disable_list_policy_handler.h"
 #include "chrome/browser/profiles/profile_manager.h"
 #include "chrome/browser/ui/browser_finder.h"
 #include "chrome/browser/ui/browser_tabstrip.h"
@@ -105,7 +104,6 @@ static const base::NoDestructor<std::vector<std::string>> kPrefsReadAllowList{{
     ash::prefs::kAccessibilitySpokenFeedbackEnabled,
     crostini::prefs::kCrostiniEnabled,
     guest_os::prefs::kGuestOsTerminalSettings,
-    crostini::prefs::kTerminalSshAllowedByPolicy,
     guest_os::prefs::kGuestOsContainers,
 }};
 
@@ -301,12 +299,6 @@ TerminalPrivateOpenTerminalProcessFunction::OpenProcess(
             command_line->GetSwitchValueASCII(switches::kCroshCommand))));
 
   } else if (process_name == kCroshName) {
-    // Ensure crosh is allowed before starting terminal.
-    if (policy::SystemFeaturesDisableListPolicyHandler::IsSystemFeatureDisabled(
-            policy::SystemFeature::kCrosh, g_browser_process->local_state())) {
-      return RespondNow(Error("crosh not allowed"));
-    }
-
     // command=crosh: use '/usr/bin/crosh' on a device, 'cat' otherwise.
     if (base::SysInfo::IsRunningOnChromeOS()) {
       OpenProcess(user_id_hash,
@@ -316,10 +308,6 @@ TerminalPrivateOpenTerminalProcessFunction::OpenProcess(
                   base::CommandLine(base::FilePath(kStubbedCroshCommand)));
     }
   } else if (process_name == kVmShellName) {
-    // Ensure vms are allowed before starting terminal.
-    if (!virtual_machines::AreVirtualMachinesAllowedByPolicy()) {
-      return RespondNow(Error("vmshell not allowed"));
-    }
     // command=vmshell: ensure --owner_id, --vm_name, --target_container, --cwd
     // are set, and the specified vm/container is running.
     base::CommandLine cmdline((base::FilePath(kVmShellCommand)));

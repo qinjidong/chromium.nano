@@ -8,8 +8,6 @@
 
 #include "base/feature_list.h"
 #include "base/memory/ptr_util.h"
-#include "components/safe_browsing/content/renderer/renderer_url_loader_throttle.h"
-#include "components/safe_browsing/core/common/features.h"
 #include "content/public/common/content_features.h"
 #include "content/public/renderer/render_thread.h"
 #include "services/network/public/cpp/resource_request.h"
@@ -22,24 +20,17 @@ AwURLLoaderThrottleProvider::AwURLLoaderThrottleProvider(
     blink::URLLoaderThrottleProviderType type)
     : type_(type) {
   DETACH_FROM_SEQUENCE(sequence_checker_);
-  broker->GetInterface(safe_browsing_remote_.InitWithNewPipeAndPassReceiver());
 }
 
 AwURLLoaderThrottleProvider::AwURLLoaderThrottleProvider(
     const AwURLLoaderThrottleProvider& other)
     : type_(other.type_) {
   DETACH_FROM_SEQUENCE(sequence_checker_);
-  if (other.safe_browsing_) {
-    other.safe_browsing_->Clone(
-        safe_browsing_remote_.InitWithNewPipeAndPassReceiver());
-  }
 }
 
 std::unique_ptr<blink::URLLoaderThrottleProvider>
 AwURLLoaderThrottleProvider::Clone() {
   DETACH_FROM_SEQUENCE(sequence_checker_);
-  if (safe_browsing_remote_)
-    safe_browsing_.Bind(std::move(safe_browsing_remote_));
   return base::WrapUnique(new AwURLLoaderThrottleProvider(*this));
 }
 
@@ -62,14 +53,6 @@ AwURLLoaderThrottleProvider::CreateThrottles(
 
   DCHECK(!is_frame_resource ||
          type_ == blink::URLLoaderThrottleProviderType::kFrame);
-
-  if (!is_frame_resource) {
-    if (safe_browsing_remote_)
-      safe_browsing_.Bind(std::move(safe_browsing_remote_));
-    throttles.emplace_back(
-        std::make_unique<safe_browsing::RendererURLLoaderThrottle>(
-            safe_browsing_.get(), local_frame_token));
-  }
 
   return throttles;
 }

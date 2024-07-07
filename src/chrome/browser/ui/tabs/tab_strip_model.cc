@@ -59,7 +59,6 @@
 #include "chrome/browser/ui/web_applications/web_app_dialog_utils.h"
 #include "chrome/browser/ui/web_applications/web_app_launch_utils.h"
 #include "chrome/browser/ui/web_applications/web_app_tabbed_utils.h"
-#include "chrome/browser/web_applications/policy/web_app_policy_manager.h"
 #include "chrome/browser/web_applications/web_app_provider.h"
 #include "chrome/browser/web_applications/web_app_tab_helper.h"
 #include "chrome/common/webui_url_constants.h"
@@ -3040,16 +3039,13 @@ bool TabStripModel::PolicyAllowsTabClosing(
     return true;
   }
 
-  web_app::WebAppProvider* provider =
-      web_app::WebAppProvider::GetForWebContents(contents);
   // Can be null if there is no tab helper or app id.
   const webapps::AppId* app_id = web_app::WebAppTabHelper::GetAppId(contents);
   if (!app_id) {
     return true;
   }
 
-  return !delegate()->IsForWebApp() ||
-         !provider->policy_manager().IsPreventCloseEnabled(*app_id);
+  return !delegate()->IsForWebApp();
 }
 
 int TabStripModel::DetermineInsertionIndex(ui::PageTransition transition,

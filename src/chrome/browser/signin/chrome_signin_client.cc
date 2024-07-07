@@ -21,7 +21,6 @@
 #include "chrome/browser/browser_process.h"
 #include "chrome/browser/content_settings/cookie_settings_factory.h"
 #include "chrome/browser/content_settings/host_content_settings_map_factory.h"
-#include "chrome/browser/enterprise/util/managed_browser_utils.h"
 #include "chrome/browser/profiles/profile_attributes_entry.h"
 #include "chrome/browser/profiles/profile_attributes_storage.h"
 #include "chrome/browser/profiles/profile_manager.h"
@@ -38,7 +37,6 @@
 #include "components/bookmarks/browser/url_and_title.h"
 #include "components/content_settings/core/browser/cookie_settings.h"
 #include "components/metrics/metrics_service.h"
-#include "components/policy/core/browser/browser_policy_connector.h"
 #include "components/prefs/pref_service.h"
 #include "components/signin/core/browser/cookie_settings_util.h"
 #include "components/signin/public/base/consent_level.h"
@@ -314,8 +312,7 @@ void ChromeSigninClient::PreSignOut(
        signout_source_metric ==
            signin_metrics::ProfileSignout::kRevokeSyncFromSettings ||
        signout_source_metric == signin_metrics::ProfileSignout::
-                                    kCancelSyncConfirmationOnWebOnlySignedIn) &&
-      chrome::enterprise_util::UserAcceptedAccountManagement(profile_);
+                                    kCancelSyncConfirmationOnWebOnlySignedIn);
   // These sign out won't remove the policy cache, keep the window opened.
   bool keep_window_opened =
       signout_source_metric ==
@@ -462,22 +459,6 @@ SigninClient::SignoutDecision ChromeSigninClient::GetSignoutDecision(
   }
 #endif
 
-// Android allows signing out of Managed accounts.
-#if !BUILDFLAG(IS_ANDROID)
-  // Check if managed user.
-  if (chrome::enterprise_util::UserAcceptedAccountManagement(profile_)) {
-    if (base::FeatureList::IsEnabled(kDisallowManagedProfileSignout)) {
-      // Allow revoke sync but disallow signout regardless of consent level of
-      // the primary account.
-      return SigninClient::SignoutDecision::CLEAR_PRIMARY_ACCOUNT_DISALLOWED;
-    }
-    // Syncing users are not allowed to revoke sync or signout. Signed in non-
-    // syncing users don't have any signout restrictions related to management.
-    if (has_sync_account) {
-      return SigninClient::SignoutDecision::REVOKE_SYNC_DISALLOWED;
-    }
-  }
-#endif
   return SigninClient::SignoutDecision::ALLOW;
 }
 

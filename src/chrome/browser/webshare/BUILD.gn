@@ -44,7 +44,6 @@ source_set("unit_tests") {
     "//base/test:test_support",
     "//chrome/browser",
     "//chrome/common",
-    "//chrome/test:test_support",
     "//content/public/browser",
     "//content/test:test_support",
     "//testing/gmock",

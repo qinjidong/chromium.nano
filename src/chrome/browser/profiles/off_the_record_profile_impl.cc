@@ -71,7 +71,6 @@
 #include "components/keyed_service/core/simple_key_map.h"
 #include "components/keyed_service/core/simple_keyed_service_factory.h"
 #include "components/permissions/permission_manager.h"
-#include "components/policy/core/common/policy_pref_names.h"
 #include "components/prefs/json_pref_store.h"
 #include "components/profile_metrics/browser_profile_type.h"
 #include "components/security_interstitials/content/stateful_ssl_host_state_delegate.h"
@@ -194,9 +193,7 @@ void OffTheRecordProfileImpl::Init() {
       this);
 
   // Always crash when incognito is not available.
-  CHECK(!IsIncognitoProfile() ||
-        IncognitoModePrefs::GetAvailability(profile_->GetPrefs()) !=
-            policy::IncognitoModeAvailability::kDisabled);
+  CHECK(!IsIncognitoProfile());
 
   TrackZoomLevelsFromParent();
 
@@ -433,30 +430,6 @@ DownloadManagerDelegate* OffTheRecordProfileImpl::GetDownloadManagerDelegate() {
       ->GetDownloadManagerDelegate();
 }
 
-policy::SchemaRegistryService*
-OffTheRecordProfileImpl::GetPolicySchemaRegistryService() {
-  return nullptr;
-}
-
-#if BUILDFLAG(IS_CHROMEOS_ASH)
-policy::UserCloudPolicyManagerAsh*
-OffTheRecordProfileImpl::GetUserCloudPolicyManagerAsh() {
-  return GetOriginalProfile()->GetUserCloudPolicyManagerAsh();
-}
-#else
-policy::UserCloudPolicyManager*
-OffTheRecordProfileImpl::GetUserCloudPolicyManager() {
-  return GetOriginalProfile()->GetUserCloudPolicyManager();
-}
-policy::ProfileCloudPolicyManager*
-OffTheRecordProfileImpl::GetProfileCloudPolicyManager() {
-  return GetOriginalProfile()->GetProfileCloudPolicyManager();
-}
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
-policy::CloudPolicyManager* OffTheRecordProfileImpl::GetCloudPolicyManager() {
-  return GetOriginalProfile()->GetCloudPolicyManager();
-}
-
 scoped_refptr<network::SharedURLLoaderFactory>
 OffTheRecordProfileImpl::GetURLLoaderFactory() {
   return GetDefaultStoragePartition()->GetURLLoaderFactoryForBrowserProcess();
@@ -569,16 +542,6 @@ base::Time OffTheRecordProfileImpl::GetStartTime() const {
 ProfileKey* OffTheRecordProfileImpl::GetProfileKey() const {
   DCHECK(key_);
   return key_.get();
-}
-
-policy::ProfilePolicyConnector*
-OffTheRecordProfileImpl::GetProfilePolicyConnector() {
-  return profile_->GetProfilePolicyConnector();
-}
-
-const policy::ProfilePolicyConnector*
-OffTheRecordProfileImpl::GetProfilePolicyConnector() const {
-  return profile_->GetProfilePolicyConnector();
 }
 
 base::FilePath OffTheRecordProfileImpl::last_selected_directory() {

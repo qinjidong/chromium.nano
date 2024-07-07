@@ -10,7 +10,6 @@
 #include "base/functional/bind.h"
 #include "chrome/common/pref_names.h"
 #include "components/os_crypt/sync/os_crypt.h"
-#include "components/policy/core/common/policy_pref_names.h"
 #include "components/prefs/pref_registry_simple.h"
 #include "components/prefs/pref_service.h"
 

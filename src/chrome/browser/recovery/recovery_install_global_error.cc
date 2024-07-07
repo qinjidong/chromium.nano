@@ -8,7 +8,6 @@
 #include "chrome/app/chrome_command_ids.h"
 #include "chrome/app/vector_icons/vector_icons.h"
 #include "chrome/browser/browser_process.h"
-#include "chrome/browser/component_updater/recovery_component_installer.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/ui/global_error/global_error_service.h"
 #include "chrome/browser/ui/global_error/global_error_service_factory.h"
@@ -120,18 +119,13 @@ std::u16string RecoveryInstallGlobalError::GetBubbleViewCancelButtonLabel() {
   return l10n_util::GetStringUTF16(IDS_DECLINE_RECOVERY);
 }
 
-void RecoveryInstallGlobalError::OnBubbleViewDidClose(Browser* browser) {
-}
+void RecoveryInstallGlobalError::OnBubbleViewDidClose(Browser* browser) {}
 
 void RecoveryInstallGlobalError::BubbleViewAcceptButtonPressed(
-    Browser* browser) {
-  component_updater::AcceptedElevatedRecoveryInstall(pref_registrar_.prefs());
-}
+    Browser* browser) {}
 
 void RecoveryInstallGlobalError::BubbleViewCancelButtonPressed(
-    Browser* browser) {
-  component_updater::DeclinedElevatedRecoveryInstall(pref_registrar_.prefs());
-}
+    Browser* browser) {}
 
 base::WeakPtr<GlobalErrorWithStandardBubble>
 RecoveryInstallGlobalError::AsWeakPtr() {

@@ -12,11 +12,9 @@ import android.webkit.WebViewClient;
 import androidx.annotation.Nullable;
 
 import org.chromium.android_webview.AwContentsClient.AwWebResourceError;
-import org.chromium.android_webview.safe_browsing.AwSafeBrowsingResponse;
 import org.chromium.base.Callback;
 import org.chromium.base.metrics.RecordHistogram;
 import org.chromium.base.metrics.ScopedSysTraceEvent;
-import org.chromium.support_lib_boundary.SafeBrowsingResponseBoundaryInterface;
 import org.chromium.support_lib_boundary.WebResourceErrorBoundaryInterface;
 import org.chromium.support_lib_boundary.WebViewClientBoundaryInterface;
 import org.chromium.support_lib_boundary.util.BoundaryInterfaceReflectionUtil;
@@ -109,19 +107,6 @@ public class SupportLibWebViewContentsClientAdapter {
             WebView webView, WebResourceRequest request, WebResourceResponse response) {
         assert isFeatureAvailable(Features.RECEIVE_HTTP_ERROR);
         mWebViewClient.onReceivedHttpError(webView, request, response);
-    }
-
-    public void onSafeBrowsingHit(
-            WebView webView,
-            WebResourceRequest request,
-            int threatType,
-            Callback<AwSafeBrowsingResponse> callback) {
-        assert isFeatureAvailable(Features.SAFE_BROWSING_HIT);
-        SafeBrowsingResponseBoundaryInterface supportLibResponse =
-                new SupportLibSafeBrowsingResponse(callback);
-        InvocationHandler responseHandler =
-                BoundaryInterfaceReflectionUtil.createInvocationHandlerFor(supportLibResponse);
-        mWebViewClient.onSafeBrowsingHit(webView, request, threatType, responseHandler);
     }
 
     public boolean shouldOverrideUrlLoading(WebView webView, WebResourceRequest request) {

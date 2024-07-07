@@ -93,7 +93,6 @@ source_set("unit_tests") {
       "//chrome/browser/web_applications",
       "//chrome/browser/web_applications:web_applications_test_support",
       "//chrome/common:chrome_features",
-      "//chrome/test:test_support",
       "//components/prefs",
       "//components/webapk:proto",
       "//content/test:test_support",

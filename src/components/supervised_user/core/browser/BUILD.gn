@@ -118,7 +118,6 @@ static_library("browser") {
     "//components/autofill/core/common",
     "//components/history/core/common",
     "//components/keyed_service/core",
-    "//components/policy/core/common:common_constants",
     "//components/pref_registry",
     "//components/safe_search_api",
     "//components/safe_search_api:safe_search_client",

@@ -21,7 +21,6 @@
 #include "chrome/browser/media/webrtc/tab_desktop_media_list.h"
 #include "chrome/browser/picture_in_picture/picture_in_picture_window_manager.h"
 #include "chrome/browser/profiles/profile.h"
-#include "chrome/browser/safe_browsing/user_interaction_observer.h"
 #include "chrome/browser/ui/url_identity.h"
 #include "chrome/common/pref_names.h"
 #include "components/prefs/pref_service.h"
@@ -120,22 +119,6 @@ void DisplayMediaAccessHandler::HandleRequest(
         blink::mojom::StreamDevicesSet(),
         blink::mojom::MediaStreamRequestResult::PERMISSION_DENIED,
         /*ui=*/nullptr);
-    return;
-  }
-
-  // SafeBrowsing Delayed Warnings experiment can delay some SafeBrowsing
-  // warnings until user interaction. If the current page has a delayed warning,
-  // it'll have a user interaction observer attached. Show the warning
-  // immediately in that case.
-  safe_browsing::SafeBrowsingUserInteractionObserver* observer =
-      safe_browsing::SafeBrowsingUserInteractionObserver::FromWebContents(
-          web_contents);
-  if (observer) {
-    std::move(callback).Run(
-        blink::mojom::StreamDevicesSet(),
-        blink::mojom::MediaStreamRequestResult::PERMISSION_DENIED,
-        /*ui=*/nullptr);
-    observer->OnDesktopCaptureRequest();
     return;
   }
 
@@ -523,18 +506,7 @@ void DisplayMediaAccessHandler::OnDisplaySurfaceSelected(
   }
 #endif  // BUILDFLAG(IS_MAC)
 
-#if BUILDFLAG(IS_CHROMEOS)
-  // Check Data Leak Prevention restrictions on Chrome.
-  // base::Unretained(this) is safe because DisplayMediaAccessHandler is owned
-  // by MediaCaptureDevicesDispatcher, which is a lazy singleton which is
-  // destroyed when the browser process terminates.
-  policy::DlpContentManager::Get()->CheckScreenShareRestriction(
-      media_id, GetApplicationTitle(web_contents.get()),
-      base::BindOnce(&DisplayMediaAccessHandler::OnDlpRestrictionChecked,
-                     base::Unretained(this), web_contents, media_id));
-#else   // BUILDFLAG(IS_CHROMEOS)
   AcceptRequest(web_contents.get(), media_id);
-#endif  // BUILDFLAG(IS_CHROMEOS)
 }
 
 #if BUILDFLAG(IS_CHROMEOS)

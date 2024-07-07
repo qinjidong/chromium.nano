@@ -12,7 +12,6 @@
 #include "base/files/file_util.h"
 #include "base/strings/stringprintf.h"
 #include "base/strings/utf_string_conversions.h"
-#include "components/policy/core/common/schema.h"
 #include "extensions/common/extension.h"
 #include "extensions/common/install_warning.h"
 #include "extensions/common/manifest.h"
@@ -29,36 +28,6 @@ namespace extensions {
 StorageSchemaManifestHandler::StorageSchemaManifestHandler() {}
 
 StorageSchemaManifestHandler::~StorageSchemaManifestHandler() {}
-
-// static
-policy::Schema StorageSchemaManifestHandler::GetSchema(
-    const Extension* extension,
-    std::string* error) {
-  std::string path;
-  if (const std::string* temp =
-          extension->manifest()->FindStringPath(kStorageManagedSchema)) {
-    path = *temp;
-  }
-  base::FilePath file = base::FilePath::FromUTF8Unsafe(path);
-  if (file.IsAbsolute() || file.ReferencesParent()) {
-    *error = base::StringPrintf("%s must be a relative path without ..",
-                                kStorageManagedSchema);
-    return policy::Schema();
-  }
-  file = extension->path().AppendASCII(path);
-  if (!base::PathExists(file)) {
-    *error = base::StringPrintf("File does not exist: %" PRFilePath,
-                                file.value().c_str());
-    return policy::Schema();
-  }
-  std::string content;
-  if (!base::ReadFileToString(file, &content)) {
-    *error =
-        base::StringPrintf("Can't read %" PRFilePath, file.value().c_str());
-    return policy::Schema();
-  }
-  return policy::Schema::Parse(content, error);
-}
 
 bool StorageSchemaManifestHandler::Parse(Extension* extension,
                                          std::u16string* error) {
@@ -80,7 +49,7 @@ bool StorageSchemaManifestHandler::Validate(
     const Extension* extension,
     std::string* error,
     std::vector<InstallWarning>* warnings) const {
-  return GetSchema(extension, error).valid();
+  return false;
 }
 
 base::span<const char* const> StorageSchemaManifestHandler::Keys() const {

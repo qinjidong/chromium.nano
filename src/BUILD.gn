@@ -21,8 +21,6 @@ import("//build/config/ui.gni")
 import("//build/gn_logs.gni")
 import("//build/util/generate_wrapper.gni")
 import("//chrome/browser/buildflags.gni")
-import("//chrome/enterprise_companion/buildflags.gni")
-import("//components/enterprise/buildflags/buildflags.gni")
 import("//device/vr/buildflags/buildflags.gni")
 import("//extensions/buildflags/buildflags.gni")
 import("//gpu/vulkan/features.gni")
@@ -117,21 +115,9 @@ group("gn_all") {
       deps += [ "//chrome/installer" ]
     }
 
-    if (enable_enterprise_companion) {
-      deps += [ "//chrome/enterprise_companion" ]
-    }
-
-    if (!is_ios && !is_castos) {
-      if (!is_fuchsia) {
-        deps += [ "//chrome/test:unit_tests" ]
-      }
-      deps += [ "//ui/accessibility:accessibility_unittests" ]
-    }
-
     if (use_blink) {
       deps += [
         "//cc:cc_unittests",
-        "//components/policy:policy_templates",
         "//components/url_formatter/tools:format_url",
         "//components/viz:viz_perftests",
         "//components/viz:viz_unittests",
@@ -218,10 +204,6 @@ group("gn_all") {
       ]
     }
 
-    if (enterprise_watermark) {
-      deps += [ "//chrome/browser/enterprise/watermark:watermark_app" ]
-    }
-
     if (use_aura) {
       deps += [
         "//ui/aura:aura_demo",
@@ -245,11 +227,6 @@ group("gn_all") {
     }
 
     if (is_win) {
-      deps += [
-        "//chrome/credential_provider",
-        "//chrome/credential_provider/test:gcp_unittests",
-      ]
-
       if (enable_platform_experience) {
         deps += [
           "//chrome/browser/platform_experience/win:platform_experience_helper",
@@ -282,7 +259,6 @@ group("gn_all") {
         "//chrome/android/monochrome:monochrome_public_apk_checker",
         "//chrome/android/webapk/shell_apk:webapk",
         "//chrome/android/webapk/shell_apk/prepare_upload_dir:prepare_webapk_shell_upload_dir",
-        "//chrome/test:android_browsertests",
         "//components:components_junit_tests",
         "//content/public/android:content_junit_tests",
         "//content/shell/android:content_shell_apk",
@@ -396,13 +372,6 @@ group("gn_all") {
         ]
       }
 
-      if (!is_android && !is_castos && !is_ios && !is_fuchsia) {
-        deps += [
-          "//chrome/test:load_library_perf_tests",
-          "//chrome/test:sync_performance_tests",
-        ]
-      }
-
       if (!is_android && !is_ios) {
         deps += [
           "//courgette:courgette",
@@ -451,10 +420,6 @@ group("gn_all") {
         "//ui/snapshot:snapshot_unittests",
       ]
 
-      if (!is_castos) {
-        deps += [ "//chrome/test:chrome_app_unittests" ]
-      }
-
       if (!is_debug && !is_component_build && !is_castos) {
         deps += [ "//chrome/tools/service_discovery_sniffer" ]
       }
@@ -470,7 +435,6 @@ group("gn_all") {
         "//chrome/installer/gcapi",
         "//chrome/installer/setup:setup_unittests",
         "//chrome/notification_helper:notification_helper_unittests",
-        "//chrome/test:delayloads_unittests",
         "//components/wifi:wifi_test",
         "//components/zucchini",
         "//net:quic_client",
@@ -550,9 +514,6 @@ group("gn_all") {
       ]
 
       if (target_cpu == "x86" || target_cpu == "x64") {
-        if (!is_android) {
-          deps += [ "//chrome/test:load_library_perf_tests" ]
-        }
         deps += [ "//third_party/libjpeg_turbo:simd_asm" ]
       }
       if ((is_linux || is_chromeos) && current_toolchain == host_toolchain) {

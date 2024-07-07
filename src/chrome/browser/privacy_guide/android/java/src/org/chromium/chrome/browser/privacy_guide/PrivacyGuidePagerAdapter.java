@@ -61,9 +61,6 @@ public class PrivacyGuidePagerAdapter extends FragmentStateAdapter {
         if (displayHandler.shouldDisplayHistorySync()) {
             fragmentTypesToDisplay.add(PrivacyGuideFragment.FragmentType.HISTORY_SYNC);
         }
-        if (displayHandler.shouldDisplaySafeBrowsing()) {
-            fragmentTypesToDisplay.add(PrivacyGuideFragment.FragmentType.SAFE_BROWSING);
-        }
         if (displayHandler.shouldDisplayCookies()) {
             fragmentTypesToDisplay.add(PrivacyGuideFragment.FragmentType.COOKIES);
         }
@@ -87,7 +84,7 @@ public class PrivacyGuidePagerAdapter extends FragmentStateAdapter {
             case PrivacyGuideFragment.FragmentType.HISTORY_SYNC:
                 return new HistorySyncFragment();
             case PrivacyGuideFragment.FragmentType.SAFE_BROWSING:
-                return new SafeBrowsingFragment();
+                return null;
             case PrivacyGuideFragment.FragmentType.COOKIES:
                 return new CookiesFragment();
             case PrivacyGuideFragment.FragmentType.SEARCH_SUGGESTIONS:

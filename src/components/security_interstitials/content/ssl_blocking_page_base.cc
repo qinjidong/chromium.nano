@@ -4,7 +4,6 @@
 
 #include "components/security_interstitials/content/ssl_blocking_page_base.h"
 
-#include "components/safe_browsing/core/common/safe_browsing_prefs.h"
 #include "components/security_interstitials/content/security_interstitial_controller_client.h"
 #include "components/security_interstitials/core/controller_client.h"
 #include "components/security_interstitials/core/metrics_helper.h"
@@ -13,12 +12,6 @@
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/web_contents.h"
 #include "ui/base/l10n/l10n_util.h"
-
-namespace {
-PrefService* GetPrefs(content::WebContents* web_contents) {
-  return user_prefs::UserPrefs::Get(web_contents->GetBrowserContext());
-}
-}  // namespace
 
 SSLBlockingPageBase::SSLBlockingPageBase(
     content::WebContents* web_contents,
@@ -53,19 +46,8 @@ bool SSLBlockingPageBase::ShouldShowEnhancedProtectionMessage() {
 
   const bool in_incognito =
       web_contents()->GetBrowserContext()->IsOffTheRecord();
-  const PrefService* pref_service = GetPrefs(web_contents());
-  bool is_enhanced_protection_enabled =
-      safe_browsing::IsEnhancedProtectionEnabled(*pref_service);
-  bool is_safe_browsing_managed =
-      safe_browsing::IsSafeBrowsingPolicyManaged(*pref_service);
 
   if (in_incognito) {
-    return false;
-  }
-  if (is_enhanced_protection_enabled) {
-    return false;
-  }
-  if (is_safe_browsing_managed) {
     return false;
   }
   return true;

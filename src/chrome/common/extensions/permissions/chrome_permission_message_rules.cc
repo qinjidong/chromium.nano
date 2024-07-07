@@ -279,17 +279,7 @@ class USBDevicesFormatter : public ChromePermissionMessageFormatter {
 };
 
 int GetEnterpriseReportingPrivatePermissionMessageId() {
-  if (!base::FeatureList::IsEnabled(
-          enterprise_signals::features::kNewEvSignalsEnabled)) {
-    return IDS_EXTENSION_PROMPT_WARNING_ENTERPRISE_REPORTING_PRIVATE;
-  }
-#if BUILDFLAG(IS_WIN)
-  return IDS_EXTENSION_PROMPT_WARNING_ENTERPRISE_REPORTING_PRIVATE_ENABLED_WIN;
-#elif BUILDFLAG(IS_LINUX) or BUILDFLAG(IS_MAC)
-  return IDS_EXTENSION_PROMPT_WARNING_ENTERPRISE_REPORTING_PRIVATE_ENABLED_LINUX_AND_MACOS;
-#else
   return IDS_EXTENSION_PROMPT_WARNING_ENTERPRISE_REPORTING_PRIVATE;
-#endif
 }
 
 }  // namespace

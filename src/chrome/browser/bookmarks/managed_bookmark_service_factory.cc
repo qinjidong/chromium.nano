@@ -9,12 +9,10 @@
 #include "base/functional/bind.h"
 #include "base/no_destructor.h"
 #include "build/chromeos_buildflags.h"
-#include "chrome/browser/policy/profile_policy_connector.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/profiles/profile_selections.h"
 #include "chrome/browser/ui/managed_ui.h"
 #include "components/bookmarks/managed/managed_bookmark_service.h"
-#include "components/policy/policy_constants.h"
 #include "google_apis/gaia/gaia_auth_util.h"
 
 namespace {
@@ -53,15 +51,6 @@ ManagedBookmarkServiceFactory::GetDefaultFactory() {
 // static
 std::string ManagedBookmarkServiceFactory::GetManagedBookmarksManager(
     Profile* profile) {
-  policy::ProfilePolicyConnector* connector =
-      profile->GetProfilePolicyConnector();
-  if (connector->IsManaged() &&
-      connector->IsProfilePolicy(policy::key::kManagedBookmarks)) {
-    std::optional<std::string> account_manager =
-        chrome::GetAccountManagerIdentity(profile);
-    if (account_manager)
-      return *account_manager;
-  }
   return std::string();
 }
 

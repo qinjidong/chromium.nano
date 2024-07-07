@@ -21,7 +21,6 @@
 #include "chrome/browser/engagement/important_sites_util.h"
 #include "chrome/browser/metrics/ukm_background_recorder_service.h"
 #include "chrome/browser/permissions/adaptive_quiet_notification_permission_ui_enabler.h"
-#include "chrome/browser/permissions/contextual_notification_permission_ui_selector.h"
 #include "chrome/browser/permissions/origin_keyed_permission_action_service_factory.h"
 #include "chrome/browser/permissions/permission_actions_history_factory.h"
 #include "chrome/browser/permissions/permission_decision_auto_blocker_factory.h"
@@ -32,9 +31,7 @@
 #include "chrome/browser/privacy_sandbox/tracking_protection_settings_factory.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/profiles/profiles_state.h"
-#include "chrome/browser/safe_browsing/safe_browsing_service.h"
 #include "chrome/browser/search_engines/ui_thread_search_terms_data.h"
-#include "chrome/browser/subresource_filter/subresource_filter_profile_context_factory.h"
 #include "chrome/browser/ui/browser_finder.h"
 #include "chrome/browser/ui/hats/hats_service.h"
 #include "chrome/browser/ui/hats/hats_service_factory.h"
@@ -58,8 +55,6 @@
 #include "components/prefs/pref_service.h"
 #include "components/privacy_sandbox/tracking_protection_settings.h"
 #include "components/site_engagement/content/site_engagement_service.h"
-#include "components/subresource_filter/content/browser/subresource_filter_content_settings_manager.h"
-#include "components/subresource_filter/content/browser/subresource_filter_profile_context.h"
 #include "components/unified_consent/pref_names.h"
 #include "components/version_info/version_info.h"
 #include "content/public/browser/web_contents.h"
@@ -145,15 +140,6 @@ ChromePermissionsClient::GetTrackingProtectionSettings(
     content::BrowserContext* browser_context) {
   return TrackingProtectionSettingsFactory::GetForProfile(
       Profile::FromBrowserContext(browser_context));
-}
-
-bool ChromePermissionsClient::IsSubresourceFilterActivated(
-    content::BrowserContext* browser_context,
-    const GURL& url) {
-  return SubresourceFilterProfileContextFactory::GetForProfile(
-             Profile::FromBrowserContext(browser_context))
-      ->settings_manager()
-      ->GetSiteActivationFromMetadata(url);
 }
 
 permissions::ObjectPermissionContextBase*
@@ -363,8 +349,6 @@ std::vector<std::unique_ptr<permissions::PermissionUiSelector>>
 ChromePermissionsClient::CreatePermissionUiSelectors(
     content::BrowserContext* browser_context) {
   std::vector<std::unique_ptr<permissions::PermissionUiSelector>> selectors;
-  selectors.emplace_back(
-      std::make_unique<ContextualNotificationPermissionUiSelector>());
   selectors.emplace_back(std::make_unique<PrefBasedQuietPermissionUiSelector>(
       Profile::FromBrowserContext(browser_context)));
   selectors.emplace_back(std::make_unique<PredictionBasedPermissionUiSelector>(
@@ -400,16 +384,6 @@ void ChromePermissionsClient::OnPromptResolved(
              QuietUiReason::kTriggeredDueToDisruptiveBehavior)) {
       PermissionRevocationRequest::ExemptOriginFromFutureRevocations(profile,
                                                                      origin);
-    }
-    if (action == permissions::PermissionAction::GRANTED) {
-      if (g_browser_process->safe_browsing_service()) {
-        g_browser_process->safe_browsing_service()
-            ->MaybeSendNotificationsAcceptedReport(
-                web_contents->GetPrimaryMainFrame(), profile,
-                web_contents->GetLastCommittedURL(),
-                web_contents->GetController().GetLastCommittedEntry()->GetURL(),
-                origin, prompt_display_duration);
-      }
     }
   }
 

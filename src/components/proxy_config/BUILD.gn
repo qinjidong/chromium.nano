@@ -22,9 +22,6 @@ component("proxy_config") {
 
   deps = [
     "//base",
-    "//components/policy:generated",
-    "//components/policy/core/browser",
-    "//components/policy/core/common",
     "//components/prefs",
     "//components/strings",
     "//net",
@@ -40,13 +37,6 @@ component("proxy_config") {
   } else {
     deps += [ "//components/pref_registry" ]
   }
-
-  if (!is_ios) {
-    sources += [
-      "proxy_policy_handler.cc",
-      "proxy_policy_handler.h",
-    ]
-  }
 }
 
 source_set("unit_tests") {
@@ -60,10 +50,6 @@ source_set("unit_tests") {
     ":proxy_config",
     "//base",
     "//base/test:test_support",
-    "//components/policy:generated",
-    "//components/policy/core/browser",
-    "//components/policy/core/browser:test_support",
-    "//components/policy/core/common",
     "//components/prefs:test_support",
     "//net",
     "//net:test_support",

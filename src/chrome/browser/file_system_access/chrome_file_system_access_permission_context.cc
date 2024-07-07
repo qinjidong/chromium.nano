@@ -36,7 +36,6 @@
 #include "chrome/browser/permissions/permission_decision_auto_blocker_factory.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/profiles/profile_manager.h"
-#include "chrome/browser/safe_browsing/download_protection/download_protection_util.h"
 #include "chrome/browser/ui/file_system_access_dialogs.h"
 #include "chrome/common/chrome_paths.h"
 #include "chrome/grit/generated_resources.h"
@@ -48,8 +47,6 @@
 #include "components/permissions/permission_decision_auto_blocker.h"
 #include "components/permissions/permission_uma_util.h"
 #include "components/permissions/permission_util.h"
-#include "components/safe_browsing/buildflags.h"
-#include "components/safe_browsing/content/common/file_type_policies.h"
 #include "content/public/browser/browser_task_traits.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/disallow_activation_reason.h"
@@ -70,11 +67,6 @@
 #include "chrome/browser/web_applications/web_app_install_manager_observer.h"
 #include "chrome/browser/web_applications/web_app_provider.h"
 #include "chrome/browser/web_applications/web_app_registrar.h"
-#endif
-
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-#include "chrome/browser/safe_browsing/download_protection/download_protection_service.h"
-#include "chrome/browser/safe_browsing/safe_browsing_service.h"
 #endif
 
 namespace {
@@ -424,89 +416,6 @@ bool ShouldBlockAccessToPath(const base::FilePath& path,
   return true;
 }
 
-void DoSafeBrowsingCheckOnUIThread(
-    content::GlobalRenderFrameHostId frame_id,
-    std::unique_ptr<content::FileSystemAccessWriteItem> item,
-    safe_browsing::CheckDownloadCallback callback) {
-  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
-  // Download Protection Service is not supported on Android.
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-  safe_browsing::SafeBrowsingService* sb_service =
-      g_browser_process->safe_browsing_service();
-  if (!sb_service || !sb_service->download_protection_service() ||
-      !sb_service->download_protection_service()->enabled()) {
-    std::move(callback).Run(safe_browsing::DownloadCheckResult::UNKNOWN);
-    return;
-  }
-
-  if (!item->browser_context) {
-    content::RenderProcessHost* rph =
-        content::RenderProcessHost::FromID(frame_id.child_id);
-    if (!rph) {
-      std::move(callback).Run(safe_browsing::DownloadCheckResult::UNKNOWN);
-      return;
-    }
-    item->browser_context = rph->GetBrowserContext();
-  }
-
-  if (!item->web_contents) {
-    content::RenderFrameHost* rfh = content::RenderFrameHost::FromID(frame_id);
-    if (rfh) {
-      DCHECK_NE(rfh->GetLifecycleState(),
-                content::RenderFrameHost::LifecycleState::kPrerendering);
-      item->web_contents = content::WebContents::FromRenderFrameHost(rfh);
-    }
-  }
-
-  sb_service->download_protection_service()->CheckFileSystemAccessWrite(
-      std::move(item), std::move(callback));
-#else
-  std::move(callback).Run(safe_browsing::DownloadCheckResult::UNKNOWN);
-#endif
-}
-
-ChromeFileSystemAccessPermissionContext::AfterWriteCheckResult
-InterpretSafeBrowsingResult(safe_browsing::DownloadCheckResult result) {
-  using Result = safe_browsing::DownloadCheckResult;
-  switch (result) {
-    // Only allow downloads that are marked as SAFE or UNKNOWN by SafeBrowsing.
-    // All other types are going to be blocked. UNKNOWN could be the result of a
-    // failed safe browsing ping or if Safe Browsing is not enabled.
-    case Result::UNKNOWN:
-    case Result::SAFE:
-    case Result::ALLOWLISTED_BY_POLICY:
-      return ChromeFileSystemAccessPermissionContext::AfterWriteCheckResult::
-          kAllow;
-
-    case Result::DANGEROUS:
-    case Result::UNCOMMON:
-    case Result::DANGEROUS_HOST:
-    case Result::POTENTIALLY_UNWANTED:
-    case Result::BLOCKED_PASSWORD_PROTECTED:
-    case Result::BLOCKED_TOO_LARGE:
-    case Result::DANGEROUS_ACCOUNT_COMPROMISE:
-    case Result::BLOCKED_SCAN_FAILED:
-      return ChromeFileSystemAccessPermissionContext::AfterWriteCheckResult::
-          kBlock;
-
-    // This shouldn't be returned for File System Access write checks.
-    case Result::ASYNC_SCANNING:
-    case Result::ASYNC_LOCAL_PASSWORD_SCANNING:
-    case Result::SENSITIVE_CONTENT_WARNING:
-    case Result::SENSITIVE_CONTENT_BLOCK:
-    case Result::DEEP_SCANNED_SAFE:
-    case Result::PROMPT_FOR_SCANNING:
-    case Result::PROMPT_FOR_LOCAL_PASSWORD_SCANNING:
-    case Result::DEEP_SCANNED_FAILED:
-    case Result::IMMEDIATE_DEEP_SCAN:
-      NOTREACHED_IN_MIGRATION();
-      return ChromeFileSystemAccessPermissionContext::AfterWriteCheckResult::
-          kAllow;
-  }
-  NOTREACHED_IN_MIGRATION();
-  return ChromeFileSystemAccessPermissionContext::AfterWriteCheckResult::kBlock;
-}
-
 std::string GenerateLastPickedDirectoryKey(const std::string& id) {
   return id.empty() ? kDefaultLastPickedDirectoryKey
                     : base::StrCat({kCustomLastPickedDirectoryKey, "-", id});
@@ -526,13 +435,9 @@ std::string_view GetGrantKeyFromGrantType(GrantType type) {
 bool FileHasDangerousExtension(const url::Origin& origin,
                                const base::FilePath& path,
                                Profile* profile) {
-  safe_browsing::DownloadFileType::DangerLevel danger_level =
-      safe_browsing::FileTypePolicies::GetInstance()->GetFileDangerLevel(
-          path, origin.GetURL(), profile->GetPrefs());
   // See https://crbug.com/1320877#c4 for justification for why we show the
   // prompt if `danger_level` is ALLOW_ON_USER_GESTURE as well as DANGEROUS.
-  return danger_level == safe_browsing::DownloadFileType::DANGEROUS ||
-         danger_level == safe_browsing::DownloadFileType::ALLOW_ON_USER_GESTURE;
+  return false;
 }
 
 }  // namespace
@@ -1590,83 +1495,6 @@ void ChromeFileSystemAccessPermissionContext::ConfirmSensitiveEntryAccess(
                             std::move(after_blocklist_check_callback));
 }
 
-void ChromeFileSystemAccessPermissionContext::CheckPathsAgainstEnterprisePolicy(
-    std::vector<PathInfo> entries,
-    content::GlobalRenderFrameHostId frame_id,
-    EntriesAllowedByEnterprisePolicyCallback callback) {
-#if BUILDFLAG(ENTERPRISE_CLOUD_CONTENT_ANALYSIS)
-  // Get WebContents pointer in order to perform enterprise content analysis.
-  content::WebContents* web_contents = nullptr;
-  if (!entries.empty()) {
-    content::RenderFrameHost* rfh = content::RenderFrameHost::FromID(frame_id);
-    if (rfh && rfh->IsActive()) {
-      web_contents = content::WebContents::FromRenderFrameHost(rfh);
-    }
-  }
-
-  if (!web_contents) {
-    std::move(callback).Run(std::move(entries));
-    return;
-  }
-
-  enterprise_connectors::ContentAnalysisDelegate::Data data;
-  if (!enterprise_connectors::ContentAnalysisDelegate::IsEnabled(
-          Profile::FromBrowserContext(profile()),
-          web_contents->GetLastCommittedURL(), &data,
-          enterprise_connectors::AnalysisConnector::FILE_ATTACHED)) {
-    std::move(callback).Run(std::move(entries));
-    return;
-  }
-
-  data.reason =
-      enterprise_connectors::ContentAnalysisRequest::FILE_PICKER_DIALOG;
-
-  // Move the paths from `entries` to `data.paths` to minimize memory copies.
-  // Later the paths will be recombined with the type left in `entries` for
-  // those files that pass enterprise policy checks.
-  std::transform(std::make_move_iterator(entries.begin()),
-                 std::make_move_iterator(entries.end()),
-                 std::back_inserter(data.paths),
-                 [](PathInfo&& entry) { return std::move(entry.path); });
-
-  // TODO: crbug.com/326618625 - Handle kExternal files correctly.
-  // CreateForFilesInWebContents() only handles real OS files, so these entries
-  // are ignored and passed directly to OnContentAnalysisComplete() unchanged.
-  // kExternal files only exist in ChromeOS.
-  enterprise_connectors::ContentAnalysisDelegate::CreateForFilesInWebContents(
-      web_contents, std::move(data),
-      base::BindOnce(
-          &ChromeFileSystemAccessPermissionContext::OnContentAnalysisComplete,
-          weak_factory_.GetWeakPtr(), std::move(entries), std::move(callback)),
-      safe_browsing::DeepScanAccessPoint::UPLOAD);
-#else
-  std::move(callback).Run(std::move(entries));
-#endif  // BUILDFLAG(ENTERPRISE_CLOUD_CONTENT_ANALYSIS)
-}
-
-#if BUILDFLAG(ENTERPRISE_CLOUD_CONTENT_ANALYSIS)
-
-void ChromeFileSystemAccessPermissionContext::OnContentAnalysisComplete(
-    std::vector<PathInfo> entries,
-    EntriesAllowedByEnterprisePolicyCallback callback,
-    std::vector<base::FilePath> paths,
-    std::vector<bool> allowed) {
-  CHECK_EQ(paths.size(), allowed.size());
-  CHECK_EQ(paths.size(), entries.size());
-
-  std::vector<PathInfo> result_entries;
-  for (size_t i = 0; i < paths.size(); ++i) {
-    if (allowed[i]) {
-      result_entries.emplace_back(
-          PathInfo{.type = entries[i].type, .path = std::move(paths[i])});
-    }
-  }
-
-  std::move(callback).Run(std::move(result_entries));
-}
-
-#endif  // BUILDFLAG(ENTERPRISE_CLOUD_CONTENT_ANALYSIS)
-
 void ChromeFileSystemAccessPermissionContext::CheckPathAgainstBlocklist(
     PathType path_type,
     const base::FilePath& path,
@@ -1707,22 +1535,6 @@ void ChromeFileSystemAccessPermissionContext::PerformAfterWriteChecks(
     content::GlobalRenderFrameHostId frame_id,
     base::OnceCallback<void(AfterWriteCheckResult)> callback) {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
-  content::GetUIThreadTaskRunner({})->PostTask(
-      FROM_HERE,
-      base::BindOnce(
-          &DoSafeBrowsingCheckOnUIThread, frame_id, std::move(item),
-          base::BindOnce(
-              [](scoped_refptr<base::TaskRunner> task_runner,
-                 base::OnceCallback<void(AfterWriteCheckResult result)>
-                     callback,
-                 safe_browsing::DownloadCheckResult result) {
-                task_runner->PostTask(
-                    FROM_HERE,
-                    base::BindOnce(std::move(callback),
-                                   InterpretSafeBrowsingResult(result)));
-              },
-              base::SequencedTaskRunner::GetCurrentDefault(),
-              std::move(callback))));
 }
 
 void ChromeFileSystemAccessPermissionContext::DidCheckPathAgainstBlocklist(

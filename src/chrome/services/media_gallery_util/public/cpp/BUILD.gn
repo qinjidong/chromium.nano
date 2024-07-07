@@ -50,8 +50,6 @@ if (!is_android) {
       ":cpp",
       "//base",
       "//chrome/services/media_gallery_util/public/mojom",
-      "//chrome/test:test_support",
-      "//chrome/test:test_support_ui",
       "//testing/gtest",
       "//third_party/libyuv",
     ]

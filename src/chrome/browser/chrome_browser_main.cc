@@ -64,7 +64,6 @@
 #include "chrome/browser/chrome_browser_field_trials.h"
 #include "chrome/browser/chrome_browser_main_extra_parts.h"
 #include "chrome/browser/defaults.h"
-#include "chrome/browser/enterprise/browser_management/management_service_factory.h"
 #include "chrome/browser/extensions/component_loader.h"
 #include "chrome/browser/first_run/first_run.h"
 #include "chrome/browser/language/url_language_histogram_factory.h"
@@ -78,7 +77,6 @@
 #include "chrome/browser/metrics/expired_histograms_array.h"
 #include "chrome/browser/metrics/shutdown_watcher_helper.h"
 #include "chrome/browser/net/system_network_context_manager.h"
-#include "chrome/browser/policy/chrome_browser_policy_connector.h"
 #include "chrome/browser/prefs/chrome_command_line_pref_store.h"
 #include "chrome/browser/prefs/chrome_pref_service_factory.h"
 #include "chrome/browser/profiles/profile.h"
@@ -145,12 +143,10 @@
 #include "components/metrics/persistent_histograms.h"
 #include "components/metrics_services_manager/metrics_services_manager.h"
 #include "components/offline_pages/buildflags/buildflags.h"
-#include "components/policy/core/common/management/management_service.h"
 #include "components/prefs/json_pref_store.h"
 #include "components/prefs/pref_registry_simple.h"
 #include "components/prefs/pref_service.h"
 #include "components/prefs/pref_value_store.h"
-#include "components/site_isolation/site_isolation_policy.h"
 #include "components/spellcheck/spellcheck_buildflags.h"
 #include "components/startup_metric_utils/browser/startup_metric_utils.h"
 #include "components/tracing/common/background_tracing_utils.h"
@@ -196,10 +192,6 @@
 #include "ui/base/resource/resource_bundle.h"
 #include "ui/color/color_provider_manager.h"
 
-#if BUILDFLAG(ENABLE_COMPONENT_UPDATER)
-#include "chrome/browser/component_updater/registration.h"
-#endif  // BUILDFLAG(ENABLE_COMPONENT_UPDATER)
-
 #if BUILDFLAG(IS_ANDROID)
 #include "chrome/browser/flags/android/chrome_feature_list.h"
 #include "chrome/browser/share/share_history.h"
@@ -225,8 +217,6 @@
 #include "base/process/process.h"
 #include "base/task/task_traits.h"
 #include "components/crash/core/app/breakpad_linux.h"
-#else
-#include "components/enterprise/browser/controller/chrome_browser_cloud_management_controller.h"
 #endif  // BUILDFLAG(IS_CHROMEOS)
 
 #if BUILDFLAG(IS_CHROMEOS_ASH)
@@ -563,8 +553,6 @@ bool ShouldInstallSodaDuringPostProfileInit(
 #if BUILDFLAG(IS_CHROMEOS_ASH)
   return base::FeatureList::IsEnabled(
       ash::features::kOnDeviceSpeechRecognition);
-#elif !BUILDFLAG(IS_CHROMEOS_LACROS) && BUILDFLAG(ENABLE_COMPONENT_UPDATER)
-  return !command_line.HasSwitch(switches::kDisableComponentUpdate);
 #else
   return false;
 #endif  // BUILDFLAG(IS_CHROMEOS_ASH)
@@ -931,12 +919,6 @@ int ChromeBrowserMainParts::OnLocalStateLoaded(
   if (!base::PathService::Get(chrome::DIR_USER_DATA, &user_data_dir_))
     return chrome::RESULT_CODE_MISSING_DATA;
 
-  auto* platform_management_service =
-      policy::ManagementServiceFactory::GetForPlatform();
-  platform_management_service->UsePrefServiceAsCache(
-      browser_process_->local_state());
-  platform_management_service->RefreshCache(base::NullCallback());
-
 #if BUILDFLAG(IS_WIN)
   if (first_run::IsChromeFirstRun()) {
     bool stats_default;
@@ -1043,15 +1025,6 @@ int ChromeBrowserMainParts::PreCreateThreadsImpl() {
   first_run::IsChromeFirstRun();
 #endif  // !BUILDFLAG(IS_ANDROID)
 
-  PrefService* local_state = browser_process_->local_state();
-
-#if BUILDFLAG(IS_CHROMEOS_ASH)
-  browser_process_->platform_part()->InitializeCrosSettings();
-  ash::StatsReportingController::Initialize(local_state);
-  arc::StabilityMetricsManager::Initialize(local_state);
-  ash::HWDataUsageController::Initialize(local_state);
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
-
   {
     TRACE_EVENT0(
         "startup",
@@ -1074,8 +1047,6 @@ int ChromeBrowserMainParts::PreCreateThreadsImpl() {
   // just changed it to include experiments.
   crash_keys::SetCrashKeysFromCommandLine(
       *base::CommandLine::ForCurrentProcess());
-
-  browser_process_->browser_policy_connector()->OnResourceBundleCreated();
 
 // Android does first run in Java instead of native.
 // Chrome OS has its own out-of-box-experience code.
@@ -1140,30 +1111,6 @@ int ChromeBrowserMainParts::PreCreateThreadsImpl() {
   TouchModeStatsTracker::Initialize(
       metrics::DesktopSessionDurationTracker::Get(),
       ui::TouchUiController::Get());
-#endif
-
-  // Add Site Isolation switches as dictated by policy.
-  auto* command_line = base::CommandLine::ForCurrentProcess();
-  if (local_state->GetBoolean(prefs::kSitePerProcess) &&
-      site_isolation::SiteIsolationPolicy::IsEnterprisePolicyApplicable() &&
-      !command_line->HasSwitch(switches::kSitePerProcess)) {
-    command_line->AppendSwitch(switches::kSitePerProcess);
-  }
-  // IsolateOrigins policy is taken care of through SiteIsolationPrefsObserver
-  // (constructed and owned by BrowserProcessImpl).
-
-#if BUILDFLAG(IS_ANDROID)
-  // The admin should also be able to use these policies to force Site Isolation
-  // off (on Android; using enterprise policies to disable Site Isolation is not
-  // supported on other platforms).  Note that disabling either SitePerProcess
-  // or IsolateOrigins via policy will disable both types of isolation.
-  if ((local_state->IsManagedPreference(prefs::kSitePerProcess) &&
-       !local_state->GetBoolean(prefs::kSitePerProcess)) ||
-      (local_state->IsManagedPreference(prefs::kIsolateOrigins) &&
-       local_state->GetString(prefs::kIsolateOrigins).empty())) {
-    base::CommandLine::ForCurrentProcess()->AppendSwitch(
-        switches::kDisableSiteIsolationForPolicy);
-  }
 #endif
 
   // ChromeOS needs ui::ResourceBundle::InitSharedInstance to be called before
@@ -1370,21 +1317,12 @@ void ChromeBrowserMainParts::PreBrowserStart() {
   CheckPakFileIntegrity();
 #endif
 
-  // The RulesetService will make the filtering rules available to renderers
-  // immediately after its construction, provided that the rules are already
-  // available at no cost in an indexed format. This enables activating
-  // subresource filtering, if needed, also for page loads on start-up.
-  g_browser_process->subresource_filter_ruleset_service();
-  // Also enable subresource filtering for fingerprinting protection.
-  g_browser_process->fingerprinting_protection_ruleset_service();
 }
 
 void ChromeBrowserMainParts::PostBrowserStart() {
   TRACE_EVENT0("startup", "ChromeBrowserMainParts::PostBrowserStart");
   for (auto& chrome_extra_part : chrome_extra_parts_)
     chrome_extra_part->PostBrowserStart();
-
-  browser_process_->browser_policy_connector()->OnBrowserStarted();
 
 #if BUILDFLAG(ENABLE_PROCESS_SINGLETON)
   // Allow ProcessSingleton to process messages.
@@ -1510,33 +1448,6 @@ int ChromeBrowserMainParts::PreMainMessageLoopRunImpl() {
   downgrade_manager_.UpdateLastVersion(user_data_dir_);
 #endif  // !BUILDFLAG(IS_ANDROID) && BUILDFLAG(ENABLE_DOWNGRADE_PROCESSING)
 
-#if !BUILDFLAG(IS_CHROMEOS)
-  // Initialize the chrome browser cloud management controller after
-  // the browser process singleton is acquired to remove race conditions where
-  // multiple browser processes start simultaneously.  The main
-  // initialization of browser_policy_connector is performed inside
-  // PreMainMessageLoopRun() so that policies can be applied as soon as
-  // possible.
-  //
-  // Note that this protects against multiple browser process starts in
-  // the same user data dir and not multiple starts across user data dirs.
-  browser_process_->browser_policy_connector()->InitCloudManagementController(
-      browser_process_->local_state(),
-      browser_process_->system_network_context_manager()
-          ->GetSharedURLLoaderFactory());
-#endif  // !BUILDFLAG(IS_CHROMEOS)
-
-#if !BUILDFLAG(IS_ANDROID) && !BUILDFLAG(IS_CHROMEOS)
-  // Wait for the chrome browser cloud management enrollment to finish.
-  // If enrollment is not mandatory, this function returns immediately.
-  // Abort the launch process if required enrollment fails.
-  if (!browser_process_->browser_policy_connector()
-           ->chrome_browser_cloud_management_controller()
-           ->WaitUntilPolicyEnrollmentFinished()) {
-    return chrome::RESULT_CODE_CLOUD_POLICY_ENROLLMENT_FAILED;
-  }
-#endif  // !BUILDFLAG(IS_ANDROID) && !BUILDFLAG(IS_CHROMEOS)
-
 #if BUILDFLAG(IS_WIN)
   // Check if there is any machine level Chrome installed on the current
   // machine. If yes and the current Chrome process is user level, we do not
@@ -1607,15 +1518,6 @@ int ChromeBrowserMainParts::PreMainMessageLoopRunImpl() {
           ::switches::kAutoOpenDevToolsForTabs))
     g_browser_process->CreateDevToolsAutoOpener();
 
-  // Needs to be done before PostProfileInit, since the SODA Installer setup is
-  // called inside PostProfileInit and depends on it.
-#if BUILDFLAG(ENABLE_COMPONENT_UPDATER)
-  if (!base::CommandLine::ForCurrentProcess()->HasSwitch(
-          switches::kDisableComponentUpdate)) {
-    component_updater::RegisterComponentsForUpdate();
-  }
-#endif  // BUILDFLAG(ENABLE_COMPONENT_UPDATER)
-
   // `profile` may be nullptr if the profile picker is shown.
   Profile* profile = profile_info.profile;
   // Call `PostProfileInit()`and set it up for profiles created later.
@@ -1680,12 +1582,6 @@ int ChromeBrowserMainParts::PreMainMessageLoopRunImpl() {
   browser_process_->intranet_redirect_detector();
 #endif
 
-#if BUILDFLAG(ENABLE_PDF)
-  chrome_pdf::features::SetIsOopifPdfPolicyEnabled(
-      g_browser_process->local_state()->GetBoolean(
-          prefs::kPdfViewerOutOfProcessIframeEnabled));
-#endif  // BUILDFLAG(ENABLE_PDF)
-
 #if BUILDFLAG(ENABLE_PRINT_PREVIEW) && !defined(OFFICIAL_BUILD)
   if (base::CommandLine::ForCurrentProcess()->HasSwitch(
           switches::kDebugPrint)) {
@@ -1734,9 +1630,6 @@ int ChromeBrowserMainParts::PreMainMessageLoopRunImpl() {
   // The profile picker is never shown on Android.
   DCHECK_EQ(profile_info.mode, StartupProfileMode::kBrowserWindow);
   DCHECK(profile);
-  // Just initialize the policy prefs service here. Variations seed fetching
-  // will be initialized when the app enters foreground mode.
-  variations_service->set_policy_pref_service(profile->GetPrefs());
 #else
   // We are in regular browser boot sequence. Open initial tabs and enter the
   // main message loop.

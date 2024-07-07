@@ -18,9 +18,7 @@
 #include "base/task/sequenced_task_runner.h"
 #include "base/unguessable_token.h"
 #include "build/chromeos_buildflags.h"
-#include "chrome/browser/policy/profile_policy_connector.h"
 #include "chrome/browser/profiles/profile.h"
-#include "components/policy/core/common/policy_service.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/render_process_host.h"
@@ -1013,40 +1011,7 @@ size_t ExtractRemoteBoundWebRtcEventLogWebAppIdFromPath(
 }
 
 bool DoesProfileDefaultToLoggingEnabled(const Profile* const profile) {
-// For Chrome OS, exclude special profiles and users.
-#if BUILDFLAG(IS_CHROMEOS_ASH)
-  const user_manager::User* user =
-      ash::ProfileHelper::Get()->GetUserByProfile(profile);
-  // We do not log an error here since this can happen in several cases,
-  // e.g. for signin profiles or lock screen app profiles.
-  if (!user) {
-    return false;
-  }
-  const user_manager::UserType user_type = user->GetType();
-  if (user_type != user_manager::UserType::kRegular) {
-    return false;
-  }
-  if (ash::ProfileHelper::IsEphemeralUserProfile(profile)) {
-    return false;
-  }
-#endif
-
-  // We only want a default of true for regular (i.e. logged-in) profiles
-  // receiving cloud-based user-level enterprise policies. Supervised (child)
-  // profiles are considered regular and can also receive cloud policies in some
-  // cases (e.g. on Chrome OS). Although currently this should be covered by the
-  // other checks, let's explicitly check to anticipate edge cases and make the
-  // requirement explicit.
-  if (profile->IsOffTheRecord() || profile->IsChild()) {
-    return false;
-  }
-
-  const policy::ProfilePolicyConnector* const policy_connector =
-      profile->GetProfilePolicyConnector();
-
-  return policy_connector->policy_service()->IsInitializationComplete(
-             policy::POLICY_DOMAIN_CHROME) &&
-         policy_connector->IsManaged();
+  return false;
 }
 
 }  // namespace webrtc_event_logging

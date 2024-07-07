@@ -492,13 +492,6 @@ class CONTENT_EXPORT FileSystemAccessManagerImpl
       ChooseEntriesCallback callback,
       std::vector<FileSystemChooser::ResultEntry> entries,
       FileSystemAccessPermissionContext::SensitiveEntryResult result);
-  void OnCheckPathsAgainstEnterprisePolicy(
-      const BindingContext& binding_context,
-      const FileSystemChooser::Options& options,
-      const std::string& starting_directory_id,
-      bool request_directory_write_access,
-      ChooseEntriesCallback callback,
-      std::vector<FileSystemAccessPermissionContext::PathInfo> entries);
 
   void DidCreateAndTruncateSaveFile(
       const BindingContext& binding_context,

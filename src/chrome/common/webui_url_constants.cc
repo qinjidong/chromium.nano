@@ -13,7 +13,6 @@
 #include "components/lens/buildflags.h"
 #include "components/optimization_guide/optimization_guide_internals/webui/url_constants.h"
 #include "components/password_manager/content/common/web_ui_constants.h"
-#include "components/safe_browsing/core/common/web_ui_constants.h"
 #include "device/vr/buildflags/buildflags.h"
 #include "extensions/buildflags/buildflags.h"
 #include "third_party/blink/public/common/chrome_debug_urls.h"
@@ -727,7 +726,6 @@ const char* const kChromeHostURLs[] = {
     kChromeUISuggestInternalsHost,
 #endif
     kChromeUINTPTilesInternalsHost,
-    safe_browsing::kChromeUISafeBrowsingHost,
     kChromeUISyncInternalsHost,
 #if !BUILDFLAG(IS_ANDROID)
     kChromeUITabSearchHost,

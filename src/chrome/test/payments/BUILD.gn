@@ -20,7 +20,6 @@ static_library("test_support") {
   deps = [
     "//chrome/browser",
     "//chrome/browser/autofill",
-    "//chrome/test:test_support",
     "//components/autofill/core/browser:test_support",
     "//components/payments/content",
     "//components/payments/content:utils",
@@ -35,18 +34,12 @@ static_library("test_support") {
       "android/payment_request_test_bridge.h",
       "payment_request_test_controller_android.cc",
     ]
-
-    deps += [
-      "//chrome/test:payment_test_support_jni_headers",
-      "//chrome/test:test_support_ui_android",
-    ]
   }
 
   if (!is_android) {
     sources += [ "payment_request_test_controller_desktop.cc" ]
 
     deps += [
-      "//chrome/test:test_support_ui",
       "//components/webauthn/content/browser",
     ]
   }

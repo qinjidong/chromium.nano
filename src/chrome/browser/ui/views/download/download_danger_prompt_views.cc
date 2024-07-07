@@ -8,10 +8,7 @@
 #include "base/strings/utf_string_conversions.h"
 #include "chrome/browser/download/download_danger_prompt.h"
 #include "chrome/browser/download/download_stats.h"
-#include "chrome/browser/download/download_ui_safe_browsing_util.h"
 #include "chrome/browser/profiles/profile.h"
-#include "chrome/browser/safe_browsing/advanced_protection_status_manager.h"
-#include "chrome/browser/safe_browsing/advanced_protection_status_manager_factory.h"
 #include "chrome/browser/ui/bookmarks/bookmark_editor.h"
 #include "chrome/browser/ui/hats/trust_safety_sentiment_service.h"
 #include "chrome/browser/ui/hats/trust_safety_sentiment_service_factory.h"
@@ -21,8 +18,6 @@
 #include "components/constrained_window/constrained_window_views.h"
 #include "components/download/public/common/download_danger_type.h"
 #include "components/download/public/common/download_item.h"
-#include "components/safe_browsing/core/common/features.h"
-#include "components/safe_browsing/core/common/safe_browsing_prefs.h"
 #include "components/strings/grit/components_strings.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/browser_thread.h"
@@ -37,8 +32,6 @@
 #include "ui/views/layout/fill_layout.h"
 #include "ui/views/window/dialog_delegate.h"
 #include "url/gurl.h"
-
-using safe_browsing::ClientSafeBrowsingReportRequest;
 
 namespace {
 
@@ -203,17 +196,9 @@ std::u16string DownloadDangerPromptViews::GetMessageBody() const {
             download_->GetFileNameToReportUser().LossyDisplayName());
       }
       case download::DOWNLOAD_DANGER_TYPE_UNCOMMON_CONTENT: {
-        if (safe_browsing::AdvancedProtectionStatusManagerFactory::
-                GetForProfile(profile_)
-                    ->IsUnderAdvancedProtection()) {
-          return l10n_util::GetStringFUTF16(
-              IDS_PROMPT_UNCOMMON_DOWNLOAD_CONTENT_IN_ADVANCED_PROTECTION,
-              download_->GetFileNameToReportUser().LossyDisplayName());
-        } else {
-          return l10n_util::GetStringFUTF16(
-              IDS_PROMPT_UNCOMMON_DOWNLOAD_CONTENT,
-              download_->GetFileNameToReportUser().LossyDisplayName());
-        }
+        return l10n_util::GetStringFUTF16(
+            IDS_PROMPT_UNCOMMON_DOWNLOAD_CONTENT,
+            download_->GetFileNameToReportUser().LossyDisplayName());
       }
       case download::DOWNLOAD_DANGER_TYPE_POTENTIALLY_UNWANTED: {
         return l10n_util::GetStringFUTF16(
@@ -271,43 +256,10 @@ void DownloadDangerPromptViews::RunDone(Action action) {
   // the window to close, and |callback| refers to a member variable.
   OnDone done = std::move(done_);
   if (download_) {
-    const bool accept = action == DownloadDangerPrompt::ACCEPT;
     // If this download is no longer dangerous, is already canceled or
     // completed, don't send any report.
     if (download_->IsDangerous() && !download_->IsDone()) {
-      // Survey triggered on ACCEPT action, since this is where the user
-      // confirms their choice to keep a dangerous download, rather than
-      // triggering a survey after selecting to KEEP in the downloads page UI.
-      if (safe_browsing::IsSafeBrowsingSurveysEnabled(*profile_->GetPrefs()) &&
-          accept) {
-        TrustSafetySentimentService* trust_safety_sentiment_service =
-            TrustSafetySentimentServiceFactory::GetForProfile(profile_);
-        if (trust_safety_sentiment_service) {
-          trust_safety_sentiment_service->InteractedWithDownloadWarningUI(
-              DownloadItemWarningData::WarningSurface::DOWNLOAD_PROMPT,
-              DownloadItemWarningData::WarningAction::PROCEED);
-        }
-      }
-      // Log here for "Shown" unconditionally, and for "Proceed" iff the dialog
-      // was accepted. This assumes the dialog cannot be dismissed once it is
-      // shown without taking some action on it.
-      RecordDownloadDangerPromptHistogram("Shown", *download_);
-      if (accept) {
-        RecordDownloadDangerPromptHistogram("Proceed", *download_);
-      }
       RecordDownloadWarningEvent(action, download_);
-      if (!download_->GetURL().is_empty() &&
-          !content::DownloadItemUtils::GetBrowserContext(download_)
-               ->IsOffTheRecord()) {
-        ClientSafeBrowsingReportRequest::ReportType report_type =
-            show_context_
-                ? ClientSafeBrowsingReportRequest::DANGEROUS_DOWNLOAD_BY_API
-                : ClientSafeBrowsingReportRequest::DANGEROUS_DOWNLOAD_RECOVERY;
-        // Do not send cancel report since it's not a terminal action.
-        if (accept) {
-          SendSafeBrowsingDownloadReport(report_type, accept, download_);
-        }
-      }
     }
     download_->RemoveObserver(this);
     download_ = nullptr;

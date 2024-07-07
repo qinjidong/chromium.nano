@@ -20,7 +20,6 @@
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/common/chrome_features.h"
 #include "chrome/grit/generated_resources.h"
-#include "components/policy/core/common/policy_pref_names.h"
 #include "components/services/app_service/public/cpp/app_registry_cache.h"
 #include "components/services/app_service/public/cpp/app_update.h"
 #include "content/public/common/content_features.h"
@@ -226,16 +225,11 @@ MenuItems CreateBrowserMenuItems(const Profile* profile) {
   MenuItems menu_items;
 
   // "Normal" windows are not allowed when incognito is enforced.
-  if (IncognitoModePrefs::GetAvailability(profile->GetPrefs()) !=
-      policy::IncognitoModeAvailability::kForced) {
-    AddCommandItem(ash::APP_CONTEXT_MENU_NEW_WINDOW, IDS_APP_LIST_NEW_WINDOW,
-                   menu_items);
-  }
+  AddCommandItem(ash::APP_CONTEXT_MENU_NEW_WINDOW, IDS_APP_LIST_NEW_WINDOW,
+                 menu_items);
 
   // Incognito windows are not allowed when incognito is disabled.
-  if (!profile->IsOffTheRecord() &&
-      IncognitoModePrefs::GetAvailability(profile->GetPrefs()) !=
-          policy::IncognitoModeAvailability::kDisabled) {
+  if (!profile->IsOffTheRecord()) {
     AddCommandItem(ash::APP_CONTEXT_MENU_NEW_INCOGNITO_WINDOW,
                    IDS_APP_LIST_NEW_INCOGNITO_WINDOW, menu_items);
   }

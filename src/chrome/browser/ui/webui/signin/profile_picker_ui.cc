@@ -10,8 +10,6 @@
 #include "build/buildflag.h"
 #include "build/chromeos_buildflags.h"
 #include "chrome/browser/browser_process.h"
-#include "chrome/browser/policy/browser_signin_policy_handler.h"
-#include "chrome/browser/policy/chrome_browser_policy_connector.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/profiles/profile_avatar_icon_util.h"
 #include "chrome/browser/profiles/profile_shortcut_manager.h"
@@ -30,9 +28,6 @@
 #include "chrome/grit/profile_picker_resources.h"
 #include "chrome/grit/profile_picker_resources_map.h"
 #include "chrome/grit/signin_resources.h"
-#include "components/policy/core/common/policy_map.h"
-#include "components/policy/core/common/policy_service.h"
-#include "components/policy/policy_constants.h"
 #include "components/prefs/pref_service.h"
 #include "components/signin/public/base/signin_buildflags.h"
 #include "components/signin/public/base/signin_switches.h"
@@ -55,24 +50,7 @@ namespace {
 constexpr int kMinimumPickerSizePx = 620;
 
 bool IsBrowserSigninAllowed() {
-#if BUILDFLAG(IS_CHROMEOS)
-  return true;
-#else
-  policy::PolicyService* policy_service = g_browser_process->policy_service();
-  DCHECK(policy_service);
-  const policy::PolicyMap& policies = policy_service->GetPolicies(
-      policy::PolicyNamespace(policy::POLICY_DOMAIN_CHROME, std::string()));
-
-  const base::Value* browser_signin_value = policies.GetValue(
-      policy::key::kBrowserSignin, base::Value::Type::INTEGER);
-
-  if (!browser_signin_value)
-    return true;
-
-  return static_cast<policy::BrowserSigninMode>(
-             browser_signin_value->GetInt()) !=
-         policy::BrowserSigninMode::kDisabled;
-#endif
+  return false;
 }
 
 std::string GetManagedDeviceDisclaimer() {
@@ -219,33 +197,6 @@ void AddStrings(content::WebUIDataSource* html_source) {
 
   html_source->AddString("managedDeviceDisclaimer",
                          GetManagedDeviceDisclaimer());
-
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-  std::string remove_warning_profile = l10n_util::GetStringFUTF8(
-      IDS_PROFILE_PICKER_REMOVE_WARNING_SIGNED_IN_PROFILE_LACROS,
-      ui::GetChromeOSDeviceName(),
-      l10n_util::GetStringUTF16(IDS_SETTINGS_TITLE),
-      l10n_util::GetStringUTF16(IDS_OS_SETTINGS_PEOPLE_V2));
-  html_source->AddString("removeWarningProfileLacros", remove_warning_profile);
-  html_source->AddString("deviceType", ui::GetChromeOSDeviceName());
-
-  bool guest_mode_enabled = true;
-  // Device settings may be nullptr in tests.
-  if (crosapi::mojom::DeviceSettings* device_settings =
-          g_browser_process->browser_policy_connector()->GetDeviceSettings()) {
-    if (device_settings->device_guest_mode_enabled ==
-        crosapi::mojom::DeviceSettings::OptionalBool::kFalse) {
-      guest_mode_enabled = false;
-    }
-  }
-  const int account_selection_lacros_subtitle =
-      guest_mode_enabled
-          ? IDS_PROFILE_PICKER_PROFILE_CREATION_FLOW_ACCOUNT_SELECTION_LACROS_SUBTITLE_WITH_GUEST
-          : IDS_PROFILE_PICKER_PROFILE_CREATION_FLOW_ACCOUNT_SELECTION_LACROS_SUBTITLE;
-  html_source->AddLocalizedString("accountSelectionLacrosSubtitle",
-                                  account_selection_lacros_subtitle);
-
-#endif
 
   // Add policies.
   html_source->AddBoolean("isBrowserSigninAllowed", IsBrowserSigninAllowed());

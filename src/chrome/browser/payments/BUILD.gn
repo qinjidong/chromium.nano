@@ -48,7 +48,6 @@ source_set("browser_tests") {
   deps = [
     "//base/test:test_support",
     "//build:chromeos_buildflags",
-    "//chrome/test:test_support",
     "//chrome/test/payments:test_support",
     "//components/payments/content",
     "//components/payments/content:utils",
@@ -75,7 +74,6 @@ source_set("browser_tests") {
     ]
 
     deps += [
-      "//chrome/test:test_support_ui",
       "//components/payments/content:utils",
       "//components/payments/content/utility",
       "//components/permissions:permissions",
@@ -94,7 +92,6 @@ source_set("unittests") {
   sources = [ "payment_handler_permission_context_unittest.cc" ]
 
   deps = [
-    "//chrome/test:test_support",
     "//components/content_settings/core/test:test_support",
     "//components/infobars/content",
     "//components/permissions:permissions",

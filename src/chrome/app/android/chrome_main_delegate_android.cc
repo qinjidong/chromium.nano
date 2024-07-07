@@ -18,7 +18,6 @@
 #include "chrome/browser/android/chrome_startup_flags.h"
 #include "chrome/browser/android/metrics/uma_utils.h"
 #include "chrome/common/profiler/main_thread_stack_sampling_profiler.h"
-#include "components/policy/core/common/android/android_combined_policy_provider.h"
 #include "components/startup_metric_utils/common/startup_metric_utils.h"
 #include "content/public/browser/browser_main_runner.h"
 
@@ -37,7 +36,6 @@ ChromeMainDelegateAndroid::~ChromeMainDelegateAndroid() = default;
 
 std::optional<int> ChromeMainDelegateAndroid::BasicStartupComplete() {
   TRACE_EVENT0("startup", "ChromeMainDelegateAndroid::BasicStartupComplete");
-  policy::android::AndroidCombinedPolicyProvider::SetShouldWaitForPolicy(true);
   SetChromeSpecificCommandLineFlags();
 
   return ChromeMainDelegate::BasicStartupComplete();

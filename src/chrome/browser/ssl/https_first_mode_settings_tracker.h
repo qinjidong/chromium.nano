@@ -12,7 +12,6 @@
 #include "base/memory/weak_ptr.h"
 #include "base/task/task_traits.h"
 #include "chrome/browser/profiles/profile_keyed_service_factory.h"
-#include "chrome/browser/safe_browsing/advanced_protection_status_manager.h"
 #include "chrome/browser/ssl/daily_navigation_counter.h"
 #include "components/keyed_service/core/keyed_service.h"
 #include "components/prefs/pref_change_registrar.h"
@@ -50,9 +49,7 @@ enum class HttpsFirstModeSetting {
 // - Checking the Site Engagement scores of a site and enable/disable HFM based
 //   on that.
 class HttpsFirstModeService
-    : public KeyedService,
-      public safe_browsing::AdvancedProtectionStatusManager::
-          StatusChangedObserver {
+    : public KeyedService {
  public:
   // Reset user prefs if they were accidentally enabled previously. See
   // crbug.com/1475747 for details. Only has as effect if
@@ -64,9 +61,6 @@ class HttpsFirstModeService
 
   HttpsFirstModeService(const HttpsFirstModeService&) = delete;
   HttpsFirstModeService& operator=(const HttpsFirstModeService&) = delete;
-
-  // safe_browsing::AdvancedProtectionStatusManager::StatusChangedObserver:
-  void OnAdvancedProtectionStatusChanged(bool enabled) override;
 
   // Runs Typically Secure User and Site Engagement heuristics after the service
   // is created.
@@ -142,11 +136,6 @@ class HttpsFirstModeService
 
   base::Value::Dict navigation_counts_dict_;
   std::unique_ptr<DailyNavigationCounter> navigation_counter_;
-
-  base::ScopedObservation<
-      safe_browsing::AdvancedProtectionStatusManager,
-      safe_browsing::AdvancedProtectionStatusManager::StatusChangedObserver>
-      obs_{this};
 
   base::WeakPtrFactory<HttpsFirstModeService> weak_factory_{this};
 };

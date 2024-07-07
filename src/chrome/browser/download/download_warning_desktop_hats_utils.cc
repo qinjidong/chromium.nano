@@ -31,19 +31,12 @@
 #include "chrome/common/pref_names.h"
 #include "components/download/public/common/download_item.h"
 #include "components/prefs/pref_service.h"
-#include "components/safe_browsing/buildflags.h"
-#include "components/safe_browsing/core/common/features.h"
-#include "components/safe_browsing/core/common/safe_browsing_prefs.h"
 #include "content/public/browser/download_item_utils.h"
 
 namespace {
 
 // Placeholder strings for fields that are not logged.
 constexpr char kNotAvailable[] = "Not available";
-constexpr char kNotLoggedNoSafeBrowsing[] =
-    "Not logged because Safe Browsing is off";
-constexpr char kNotLoggedNoEnhancedProtection[] =
-    "Not logged because Enhanced Protection is off";
 
 bool IsDownloadBubbleTrigger(DownloadWarningHatsType type) {
   return type == DownloadWarningHatsType::kDownloadBubbleBypass ||
@@ -109,46 +102,6 @@ std::string GetWarningTypeStringData(const DownloadUIModel& model) {
 
 std::string ElapsedTimeToSecondsString(base::TimeDelta elapsed_time) {
   return base::NumberToString(elapsed_time.InSeconds());
-}
-
-std::string SafeBrowsingStateToString(
-    safe_browsing::SafeBrowsingState sb_state) {
-  switch (sb_state) {
-    case safe_browsing::SafeBrowsingState::NO_SAFE_BROWSING:
-      return "No Safe Browsing";
-    case safe_browsing::SafeBrowsingState::STANDARD_PROTECTION:
-      return "Standard Protection";
-    case safe_browsing::SafeBrowsingState::ENHANCED_PROTECTION:
-      return "Enhanced Protection";
-  }
-}
-
-// Produces a string consisting of comma-separated action events, each of which
-// consists of the surface, action, and relative timestamp (ms) separated by
-// colons. The first SHOWN event is included, and is the basis of all
-// timestamps, however subsequent SHOWN events are not included.
-std::string SerializeWarningActionEvents(
-    DownloadItemWarningData::WarningSurface warning_first_shown_surface,
-    const std::vector<DownloadItemWarningData::WarningActionEvent>& events) {
-  // The first SHOWN event is not stored by DownloadItemWarningData, so we
-  // construct it here.
-  std::string first_event_string =
-      DownloadItemWarningData::WarningActionEvent{
-          warning_first_shown_surface,
-          DownloadItemWarningData::WarningAction::SHOWN, 0,
-          /*is_terminal_action=*/false}
-          .ToString();
-
-  std::vector<std::string> event_strings;
-  event_strings.reserve(events.size() + 1);
-  event_strings.push_back(std::move(first_event_string));
-  base::ranges::transform(
-      events.begin(), events.end(), std::back_inserter(event_strings),
-      [](const DownloadItemWarningData::WarningActionEvent& event) {
-        return event.ToString();
-      });
-
-  return base::JoinString(std::move(event_strings), ",");
 }
 
 }  // namespace
@@ -239,7 +192,6 @@ DownloadWarningHatsProductSpecificData::Create(
   Profile* profile = Profile::FromBrowserContext(
       content::DownloadItemUtils::GetBrowserContext(download_item));
   if (!profile) {
-    psd.string_data_.insert({Fields::kSafeBrowsingState, kNotAvailable});
     psd.string_data_.insert({Fields::kPartialViewEnabled, kNotAvailable});
     psd.string_data_.insert({Fields::kUrlDownload, kNotAvailable});
     psd.string_data_.insert({Fields::kUrlReferrer, kNotAvailable});
@@ -248,49 +200,9 @@ DownloadWarningHatsProductSpecificData::Create(
     return psd;
   }
 
-  psd.string_data_.insert(
-      {Fields::kSafeBrowsingState,
-       SafeBrowsingStateToString(
-           safe_browsing::GetSafeBrowsingState(*profile->GetPrefs()))});
-
   psd.bits_data_.insert({Fields::kPartialViewEnabled,
                          profile->GetPrefs()->GetBoolean(
                              prefs::kDownloadBubblePartialViewEnabled)});
-
-  // URL and filename logged only for Safe Browsing users.
-  if (safe_browsing::IsSafeBrowsingEnabled(*profile->GetPrefs())) {
-    psd.string_data_.insert({Fields::kUrlDownload,
-                             download_item->GetURL().possibly_invalid_spec()});
-    psd.string_data_.insert(
-        {Fields::kUrlReferrer,
-         download_item->GetReferrerUrl().possibly_invalid_spec()});
-    psd.string_data_.insert(
-        {Fields::kFilename,
-         base::UTF16ToUTF8(
-             download_item->GetFileNameToReportUser().LossyDisplayName())});
-  } else {
-    psd.string_data_.insert({Fields::kUrlDownload, kNotLoggedNoSafeBrowsing});
-    psd.string_data_.insert({Fields::kUrlReferrer, kNotLoggedNoSafeBrowsing});
-    psd.string_data_.insert({Fields::kFilename, kNotLoggedNoSafeBrowsing});
-  }
-
-  // Interaction details logged only for ESB users.
-  std::optional<DownloadItemWarningData::WarningSurface>
-      warning_first_shown_surface =
-          DownloadItemWarningData::WarningFirstShownSurface(download_item);
-  if (warning_first_shown_surface &&
-      safe_browsing::IsEnhancedProtectionEnabled(*profile->GetPrefs())) {
-    std::vector<DownloadItemWarningData::WarningActionEvent>
-        warning_action_events =
-            DownloadItemWarningData::GetWarningActionEvents(download_item);
-    psd.string_data_.insert(
-        {Fields::kWarningInteractions,
-         SerializeWarningActionEvents(*warning_first_shown_surface,
-                                      warning_action_events)});
-  } else {
-    psd.string_data_.insert(
-        {Fields::kWarningInteractions, kNotLoggedNoEnhancedProtection});
-  }
 
   return psd;
 }
@@ -331,7 +243,6 @@ DownloadWarningHatsProductSpecificData::GetStringDataFields(
       Fields::kSurface,
       Fields::kDangerType,
       Fields::kWarningType,
-      Fields::kSafeBrowsingState,
       Fields::kChannel,
       Fields::kWarningInteractions,
       Fields::kSecondsSinceDownloadStarted,
@@ -482,45 +393,11 @@ bool CanShowDownloadWarningHatsSurvey(download::DownloadItem* download) {
 
 std::optional<std::string> MaybeGetDownloadWarningHatsTrigger(
     DownloadWarningHatsType survey_type) {
-  if (!base::FeatureList::IsEnabled(safe_browsing::kDownloadWarningSurvey)) {
-    return std::nullopt;
-  }
-
-  const int eligible_survey_type =
-      safe_browsing::kDownloadWarningSurveyType.Get();
-
-  // Configuration error.
-  if (eligible_survey_type < 0 ||
-      eligible_survey_type >
-          static_cast<int>(DownloadWarningHatsType::kMaxValue)) {
-    return std::nullopt;
-  }
-
-  // User is not assigned to be eligible for this type.
-  if (static_cast<DownloadWarningHatsType>(eligible_survey_type) !=
-      survey_type) {
-    return std::nullopt;
-  }
-
-  switch (survey_type) {
-    case DownloadWarningHatsType::kDownloadBubbleBypass:
-      return kHatsSurveyTriggerDownloadWarningBubbleBypass;
-    case DownloadWarningHatsType::kDownloadBubbleHeed:
-      return kHatsSurveyTriggerDownloadWarningBubbleHeed;
-    case DownloadWarningHatsType::kDownloadBubbleIgnore:
-      return kHatsSurveyTriggerDownloadWarningBubbleIgnore;
-    case DownloadWarningHatsType::kDownloadsPageBypass:
-      return kHatsSurveyTriggerDownloadWarningPageBypass;
-    case DownloadWarningHatsType::kDownloadsPageHeed:
-      return kHatsSurveyTriggerDownloadWarningPageHeed;
-    case DownloadWarningHatsType::kDownloadsPageIgnore:
-      return kHatsSurveyTriggerDownloadWarningPageIgnore;
-  }
+  return std::nullopt;
 }
 
 base::TimeDelta GetIgnoreDownloadBubbleWarningDelay() {
-  return base::Seconds(
-      safe_browsing::kDownloadWarningSurveyIgnoreDelaySeconds.Get());
+  return base::TimeDelta();
 }
 
 void MaybeLaunchDownloadWarningHatsSurvey(

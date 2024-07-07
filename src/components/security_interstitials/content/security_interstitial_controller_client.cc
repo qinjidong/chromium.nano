@@ -7,9 +7,6 @@
 #include <utility>
 
 #include "components/prefs/pref_service.h"
-#include "components/safe_browsing/core/common/features.h"
-#include "components/safe_browsing/core/common/safe_browsing_prefs.h"
-#include "components/safe_browsing/core/common/safebrowsing_referral_methods.h"
 #include "components/security_interstitials/content/settings_page_helper.h"
 #include "components/security_interstitials/core/metrics_helper.h"
 #include "content/public/browser/navigation_entry.h"
@@ -94,15 +91,7 @@ void SecurityInterstitialControllerClient::OpenUrlInNewForegroundTab(
   web_contents_->OpenURL(params, /*navigation_handle_callback=*/{});
 }
 
-void SecurityInterstitialControllerClient::OpenEnhancedProtectionSettings() {
-#if BUILDFLAG(IS_ANDROID)
-  settings_page_helper_->OpenEnhancedProtectionSettings(web_contents_);
-#else
-  settings_page_helper_->OpenEnhancedProtectionSettingsWithIph(
-      web_contents_,
-      safe_browsing::SafeBrowsingSettingReferralMethod::kSecurityInterstitial);
-#endif
-}
+void SecurityInterstitialControllerClient::OpenEnhancedProtectionSettings() {}
 
 const std::string&
 SecurityInterstitialControllerClient::GetApplicationLocale() const {
@@ -116,7 +105,7 @@ SecurityInterstitialControllerClient::GetPrefService() {
 
 const std::string
 SecurityInterstitialControllerClient::GetExtendedReportingPrefName() const {
-  return prefs::kSafeBrowsingScoutReportingEnabled;
+  return "";
 }
 
 bool SecurityInterstitialControllerClient::CanLaunchDateAndTimeSettings() {

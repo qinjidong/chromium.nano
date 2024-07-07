@@ -32,23 +32,6 @@ DiceTabHelper::GetEnableSyncCallbackForBrowser() {
                                 content::WebContents* web_contents,
                                 const CoreAccountInfo& account_info) {
     DCHECK(profile);
-    Browser* browser = web_contents ? chrome::FindBrowserWithTab(web_contents)
-                                    : chrome::FindBrowserWithProfile(profile);
-    if (!browser) {
-      return;
-    }
-
-    TurnSyncOnHelper::SigninAbortedMode abort_mode =
-        switches::IsExplicitBrowserSigninUIOnDesktopEnabled() &&
-                access_point == signin_metrics::AccessPoint::
-                                    ACCESS_POINT_AVATAR_BUBBLE_SIGN_IN
-            ? TurnSyncOnHelper::SigninAbortedMode::KEEP_ACCOUNT
-            : TurnSyncOnHelper::SigninAbortedMode::REMOVE_ACCOUNT;
-
-    // TurnSyncOnHelper is suicidal (it will kill itself once it
-    // finishes enabling sync).
-    new TurnSyncOnHelper(profile, browser, access_point, promo_action,
-                         account_info.account_id, abort_mode);
   });
 }
 

@@ -11,7 +11,6 @@
 #include "components/password_manager/core/browser/password_form.h"
 #include "components/password_manager/core/browser/password_manager_client.h"
 #include "components/password_manager/core/common/password_manager_features.h"
-#include "components/safe_browsing/core/common/safe_browsing_prefs.h"
 #include "components/signin/public/identity_manager/identity_manager.h"
 #include "components/sync/base/user_selectable_type.h"
 #include "components/sync/service/sync_user_settings.h"
@@ -74,11 +73,6 @@ bool IsGaiaCredentialPage(const std::string& signon_realm) {
 
 bool ShouldSaveEnterprisePasswordHash(const PasswordForm& form,
                                       const PrefService& prefs) {
-  if (base::FeatureList::IsEnabled(features::kPasswordReuseDetectionEnabled)) {
-    return safe_browsing::MatchesPasswordProtectionLoginURL(form.url, prefs) ||
-           safe_browsing::MatchesPasswordProtectionChangePasswordURL(form.url,
-                                                                     prefs);
-  }
   return false;
 }
 

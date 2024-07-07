@@ -30,7 +30,6 @@
 #include "chrome/browser/web_applications/isolated_web_apps/isolated_web_app_url_info.h"
 #include "chrome/browser/web_applications/mojom/user_display_mode.mojom-shared.h"
 #include "chrome/browser/web_applications/mojom/user_display_mode.mojom.h"
-#include "chrome/browser/web_applications/policy/web_app_policy_manager.h"
 #include "chrome/browser/web_applications/proto/web_app_os_integration_state.pb.h"
 #include "chrome/browser/web_applications/proto/web_app_proto_package.pb.h"
 #include "chrome/browser/web_applications/web_app.h"
@@ -889,7 +888,7 @@ bool WebAppRegistrar::CanUserUninstallWebApp(
 
 bool WebAppRegistrar::IsPreventCloseEnabled(
     const webapps::AppId& app_id) const {
-  return provider_->policy_manager().IsPreventCloseEnabled(app_id);
+  return false;
 }
 
 bool WebAppRegistrar::IsAllowedLaunchProtocol(
@@ -1494,21 +1493,7 @@ WebAppRegistrar::GetSubAppToParentMap() const {
 
 ValueWithPolicy<RunOnOsLoginMode> WebAppRegistrar::GetAppRunOnOsLoginMode(
     const webapps::AppId& app_id) const {
-  RunOnOsLoginPolicy login_policy =
-      provider_->policy_manager().GetUrlRunOnOsLoginPolicy(app_id);
-
-  switch (login_policy) {
-    case RunOnOsLoginPolicy::kAllowed: {
-      auto* web_app = GetAppById(app_id);
-      return {
-          web_app ? web_app->run_on_os_login_mode() : RunOnOsLoginMode::kNotRun,
-          true};
-    }
-    case RunOnOsLoginPolicy::kBlocked:
-      return {RunOnOsLoginMode::kNotRun, false};
-    case RunOnOsLoginPolicy::kRunWindowed:
-      return {RunOnOsLoginMode::kWindowed, false};
-  }
+  return {RunOnOsLoginMode::kNotRun, false};
 }
 
 std::optional<RunOnOsLoginMode>

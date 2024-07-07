@@ -36,7 +36,6 @@ import org.chromium.chrome.browser.profiles.Profile;
 import org.chromium.chrome.browser.profiles.ProfileKeyedMap;
 import org.chromium.chrome.browser.profiles.ProfileManagerUtils;
 import org.chromium.chrome.browser.profiles.ProfileProvider;
-import org.chromium.chrome.browser.safety_hub.SafetyHubFetchServiceFactory;
 import org.chromium.chrome.browser.translate.TranslateBridge;
 import org.chromium.components.browser_ui.accessibility.DeviceAccessibilitySettingsHandler;
 import org.chromium.components.browser_ui.accessibility.FontSizePrefs;
@@ -180,7 +179,6 @@ public class ChromeActivitySessionTracker {
             FontSizePrefs.getInstance(profile).onSystemFontScaleChanged();
             DeviceAccessibilitySettingsHandler.getInstance(profile).updateFontWeightAdjustment();
             updateAcceptLanguages(profile);
-            SafetyHubFetchServiceFactory.getForProfile(profile).onForegroundSessionStart();
         }
         return true; // Return a non-null value to ensure ProfileKeyedMap tracks this was completed.
     }

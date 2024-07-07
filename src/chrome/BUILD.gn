@@ -47,7 +47,6 @@ if (is_android) {
   import("//build/config/mac/rules.gni")
   import("//build/util/branding.gni")
   import("//chrome/browser/buildflags.gni")
-  import("//chrome/updater/branding.gni")
   import("//chrome/version.gni")
   import("//content/public/app/mac_helpers.gni")
   import("//media/cdm/library_cdm/cdm_paths.gni")
@@ -200,7 +199,6 @@ if (!is_android && !is_mac) {
           "//chrome/app/version_assembly:chrome_exe_manifest",
           "//chrome/browser:active_use_util",
           "//chrome/browser:chrome_process_finder",
-          "//chrome/browser/policy:path_parser",
           "//chrome/chrome_elf",
           "//chrome/common:constants",
           "//chrome/common/win:delay_load_failure_support",
@@ -432,7 +430,6 @@ if (is_win) {
       "//chrome/install_static:secondary_module",
       "//components/crash/core/app",
       "//components/memory_system",
-      "//components/policy:generated",
       "//content/public/app",
       "//crypto",
       "//headless:headless_non_renderer",
@@ -648,7 +645,6 @@ if (is_win) {
     public_deps = [
       ":chrome_app_icon",
       ":chrome_app_strings",
-      "//components/policy:chrome_manifest_bundle",
     ]
   }
 
@@ -681,8 +677,6 @@ if (is_win) {
       outputs = [
         "{{bundle_contents_dir}}/Library/LaunchServices/{{source_file_part}}",
       ]
-
-      public_deps = [ "//chrome/updater/mac:privileged_helper" ]
     }
   }
 
@@ -916,20 +910,6 @@ if (is_win) {
             [ ":verify_libraries_chrome_helper_app_${helper_params[0]}" ]
       }
     }
-
-    if (enable_updater) {
-      if (is_chrome_branded) {
-        sources += [ "//third_party/updater/chrome_mac_universal_prod/${updater_product_full_name}.app" ]
-      } else {
-        sources += [ "$root_out_dir/${updater_product_full_name}.app" ]
-
-        public_deps += [
-          "//chrome/updater/mac:browser_install_script",
-          "//chrome/updater/mac:updater_bundle",
-          "//chrome/updater/mac:updater_install_script",
-        ]
-      }
-    }
   }
 
   bundle_data("chrome_framework_resources") {
@@ -1138,7 +1118,6 @@ if (is_win) {
       "//chrome/common/profiler",
       "//components/crash/core/app",
       "//components/memory_system",
-      "//components/policy:generated",
       "//content/public/app",
       "//headless:headless_shell_lib",
       "//third_party/cld_3/src/src:cld_3",
@@ -1394,7 +1373,6 @@ group("dependencies") {
     "//build:chromeos_buildflags",
     "//chrome/browser",
     "//chrome/browser:buildflags",
-    "//chrome/browser/policy:path_parser",
     "//chrome/child",
     "//chrome/common",
     "//chrome/gpu",
@@ -1639,9 +1617,6 @@ if (is_android) {
       "//chrome/gpu",
       "//chrome/renderer",
       "//components/minidump_uploader",
-      "//components/safe_browsing:buildflags",
-      "//components/safe_browsing/android:safe_browsing_api_handler",
-      "//components/safe_browsing/android:safe_browsing_mobile",
       "//content/public/app",
     ]
 

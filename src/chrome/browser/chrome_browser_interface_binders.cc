@@ -82,7 +82,6 @@
 #include "components/prefs/pref_service.h"
 #include "components/privacy_sandbox/privacy_sandbox_features.h"
 #include "components/reading_list/features/reading_list_switches.h"
-#include "components/safe_browsing/buildflags.h"
 #include "components/search_engines/search_engine_choice/search_engine_choice_utils.h"
 #include "components/security_state/content/content_utils.h"
 #include "components/security_state/core/security_state.h"
@@ -124,17 +123,6 @@
 #include "chrome/browser/android/contextualsearch/unhandled_tap_web_contents_observer.h"
 #include "third_party/blink/public/mojom/unhandled_tap_notifier/unhandled_tap_notifier.mojom.h"
 #endif  // BUILDFLAG(ENABLE_UNHANDLED_TAP)
-
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-#include "chrome/browser/ui/webui/reset_password/reset_password.mojom.h"
-#include "chrome/browser/ui/webui/reset_password/reset_password_ui.h"
-#endif  // BUILDFLAG(FULL_SAFE_BROWSING)
-
-#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC) || BUILDFLAG(IS_LINUX) || \
-    BUILDFLAG(IS_CHROMEOS_ASH)
-#include "chrome/browser/ui/webui/connectors_internals/connectors_internals.mojom.h"
-#include "chrome/browser/ui/webui/connectors_internals/connectors_internals_ui.h"
-#endif
 
 #if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC) || BUILDFLAG(IS_LINUX)
 #include "chrome/browser/ui/webui/app_settings/web_app_settings_ui.h"
@@ -472,11 +460,6 @@
 #if BUILDFLAG(ENABLE_PRINT_PREVIEW)
 #include "chrome/browser/printing/web_api/web_printing_service_binder.h"
 #include "third_party/blink/public/mojom/printing/web_printing.mojom.h"
-#endif
-
-#if BUILDFLAG(IS_CHROMEOS)
-#include "chrome/browser/ui/webui/dlp_internals/dlp_internals.mojom.h"
-#include "chrome/browser/ui/webui/dlp_internals/dlp_internals_ui.h"
 #endif
 
 #if BUILDFLAG(CHROME_ROOT_STORE_CERT_MANAGEMENT_UI)
@@ -1134,18 +1117,6 @@ void PopulateChromeWebUIFrameBinders(
       commerce::mojom::CommerceInternalsHandlerFactory,
       commerce::CommerceInternalsUI>(map);
 
-#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC) || BUILDFLAG(IS_LINUX) || \
-    BUILDFLAG(IS_CHROMEOS_ASH)
-  RegisterWebUIControllerInterfaceBinder<
-      connectors_internals::mojom::PageHandler,
-      enterprise_connectors::ConnectorsInternalsUI>(map);
-#endif
-
-#if BUILDFLAG(IS_CHROMEOS)
-  RegisterWebUIControllerInterfaceBinder<dlp_internals::mojom::PageHandler,
-                                         policy::DlpInternalsUI>(map);
-#endif
-
 #if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC) || BUILDFLAG(IS_LINUX)
   RegisterWebUIControllerInterfaceBinder<
       app_management::mojom::PageHandlerFactory, WebAppSettingsUI>(map);
@@ -1774,11 +1745,6 @@ void PopulateChromeWebUIFrameBinders(
 #if BUILDFLAG(ENABLE_FEED_V2) && BUILDFLAG(IS_ANDROID)
   RegisterWebUIControllerInterfaceBinder<feed_internals::mojom::PageHandler,
                                          FeedInternalsUI>(map);
-#endif
-
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-  RegisterWebUIControllerInterfaceBinder<::mojom::ResetPasswordHandler,
-                                         ResetPasswordUI>(map);
 #endif
 
 #if BUILDFLAG(IS_CHROMEOS_ASH)

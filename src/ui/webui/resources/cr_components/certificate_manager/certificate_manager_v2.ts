@@ -97,11 +97,6 @@ export class CertificateManagerV2Element extends
 
   override ready() {
     super.ready();
-    const proxy = CertificatesV2BrowserProxy.getInstance();
-    proxy.handler.getPolicyInformation().then(
-        (results: {policyInfo: CertPolicyInfo}) => {
-          this.certPolicy_ = results.policyInfo;
-        });
   }
 
   private onHashCopied_() {

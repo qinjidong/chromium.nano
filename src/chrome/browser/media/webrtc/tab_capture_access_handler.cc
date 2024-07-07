@@ -172,38 +172,6 @@ void TabCaptureAccessHandler::HandleRequest(
   const bool is_allowlisted_extension =
       IsExtensionAllowedForScreenCapture(extension);
 
-#if BUILDFLAG(IS_CHROMEOS)
-  if (request.video_type ==
-      blink::mojom::MediaStreamType::GUM_TAB_VIDEO_CAPTURE) {
-    // Use extension name as title for extensions and host/origin for drive-by
-    // web.
-    std::u16string application_title =
-        extension
-            ? base::UTF8ToUTF16(extension->name())
-            : url_formatter::FormatOriginForSecurityDisplay(
-                  web_contents->GetPrimaryMainFrame()->GetLastCommittedOrigin(),
-                  url_formatter::SchemeDisplay::OMIT_CRYPTOGRAPHIC);
-    content::DesktopMediaID media_id(
-        content::DesktopMediaID::TYPE_WEB_CONTENTS, /*id=*/0,
-        content::WebContentsMediaCaptureId(request.render_process_id,
-                                           request.render_frame_id));
-    // base::Unretained(this) is safe because TabCaptureAccessHandler is owned
-    // by MediaCaptureDevicesDispatcher, which is a lazy singleton which is
-    // destroyed when the browser process terminates.
-    policy::DlpContentManager::Get()->CheckScreenShareRestriction(
-        media_id, application_title,
-        base::BindOnce(
-            &TabCaptureAccessHandler::OnDlpRestrictionChecked,
-            base::Unretained(this), web_contents->GetWeakPtr(),
-            std::make_unique<PendingAccessRequest>(
-                /*picker=*/nullptr, request, std::move(callback),
-                application_title,
-                /*display_notification=*/false, is_allowlisted_extension),
-            std::move(media_ui)));
-    return;
-  }
-#endif  // BUILDFLAG(IS_CHROMEOS)
-
   AcceptRequest(web_contents, request, std::move(callback),
                 is_allowlisted_extension, std::move(media_ui));
 }

@@ -602,25 +602,6 @@ public class WebViewChromiumFactoryProvider implements WebViewFactoryProvider {
                                 return sharedStatics.parseFileChooserResult(resultCode, intent);
                             }
 
-                            @Override
-                            public void initSafeBrowsing(
-                                    Context context, ValueCallback<Boolean> callback) {
-                                sharedStatics.initSafeBrowsing(
-                                        context, CallbackConverter.fromValueCallback(callback));
-                            }
-
-                            @Override
-                            public void setSafeBrowsingWhitelist(
-                                    List<String> urls, ValueCallback<Boolean> callback) {
-                                sharedStatics.setSafeBrowsingAllowlist(
-                                        urls, CallbackConverter.fromValueCallback(callback));
-                            }
-
-                            @Override
-                            public Uri getSafeBrowsingPrivacyPolicyUrl() {
-                                return sharedStatics.getSafeBrowsingPrivacyPolicyUrl();
-                            }
-
                             public boolean isMultiProcessEnabled() {
                                 return sharedStatics.isMultiProcessEnabled();
                             }

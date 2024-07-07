@@ -86,9 +86,6 @@ class StubPasswordManagerClient : public PasswordManagerClient {
 #endif  // BUILDFLAG(IS_WIN) || BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_MAC) ||
         // BUILDFLAG(IS_CHROMEOS)
 
-  safe_browsing::PasswordProtectionService* GetPasswordProtectionService()
-      const override;
-
 #if defined(ON_FOCUS_PING_ENABLED)
   void CheckSafeBrowsingReputation(const GURL& form_action,
                                    const GURL& frame_url) override;

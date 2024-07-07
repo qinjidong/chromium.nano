@@ -67,15 +67,6 @@ source_set("api") {
     "//ui/shell_dialogs",
   ]
 
-  if (is_chromeos) {
-    sources += [
-      "enterprise_remote_apps/enterprise_remote_apps_api.cc",
-      "enterprise_remote_apps/enterprise_remote_apps_api.h",
-    ]
-
-    deps += [ "//chromeos/components/remote_apps/mojom" ]
-  }
-
   if (is_chromeos_ash) {
     sources += [
       "arc_apps_private/arc_apps_private_api.cc",

@@ -17,7 +17,6 @@
 #include "chrome/browser/ui/tabs/tab_strip_model_delegate.h"
 #include "chrome/browser/ui/web_applications/app_browser_controller.h"
 #include "chrome/browser/ui/web_applications/web_app_tabbed_utils.h"
-#include "chrome/browser/web_applications/policy/web_app_policy_manager.h"
 #include "chrome/browser/web_applications/web_app_provider.h"
 #include "components/tab_groups/tab_group_id.h"
 #include "components/webapps/common/web_app_id.h"
@@ -451,16 +450,5 @@ void UnloadController::ClearUnloadState(content::WebContents* web_contents,
 }
 
 bool UnloadController::IsUnclosableApp() const {
-  if (!web_app::AppBrowserController::IsWebApp(browser_.get())) {
-    return false;
-  }
-
-  content::WebContents* const active_web_contents =
-      browser_->tab_strip_model()->GetActiveWebContents();
-  if (!active_web_contents) {
-    return false;
-  }
-  return web_app::WebAppProvider::GetForWebContents(active_web_contents)
-      ->policy_manager()
-      .IsPreventCloseEnabled(browser_->app_controller()->app_id());
+  return false;
 }

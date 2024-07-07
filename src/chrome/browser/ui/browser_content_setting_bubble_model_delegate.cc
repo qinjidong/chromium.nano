@@ -11,7 +11,6 @@
 #include "chrome/browser/ui/tab_dialogs.h"
 #include "chrome/common/url_constants.h"
 #include "components/google/core/common/google_util.h"
-#include "components/subresource_filter/core/browser/subresource_filter_constants.h"
 
 // The URL for when the user clicks "Learn more" on the mixed scripting page
 // icon bubble.
@@ -55,9 +54,6 @@ void BrowserContentSettingBubbleModelDelegate::ShowLearnMorePage(
     ContentSettingsType type) {
   GURL learn_more_url;
   switch (type) {
-    case ContentSettingsType::ADS:
-      learn_more_url = GURL(subresource_filter::kLearnMoreLink);
-      break;
     case ContentSettingsType::MIXEDSCRIPT:
       learn_more_url = GURL(kInsecureScriptHelpUrl);
       break;

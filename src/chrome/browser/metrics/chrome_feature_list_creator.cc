@@ -24,7 +24,6 @@
 #include "chrome/browser/about_flags.h"
 #include "chrome/browser/browser_features.h"
 #include "chrome/browser/browser_process.h"
-#include "chrome/browser/enterprise/browser_management/management_service_factory.h"
 #include "chrome/browser/first_run/first_run.h"
 #include "chrome/browser/metrics/chrome_metrics_service_accessor.h"
 #include "chrome/browser/metrics/chrome_metrics_services_manager_client.h"
@@ -44,13 +43,11 @@
 #include "components/metrics/metrics_pref_names.h"
 #include "components/metrics/metrics_state_manager.h"
 #include "components/metrics_services_manager/metrics_services_manager.h"
-#include "components/policy/core/common/policy_service.h"
 #include "components/prefs/json_pref_store.h"
 #include "components/prefs/pref_registry.h"
 #include "components/prefs/pref_registry_simple.h"
 #include "components/prefs/pref_service_factory.h"
 #include "components/privacy_sandbox/privacy_sandbox_features.h"
-#include "components/safe_browsing/core/common/features.h"
 #include "components/variations/pref_names.h"
 #include "components/variations/service/variations_service.h"
 #include "components/variations/variations_crash_keys.h"
@@ -61,7 +58,6 @@
 #include "ui/base/resource/resource_bundle.h"
 
 #if BUILDFLAG(IS_CHROMEOS_ASH)
-#include "chrome/browser/ash/policy/core/browser_policy_connector_ash.h"
 #include "chrome/browser/ash/settings/about_flags.h"
 #include "chromeos/ash/components/dbus/dbus_thread_manager.h"  // nogncheck
 #endif  // BUILDFLAG(IS_CHROMEOS_ASH)
@@ -88,24 +84,7 @@ GetSwitchDependentFeatureOverrides(const base::CommandLine& command_line) {
     // State to override the feature with.
     base::FeatureList::OverrideState override_state;
   } chrome_layer_override_info[] = {
-      // Overrides for --enable-download-warning-improvements.
-      {switches::kEnableDownloadWarningImprovements,
-       std::cref(safe_browsing::kDownloadTailoredWarnings),
-       base::FeatureList::OVERRIDE_ENABLE_FEATURE},
-      {switches::kEnableDownloadWarningImprovements,
-       std::cref(safe_browsing::kImprovedDownloadPageWarnings),
-       base::FeatureList::OVERRIDE_ENABLE_FEATURE},
-      {switches::kEnableDownloadWarningImprovements,
-       std::cref(safe_browsing::kEncryptedArchivesMetadata),
-       base::FeatureList::OVERRIDE_ENABLE_FEATURE},
-      {switches::kEnableDownloadWarningImprovements,
-       std::cref(safe_browsing::kDeepScanningPromptRemoval),
-       base::FeatureList::OVERRIDE_ENABLE_FEATURE},
-      {switches::kEnableDownloadWarningImprovements,
-       std::cref(safe_browsing::kDownloadReportWithoutUserDecision),
-       base::FeatureList::OVERRIDE_ENABLE_FEATURE},
-
-      // Override for --privacy-sandbox-ads-apis.
+       // Override for --privacy-sandbox-ads-apis.
       {switches::kEnablePrivacySandboxAdsApis,
        std::cref(privacy_sandbox::kOverridePrivacySandboxSettingsLocalTesting),
        base::FeatureList::OVERRIDE_ENABLE_FEATURE},
@@ -176,11 +155,6 @@ ChromeFeatureListCreator::TakeMetricsServicesManager() {
   return std::move(metrics_services_manager_);
 }
 
-std::unique_ptr<policy::ChromeBrowserPolicyConnector>
-ChromeFeatureListCreator::TakeChromeBrowserPolicyConnector() {
-  return std::move(browser_policy_connector_);
-}
-
 #if !BUILDFLAG(IS_ANDROID) && !BUILDFLAG(IS_CHROMEOS_ASH)
 std::unique_ptr<installer::InitialPreferences>
 ChromeFeatureListCreator::TakeInitialPrefs() {
@@ -202,39 +176,14 @@ void ChromeFeatureListCreator::CreatePrefService() {
   auto pref_registry = base::MakeRefCounted<PrefRegistrySimple>();
   RegisterLocalState(pref_registry.get());
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
-  // DBus must be initialized before constructing the policy connector.
-  CHECK(ash::DBusThreadManager::IsInitialized());
-  browser_policy_connector_ =
-      std::make_unique<policy::BrowserPolicyConnectorAsh>();
-#else
-  browser_policy_connector_ =
-      std::make_unique<policy::ChromeBrowserPolicyConnector>();
-#endif  // BUILDFLAG(IS_CHROMEOS_ASH)
-
   // ManagementService needs Local State but creating local state needs
   // ManagementService, instantiate the underlying PrefStore early and share it
   // between both.
   auto local_state_pref_store =
       base::MakeRefCounted<JsonPrefStore>(local_state_file);
 
-  // Try and read the local state prefs, if it succeeds, use it as the
-  // ManagementService's cache.
-  if (local_state_pref_store->ReadPrefs() ==
-      JsonPrefStore::PREF_READ_ERROR_NONE) {
-    auto* platform_management_service =
-        policy::ManagementServiceFactory::GetForPlatform();
-    platform_management_service->UsePrefStoreAsCache(local_state_pref_store);
-  }
-
   local_state_ = chrome_prefs::CreateLocalState(
-      local_state_file, local_state_pref_store,
-      browser_policy_connector_->GetPolicyService(), std::move(pref_registry),
-      browser_policy_connector_.get());
-
-  // Apply local test policies from the kLocalTestPoliciesForNextStartup pref if
-  // there are any.
-  browser_policy_connector_->MaybeApplyLocalTestPolicies(local_state_.get());
+      local_state_file, local_state_pref_store, std::move(pref_registry));
 
 // TODO(asvitkine): This is done here so that the pref is set before
 // VariationsService queries the locale. This should potentially be moved to

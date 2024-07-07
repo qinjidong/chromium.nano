@@ -290,7 +290,6 @@ test("vr_common_unittests") {
     ":vr_test_support",
     "//chrome/app/vector_icons",
     "//chrome/browser",
-    "//chrome/test:test_support",
     "//components/url_formatter",
     "//components/vector_icons",
     "//content/test:test_support",
@@ -431,7 +430,6 @@ if (!is_android) {
     deps = [
       ":vr_common",
       "//chrome/common:constants",
-      "//chrome/test:xr_browser_tests_common",
       "//device/vr:vr",
       "//device/vr/buildflags:buildflags",
       "//device/vr/orientation",

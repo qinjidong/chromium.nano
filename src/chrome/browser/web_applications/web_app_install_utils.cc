@@ -41,7 +41,6 @@
 #include "chrome/browser/ssl/security_state_tab_helper.h"
 #include "chrome/browser/web_applications/os_integration/os_integration_manager.h"
 #include "chrome/browser/web_applications/os_integration/web_app_file_handler_manager.h"
-#include "chrome/browser/web_applications/policy/pre_redirection_url_observer.h"
 #include "chrome/browser/web_applications/scope_extension_info.h"
 #include "chrome/browser/web_applications/web_app.h"
 #include "chrome/browser/web_applications/web_app_chromeos_data.h"
@@ -1097,7 +1096,6 @@ void CreateWebAppInstallTabHelpers(content::WebContents* web_contents) {
   webapps::InstallableManager::CreateForWebContents(web_contents);
   SecurityStateTabHelper::CreateForWebContents(web_contents);
   favicon::CreateContentFaviconDriverForWebContents(web_contents);
-  webapps::PreRedirectionURLObserver::CreateForWebContents(web_contents);
 }
 
 void SetWebAppManifestFields(const WebAppInstallInfo& web_app_info,
@@ -1211,12 +1209,6 @@ void SetWebAppProductIconFields(const WebAppInstallInfo& web_app_info,
 
 
 bool CanWebAppUpdateIdentity(const WebApp* web_app) {
-  if (web_app->IsPolicyInstalledApp() &&
-      base::FeatureList::IsEnabled(
-          features::kWebAppManifestPolicyAppIdentityUpdate)) {
-    return true;
-  }
-
   // WebAppChromeOsData::oem_installed is not included in this statement as
   // we would like to keep WebAppManagement::kOem and
   // WebAppChromeOsData::oem_installed separate.

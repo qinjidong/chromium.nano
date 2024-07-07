@@ -9,7 +9,6 @@
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/signin/identity_manager_factory.h"
 #include "chrome/browser/supervised_user/supervised_user_service_factory.h"
-#include "components/policy/core/common/policy_pref_names.h"
 #include "components/supervised_user/core/browser/supervised_user_preferences.h"
 #include "components/supervised_user/core/browser/supervised_user_service.h"
 
@@ -52,14 +51,7 @@ void ChromeSupervisedUserServicePlatformDelegateBase::
       // This is a supervised profile. It is not expected for incognito to be
       // available except in some edge cases. Output the edge cases separately
       // from the "unexpected" bucket.
-      if (profile_->GetPrefs()
-              ->FindPreference(policy::policy_prefs::kIncognitoModeAvailability)
-              ->IsManaged()) {
-        // An Enterprise policy has taken higher precedence than the parental
-        // control settings.
-        base::RecordAction(base::UserMetricsAction(
-            "IncognitoMode_Started_Supervised_Managed"));
-      } else if (!supervised_user::IsSubjectToParentalControls(
+      if (!supervised_user::IsSubjectToParentalControls(
                      *profile_->GetPrefs())) {
         // This is unexpected, and suggests there's a mismatch between the UMA
         // log segment state based on capabilities and the parental supervision

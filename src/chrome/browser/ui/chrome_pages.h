@@ -31,10 +31,6 @@ namespace apps {
 enum class LaunchSource;
 }
 
-namespace safe_browsing {
-enum class SafeBrowsingSettingReferralMethod;
-}
-
 namespace signin {
 enum class ConsentLevel;
 }  // namespace signin
@@ -148,10 +144,6 @@ void ShowPasswordManager(Browser* browser);
 void ShowPasswordDetailsPage(Browser* browser,
                              const std::string& password_domain_name);
 void ShowPasswordCheck(Browser* browser);
-void ShowSafeBrowsingEnhancedProtection(Browser* browser);
-void ShowSafeBrowsingEnhancedProtectionWithIph(
-    Browser* browser,
-    safe_browsing::SafeBrowsingSettingReferralMethod referral_method);
 void ShowImportDialog(Browser* browser);
 void ShowAboutChrome(Browser* browser);
 void ShowSearchEngineSettings(Browser* browser);

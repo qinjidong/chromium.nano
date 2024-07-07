@@ -169,7 +169,6 @@ source_set("browser_tests") {
     "//chrome/browser/media/router/discovery/access_code:access_code_cast_feature",
     "//chrome/browser/optimization_guide:test_support",
     "//chrome/browser/ui/lens",
-    "//chrome/test:test_support",
     "//components/bookmarks/browser:browser",
     "//components/bookmarks/managed:managed",
     "//components/commerce/core:commerce_constants",
@@ -189,7 +188,6 @@ source_set("browser_tests") {
     "//components/privacy_sandbox:features",
     "//components/privacy_sandbox/privacy_sandbox_attestations:privacy_sandbox_attestations",
     "//components/privacy_sandbox/privacy_sandbox_attestations:test_support",
-    "//components/safe_browsing/core/common:common",
     "//components/search:search",
     "//components/site_engagement/content:content",
     "//components/user_notes:features",
@@ -222,7 +220,6 @@ source_set("interactive_ui_tests") {
     "new_tab_page/new_tab_page_focus_test.cc",
     "password_manager/password_manager_focus_test.cc",
     "settings/settings_focus_test.cc",
-    "support_tool/support_tool_focus_test.cc",
     "tab_search/tab_search_focus_test.cc",
   ]
 
@@ -250,7 +247,6 @@ source_set("interactive_ui_tests") {
   defines = [ "HAS_OUT_OF_PROC_TEST_RUNNER" ]
 
   deps = [
-    "//chrome/test:test_support",
     "//components/password_manager/content/common:common",
     "//components/search:search",
   ]
@@ -398,7 +394,6 @@ generate_grd("build_grd") {
     "side_panel:build_grdp",
     "side_panel/customize_chrome:build_grdp",
     "side_panel/read_anything:build_grdp",
-    "support_tool:build_grdp",
     "sync_internals:build_grdp",
     "tab_search:build_grdp",
     "usb_internals:build_grdp",
@@ -446,7 +441,6 @@ generate_grd("build_grd") {
     "$target_gen_dir/side_panel/customize_chrome/resources.grdp",
     "$target_gen_dir/side_panel/read_anything/resources.grdp",
     "$target_gen_dir/side_panel/resources.grdp",
-    "$target_gen_dir/support_tool/resources.grdp",
     "$target_gen_dir/sync_internals/resources.grdp",
     "$target_gen_dir/tab_search/resources.grdp",
     "$target_gen_dir/usb_internals/resources.grdp",

@@ -6,7 +6,6 @@
 
 #include "chrome/app/vector_icons/vector_icons.h"
 #include "chrome/browser/download/download_ui_model.h"
-#include "chrome/browser/enterprise/connectors/common.h"
 #include "chrome/browser/ui/color/chrome_color_id.h"
 #include "chrome/grit/generated_resources.h"
 #include "components/vector_icons/vector_icons.h"
@@ -54,18 +53,10 @@ IconAndColor IconAndColorForInterrupted(const DownloadUIModel& model) {
                               : &views::kInfoIcon,
                           kColorDownloadItemIconDangerous};
     case download::DOWNLOAD_DANGER_TYPE_SENSITIVE_CONTENT_BLOCK: {
-      if (enterprise_connectors::ShouldPromptReviewForDownload(
-              model.profile(), model.GetDownloadItem())) {
-        return IconAndColor{features::IsChromeRefresh2023()
-                                ? &kDownloadWarningIcon
-                                : &vector_icons::kNotSecureWarningIcon,
-                            kColorDownloadItemIconDangerous};
-      } else {
-        return IconAndColor{features::IsChromeRefresh2023()
-                                ? &views::kInfoChromeRefreshIcon
-                                : &views::kInfoIcon,
-                            kColorDownloadItemIconDangerous};
-      }
+      return IconAndColor{features::IsChromeRefresh2023()
+                              ? &views::kInfoChromeRefreshIcon
+                              : &views::kInfoIcon,
+                          kColorDownloadItemIconDangerous};
     }
     case download::DOWNLOAD_DANGER_TYPE_DANGEROUS_FILE:
     case download::DOWNLOAD_DANGER_TYPE_DANGEROUS_CONTENT:
@@ -131,29 +122,6 @@ IconAndColor IconAndColorForInProgressOrComplete(const DownloadUIModel& model) {
     case download::DownloadItem::InsecureDownloadStatus::VALIDATED:
     case download::DownloadItem::InsecureDownloadStatus::SILENT_BLOCK:
       break;
-  }
-
-  if (enterprise_connectors::ShouldPromptReviewForDownload(
-          model.profile(), model.GetDownloadItem())) {
-    switch (model.GetDangerType()) {
-      case download::DOWNLOAD_DANGER_TYPE_DANGEROUS_CONTENT:
-        return IconAndColor{features::IsChromeRefresh2023()
-                                ? &vector_icons::kDangerousChromeRefreshIcon
-                                : &vector_icons::kDangerousIcon,
-                            kColorDownloadItemIconDangerous};
-      case download::DOWNLOAD_DANGER_TYPE_POTENTIALLY_UNWANTED:
-        return IconAndColor{features::IsChromeRefresh2023()
-                                ? &kDownloadWarningIcon
-                                : &vector_icons::kNotSecureWarningIcon,
-                            kColorDownloadItemIconWarning};
-      case download::DOWNLOAD_DANGER_TYPE_SENSITIVE_CONTENT_WARNING:
-        return IconAndColor{features::IsChromeRefresh2023()
-                                ? &views::kInfoChromeRefreshIcon
-                                : &views::kInfoIcon,
-                            kColorDownloadItemIconWarning};
-      default:
-        break;
-    }
   }
 
   if (DownloadUIModel::TailoredWarningType type =
@@ -273,18 +241,6 @@ std::vector<DownloadBubbleQuickAction> QuickActionsForDownload(
       break;
   }
 
-  if (enterprise_connectors::ShouldPromptReviewForDownload(
-          model.profile(), model.GetDownloadItem())) {
-    switch (model.GetDangerType()) {
-      case download::DOWNLOAD_DANGER_TYPE_DANGEROUS_CONTENT:
-      case download::DOWNLOAD_DANGER_TYPE_POTENTIALLY_UNWANTED:
-      case download::DOWNLOAD_DANGER_TYPE_SENSITIVE_CONTENT_WARNING:
-        return {};
-      default:
-        break;
-    }
-  }
-
   if (model.GetTailoredWarningType() !=
       TailoredWarningType::kNoTailoredWarning) {
     return {};
@@ -382,18 +338,6 @@ DownloadBubbleProgressBar ProgressBarForDownload(const DownloadUIModel& model) {
     case DownloadItem::InsecureDownloadStatus::VALIDATED:
     case DownloadItem::InsecureDownloadStatus::SILENT_BLOCK:
       break;
-  }
-
-  if (enterprise_connectors::ShouldPromptReviewForDownload(
-          model.profile(), model.GetDownloadItem())) {
-    switch (model.GetDangerType()) {
-      case download::DOWNLOAD_DANGER_TYPE_DANGEROUS_CONTENT:
-      case download::DOWNLOAD_DANGER_TYPE_POTENTIALLY_UNWANTED:
-      case download::DOWNLOAD_DANGER_TYPE_SENSITIVE_CONTENT_WARNING:
-        return DownloadBubbleProgressBar::NoProgressBar();
-      default:
-        break;
-    }
   }
 
   if (model.GetTailoredWarningType() !=

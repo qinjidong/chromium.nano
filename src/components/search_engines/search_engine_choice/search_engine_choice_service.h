@@ -14,10 +14,6 @@
 #include "components/keyed_service/core/keyed_service.h"
 #include "components/search_engines/search_engine_choice/search_engine_choice_utils.h"
 
-namespace policy {
-class PolicyService;
-}
-
 class PrefService;
 class TemplateURLService;
 
@@ -49,17 +45,6 @@ class SearchEngineChoiceService : public KeyedService {
   // during a profile's lifetime. Should be checked right before showing a
   // choice screen.
   SearchEngineChoiceScreenConditions GetDynamicChoiceScreenConditions(
-      const TemplateURLService& template_url_service);
-
-  // Returns the choice screen eligibility condition most relevant for the
-  // profile described by `profile_properties`. Only checks static conditions,
-  // such that if a non-eligible condition is returned, it would take at least a
-  // restart for the state to change. So this state can be checked and cached
-  // ahead of showing a choice screen.
-  // TODO(b/318801987): Remove `is_regular_profile` after fixing tests.
-  SearchEngineChoiceScreenConditions GetStaticChoiceScreenConditions(
-      const policy::PolicyService& policy_service,
-      bool is_regular_profile,
       const TemplateURLService& template_url_service);
 
   // Returns the country ID to use in the context of any search engine choice

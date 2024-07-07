@@ -11,11 +11,6 @@
 #include "base/memory/raw_ref.h"
 #include "build/build_config.h"
 
-#if BUILDFLAG(IS_CHROMEOS)
-#include "chrome/browser/enterprise/browser_management/management_service_factory.h"
-#include "components/policy/core/common/management/management_service.h"
-#endif  // BUILDFLAG(IS_CHROMEOS)
-
 namespace web_app {
 
 namespace {
@@ -78,23 +73,7 @@ BASE_FEATURE(kDocsSheetsSlidesDrivePreinstallStandaloneTabbed,
 #endif  // BUILDFLAG(IS_CHROMEOS)
 
 bool IsPreinstalledDocsSheetsSlidesDriveStandaloneTabbed(Profile& profile) {
-#if BUILDFLAG(IS_CHROMEOS)
-  if (!base::FeatureList::IsEnabled(
-          kDocsSheetsSlidesDrivePreinstallStandaloneTabbed)) {
-    return false;
-  }
-  // Exclude managed devices.
-  if (policy::ManagementServiceFactory::GetForPlatform()->IsManaged()) {
-    return false;
-  }
-  // Exclude managed profiles.
-  if (policy::ManagementServiceFactory::GetForProfile(&profile)->IsManaged()) {
-    return false;
-  }
-  return true;
-#else
   return false;
-#endif  // BUILDFLAG(IS_CHROMEOS)
 }
 
 bool IsPreinstalledAppInstallFeatureEnabled(std::string_view feature_name,

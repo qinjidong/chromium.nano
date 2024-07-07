@@ -60,8 +60,6 @@
 #include "chrome/browser/ui/webui/settings/profile_info_handler.h"
 #include "chrome/browser/ui/webui/settings/protocol_handlers_handler.h"
 #include "chrome/browser/ui/webui/settings/reset_settings_handler.h"
-#include "chrome/browser/ui/webui/settings/safety_check_handler.h"
-#include "chrome/browser/ui/webui/settings/safety_hub_handler.h"
 #include "chrome/browser/ui/webui/settings/search_engines_handler.h"
 #include "chrome/browser/ui/webui/settings/settings_clear_browsing_data_handler.h"
 #include "chrome/browser/ui/webui/settings/settings_localized_strings_provider.h"
@@ -94,8 +92,6 @@
 #include "components/prefs/pref_service.h"
 #include "components/privacy_sandbox/privacy_sandbox_features.h"
 #include "components/privacy_sandbox/tracking_protection_settings.h"
-#include "components/safe_browsing/core/common/features.h"
-#include "components/safe_browsing/core/common/hashprefix_realtime/hash_realtime_utils.h"
 #include "components/search_engines/search_engine_choice/search_engine_choice_service.h"
 #include "components/search_engines/search_engine_choice/search_engine_choice_utils.h"
 #include "components/signin/public/base/signin_pref_names.h"
@@ -240,8 +236,6 @@ SettingsUI::SettingsUI(content::WebUI* web_ui)
   AddSettingsPageUIHandler(std::make_unique<BrowserLifetimeHandler>());
   AddSettingsPageUIHandler(
       std::make_unique<ClearBrowsingDataHandler>(web_ui, profile));
-  AddSettingsPageUIHandler(std::make_unique<SafetyCheckHandler>());
-  AddSettingsPageUIHandler(std::make_unique<SafetyHubHandler>(profile));
   AddSettingsPageUIHandler(std::make_unique<DownloadsHandler>(profile));
   AddSettingsPageUIHandler(std::make_unique<ExtensionControlHandler>());
   AddSettingsPageUIHandler(std::make_unique<FontHandler>(profile));
@@ -372,18 +366,6 @@ SettingsUI::SettingsUI(content::WebUI* web_ui)
       base::FeatureList::IsEnabled(features::kCbdTimeframeRequired));
 
   html_source->AddBoolean(
-      "enableFriendlierSafeBrowsingSettings",
-      base::FeatureList::IsEnabled(
-          safe_browsing::kFriendlierSafeBrowsingSettingsEnhancedProtection) &&
-          base::FeatureList::IsEnabled(
-              safe_browsing::
-                  kFriendlierSafeBrowsingSettingsStandardProtection));
-
-  html_source->AddBoolean("enableHashPrefixRealTimeLookups",
-                          safe_browsing::hash_realtime_utils::
-                              IsHashRealTimeLookupEligibleInSession());
-
-  html_source->AddBoolean(
       "enableHttpsFirstModeNewSettings",
       base::FeatureList::IsEnabled(features::kHttpsFirstModeIncognito));
 
@@ -472,10 +454,6 @@ SettingsUI::SettingsUI(content::WebUI* web_ui)
   // Add the metrics handler to write uma stats.
   web_ui->AddMessageHandler(std::make_unique<MetricsHandler>());
 
-  webui::SetupWebUIDataSource(
-      html_source, base::make_span(kSettingsResources, kSettingsResourcesSize),
-      IDR_SETTINGS_SETTINGS_HTML);
-
 #if !BUILDFLAG(OPTIMIZE_WEBUI)
   html_source->AddResourcePaths(
       base::make_span(kSettingsSharedResources, kSettingsSharedResourcesSize));
@@ -510,11 +488,6 @@ SettingsUI::SettingsUI(content::WebUI* web_ui)
       "safetyCheckUnusedSitePermissionsEnabled",
       base::FeatureList::IsEnabled(
           content_settings::features::kSafetyCheckUnusedSitePermissions));
-
-  html_source->AddBoolean(
-      "safetyHubAbusiveNotificationRevocationEnabled",
-      base::FeatureList::IsEnabled(
-          safe_browsing::kSafetyHubAbusiveNotificationRevocation));
 
 #if BUILDFLAG(ENABLE_EXTENSIONS)
   html_source->AddBoolean(

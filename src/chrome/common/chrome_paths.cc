@@ -29,10 +29,6 @@
 #include "base/apple/foundation_util.h"
 #endif
 
-#if BUILDFLAG(IS_POSIX) && !BUILDFLAG(IS_MAC) && !BUILDFLAG(IS_OPENBSD)
-#include "components/policy/core/common/policy_paths.h"
-#endif
-
 #if BUILDFLAG(IS_WIN)
 #include "base/win/registry.h"
 #endif
@@ -540,12 +536,6 @@ bool PathProvider(int key, base::FilePath* result) {
         return false;
       }
       break;
-#if BUILDFLAG(IS_POSIX) && !BUILDFLAG(IS_MAC) && !BUILDFLAG(IS_OPENBSD)
-    case chrome::DIR_POLICY_FILES: {
-      cur = base::FilePath(policy::kPolicyPath);
-      break;
-    }
-#endif
 // TODO(crbug.com/40118868): Revisit once build flag switch of lacros-chrome is
 // complete.
 #if BUILDFLAG(IS_CHROMEOS_ASH) ||                              \

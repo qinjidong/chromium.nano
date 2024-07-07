@@ -59,12 +59,8 @@
 #include "chrome/renderer/plugins/non_loadable_plugin_placeholder.h"
 #include "chrome/renderer/plugins/pdf_plugin_placeholder.h"
 #include "chrome/renderer/supervised_user/supervised_user_error_page_controller_delegate_impl.h"
-#include "chrome/renderer/trusted_vault_encryption_keys_extension.h"
-#include "chrome/renderer/url_loader_throttle_provider_impl.h"
-#include "chrome/renderer/v8_unwinder.h"
-#include "chrome/renderer/web_link_preview_triggerer_impl.h"
-#include "chrome/renderer/websocket_handshake_throttle_provider_impl.h"
 #include "chrome/renderer/worker_content_settings_client.h"
+#include "chrome/renderer/v8_unwinder.h"
 #include "chrome/services/speech/buildflags/buildflags.h"
 #include "components/autofill/content/renderer/autofill_agent.h"
 #include "components/autofill/content/renderer/password_autofill_agent.h"
@@ -103,12 +99,7 @@
 #include "components/pdf/common/constants.h"
 #include "components/pdf/common/pdf_util.h"
 #include "components/permissions/features.h"
-#include "components/safe_browsing/buildflags.h"
-#include "components/safe_browsing/content/renderer/threat_dom_details.h"
 #include "components/spellcheck/spellcheck_buildflags.h"
-#include "components/subresource_filter/content/renderer/subresource_filter_agent.h"
-#include "components/subresource_filter/content/renderer/unverified_ruleset_dealer.h"
-#include "components/subresource_filter/core/common/common_features.h"
 #include "components/variations/net/variations_http_headers.h"
 #include "components/variations/variations_switches.h"
 #include "components/version_info/version_info.h"
@@ -453,15 +444,7 @@ void ChromeContentRendererClient::RenderThreadStarted() {
     InitSpellCheck();
 #endif
 
-  subresource_filter_ruleset_dealer_ =
-      std::make_unique<subresource_filter::UnverifiedRulesetDealer>();
-
-  phishing_model_setter_ =
-      std::make_unique<safe_browsing::PhishingModelSetterImpl>();
-
   thread->AddObserver(chrome_observer_.get());
-  thread->AddObserver(subresource_filter_ruleset_dealer_.get());
-  thread->AddObserver(phishing_model_setter_.get());
 
   blink::WebScriptController::RegisterExtension(
       extensions_v8::LoadTimesExtension::Get());
@@ -619,10 +602,6 @@ void ChromeContentRendererClient::RenderFrameCreated(
   new nacl::NaClHelper(render_frame);
 #endif
 
-#if BUILDFLAG(SAFE_BROWSING_DB_LOCAL) || BUILDFLAG(SAFE_BROWSING_DB_REMOTE)
-  safe_browsing::ThreatDOMDetails::Create(render_frame, registry);
-#endif
-
 #if BUILDFLAG(ENABLE_PRINTING)
   new printing::PrintRenderFrameHelper(
       render_frame, std::make_unique<ChromePrintRenderFrameHelperDelegate>());
@@ -636,7 +615,6 @@ void ChromeContentRendererClient::RenderFrameCreated(
   SandboxStatusExtension::Create(render_frame);
 #endif
 
-  TrustedVaultEncryptionKeysExtension::Create(render_frame);
   GoogleAccountsPrivateApiExtension::Create(render_frame);
 
   if (render_frame->IsMainFrame())
@@ -722,14 +700,6 @@ void ChromeContentRendererClient::RenderFrameCreated(
 
   // Owned by |render_frame|.
   new page_load_metrics::MetricsRenderFrameObserver(render_frame);
-  // There is no render thread, thus no UnverifiedRulesetDealer in
-  // ChromeRenderViewTests.
-  if (subresource_filter_ruleset_dealer_) {
-    auto* subresource_filter_agent =
-        new subresource_filter::SubresourceFilterAgent(
-            render_frame, subresource_filter_ruleset_dealer_.get());
-    subresource_filter_agent->Initialize();
-  }
 
 #if !BUILDFLAG(IS_ANDROID)
   base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
@@ -1554,12 +1524,6 @@ SpellCheck* ChromeContentRendererClient::GetSpellCheck() {
 }
 #endif  // BUILDFLAG(ENABLE_SPELLCHECK)
 
-std::unique_ptr<blink::WebSocketHandshakeThrottleProvider>
-ChromeContentRendererClient::CreateWebSocketHandshakeThrottleProvider() {
-  return std::make_unique<WebSocketHandshakeThrottleProviderImpl>(
-      browser_interface_broker_.get());
-}
-
 std::unique_ptr<media::KeySystemSupportRegistration>
 ChromeContentRendererClient::GetSupportedKeySystems(
     content::RenderFrame* render_frame,
@@ -1639,9 +1603,6 @@ void ChromeContentRendererClient::
           autofill::features::kAutofillSharedAutofill)) {
     blink::WebRuntimeFeatures::EnableSharedAutofill(true);
   }
-
-  if (base::FeatureList::IsEnabled(subresource_filter::kAdTagging))
-    blink::WebRuntimeFeatures::EnableAdTagging(true);
 
 #if BUILDFLAG(ENABLE_EXTENSIONS)
   // WebHID and WebUSB on service workers is only available in extensions.
@@ -1747,8 +1708,7 @@ GURL ChromeContentRendererClient::OverrideFlashEmbedWithHTML(const GURL& url) {
 std::unique_ptr<blink::URLLoaderThrottleProvider>
 ChromeContentRendererClient::CreateURLLoaderThrottleProvider(
     blink::URLLoaderThrottleProviderType provider_type) {
-  return URLLoaderThrottleProviderImpl::Create(provider_type, this,
-                                               browser_interface_broker_.get());
+  return nullptr;
 }
 
 blink::WebFrame* ChromeContentRendererClient::FindFrame(
@@ -1823,5 +1783,5 @@ void ChromeContentRendererClient::AppendContentSecurityPolicy(
 
 std::unique_ptr<blink::WebLinkPreviewTriggerer>
 ChromeContentRendererClient::CreateLinkPreviewTriggerer() {
-  return ::CreateWebLinkPreviewTriggerer();
+  return nullptr;
 }

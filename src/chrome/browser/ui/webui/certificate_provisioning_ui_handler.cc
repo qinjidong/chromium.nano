@@ -18,8 +18,6 @@
 #include "chrome/common/net/x509_certificate_model.h"
 #include "chrome/common/net/x509_certificate_model_nss.h"
 #include "chrome/grit/generated_resources.h"
-#include "components/policy/core/browser/cloud/message_util.h"
-#include "components/policy/core/common/cloud/cloud_policy_constants.h"
 #include "content/public/browser/web_ui.h"
 #include "ui/base/l10n/l10n_util.h"
 #include "ui/base/l10n/time_format.h"
@@ -169,22 +167,6 @@ std::u16string GetTimeSinceLastUpdate(base::Time last_update_time) {
                                 ui::TimeFormat::LENGTH_SHORT, elapsed_time);
 }
 
-std::u16string GetMessageFromBackendError(
-    const crosapi::mojom::CertProvisioningBackendServerErrorPtr& call_info) {
-  if (!call_info)
-    return std::u16string();
-
-  std::u16string time_u16 =
-      base::UTF8ToUTF16(base::TimeFormatHTTP(call_info->time));
-  // FormatDeviceManagementStatus will return "Unknown error" if the value after
-  // cast is not actually an existing enum value.
-  auto status =
-      static_cast<policy::DeviceManagementStatus>(call_info->status_code);
-  return l10n_util::GetStringFUTF16(
-      IDS_SETTINGS_CERTIFICATE_MANAGER_PROVISIONING_DMSERVER_ERROR_MESSAGE,
-      policy::FormatDeviceManagementStatus(status), time_u16);
-}
-
 }  // namespace
 
 // static
@@ -306,8 +288,6 @@ void CertificateProvisioningUiHandler::GotStatus(
     entry.Set("isDeviceWide", process->is_device_wide);
     entry.Set("timeSinceLastUpdate",
               GetTimeSinceLastUpdate(process->last_update_time));
-    entry.Set("lastUnsuccessfulMessage",
-              GetMessageFromBackendError(process->last_backend_server_error));
     entry.Set("stateId", static_cast<int>(process->state));
     entry.Set("status", MakeStatusMessage(process->did_fail, process->state,
                                           process->failure_message));

@@ -193,7 +193,6 @@
 
 #if BUILDFLAG(IS_MAC) || BUILDFLAG(IS_WIN) || BUILDFLAG(IS_ANDROID) || \
     BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS)
-#include "chrome/browser/policy/policy_path_parser.h"
 #include "components/crash/core/app/crashpad.h"
 #endif
 
@@ -649,9 +648,6 @@ void InitializeUserDataDir(base::CommandLine* command_line) {
     }
   }
 #endif  // BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS)
-#if BUILDFLAG(IS_MAC)
-  policy::path_parser::CheckUserDataDirPolicy(&user_data_dir);
-#endif  // BUILDFLAG(IS_MAC)
 
   const bool specified_directory_was_invalid =
       !user_data_dir.empty() &&

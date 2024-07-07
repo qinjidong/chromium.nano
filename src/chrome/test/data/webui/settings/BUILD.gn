@@ -73,13 +73,6 @@ build_webui_tests("build") {
     "safety_check_page_test.ts",
     "safety_check_permissions_test.ts",
     "safety_check_test_utils.ts",
-    "safety_hub_card_test.ts",
-    "safety_hub_entry_point_test.ts",
-    "safety_hub_module_test.ts",
-    "safety_hub_notification_permissions_module_test.ts",
-    "safety_hub_extensions_module_test.ts",
-    "safety_hub_page_test.ts",
-    "safety_hub_unused_site_permissions_module_test.ts",
     "search_engine_entry_test.ts",
     "search_engines_page_test.ts",
     "search_page_test.ts",
@@ -243,7 +236,6 @@ build_webui_tests("build") {
   }
 
   ts_deps = [
-    "//chrome/browser/resources/settings:build_ts",
     "//chrome/test/data/webui/cr_elements:build_ts",
     "//third_party/polymer/v3_0:library",
     "//ui/webui/resources/js:build_ts",

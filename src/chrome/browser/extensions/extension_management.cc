@@ -53,12 +53,6 @@
 #include "extensions/common/url_pattern.h"
 #include "url/gurl.h"
 
-#if BUILDFLAG(IS_CHROMEOS_ASH)
-#include "chrome/browser/ash/profiles/profile_helper.h"
-#else
-#include "components/enterprise/browser/reporting/common_pref_names.h"
-#endif
-
 namespace extensions {
 
 ExtensionManagement::ExtensionManagement(Profile* profile)
@@ -84,10 +78,6 @@ ExtensionManagement::ExtensionManagement(Profile* profile)
                              pref_change_callback);
   pref_change_registrar_.Add(prefs::kCloudExtensionRequestEnabled,
                              pref_change_callback);
-#if !BUILDFLAG(IS_CHROMEOS_ASH)
-  pref_change_registrar_.Add(enterprise_reporting::kCloudReportingEnabled,
-                             pref_change_callback);
-#endif
   pref_change_registrar_.Add(pref_names::kManifestV2Availability,
                              pref_change_callback);
   pref_change_registrar_.Add(pref_names::kExtensionUnpublishedAvailability,

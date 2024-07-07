@@ -32,7 +32,6 @@
 #include "chrome/common/channel_info.h"
 #include "chrome/common/chrome_switches.h"
 #include "chrome/common/pref_names.h"
-#include "components/enterprise/browser/controller/browser_dm_token_storage.h"
 #include "components/prefs/pref_service.h"
 #include "components/version_info/version_info.h"
 #include "components/version_info/version_info_values.h"
@@ -150,11 +149,11 @@ void DeleteMovedUserData(const base::FilePath& user_data_dir,
 }
 
 bool UserDataSnapshotEnabled() {
-  return g_snapshots_enabled_for_testing ||
+  return g_snapshots_enabled_for_testing
 #if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC)
-         base::IsEnterpriseDevice() ||
+         || base::IsEnterpriseDevice()
 #endif
-         policy::BrowserDMTokenStorage::Get()->RetrieveDMToken().is_valid();
+  ;
 }
 
 #if BUILDFLAG(IS_WIN)

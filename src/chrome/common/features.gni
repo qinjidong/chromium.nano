@@ -9,7 +9,6 @@ import("//build/config/dcheck_always_on.gni")
 import("//build/config/features.gni")
 import("//components/compose/features.gni")
 import("//components/feed/features.gni")
-import("//components/safe_browsing/buildflags.gni")
 import("//components/signin/features.gni")
 import("//components/supervised_user/buildflags.gni")
 import("//crypto/features.gni")
@@ -122,7 +121,6 @@ chrome_grit_defines = [
   "enable_webui_certificate_viewer=$enable_webui_certificate_viewer",
   "enable_webui_tab_strip=$enable_webui_tab_strip",
   "is_official_build=$is_official_build",
-  "safe_browsing_mode=$safe_browsing_mode",
   "optimize_webui=$optimize_webui",
   "chrome_root_store_cert_management_ui=$chrome_root_store_cert_management_ui",
   "use_nss_certs=$use_nss_certs",

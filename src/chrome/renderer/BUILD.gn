@@ -101,16 +101,8 @@ static_library("renderer") {
     "supervised_user/supervised_user_error_page_controller_delegate.h",
     "supervised_user/supervised_user_error_page_controller_delegate_impl.cc",
     "supervised_user/supervised_user_error_page_controller_delegate_impl.h",
-    "trusted_vault_encryption_keys_extension.cc",
-    "trusted_vault_encryption_keys_extension.h",
-    "url_loader_throttle_provider_impl.cc",
-    "url_loader_throttle_provider_impl.h",
     "v8_unwinder.cc",
     "v8_unwinder.h",
-    "web_link_preview_triggerer_impl.cc",
-    "web_link_preview_triggerer_impl.h",
-    "websocket_handshake_throttle_provider_impl.cc",
-    "websocket_handshake_throttle_provider_impl.h",
     "worker_content_settings_client.cc",
     "worker_content_settings_client.h",
   ]
@@ -187,19 +179,11 @@ static_library("renderer") {
     "//components/plugins/renderer",
     "//components/resources:components_resources",
     "//components/resources:components_scaled_resources",
-    "//components/safe_browsing:buildflags",
-    "//components/safe_browsing/content/common:interfaces",
-    "//components/safe_browsing/content/renderer",
-    "//components/safe_browsing/content/renderer:throttles",
-    "//components/safe_browsing/core/common",
-    "//components/safe_browsing/core/common:interfaces",
     "//components/search:search",
     "//components/security_interstitials/content/renderer:security_interstitial_page_controller",
     "//components/security_interstitials/core:",
     "//components/security_interstitials/core/common/mojom:",
     "//components/spellcheck:buildflags",
-    "//components/subresource_filter/content/renderer",
-    "//components/subresource_filter/core/common",
     "//components/supervised_user/core/common:buildflags",
     "//components/translate/content/renderer",
     "//components/translate/core/common",
@@ -279,11 +263,6 @@ static_library("renderer") {
       "media/chrome_key_systems.cc",
       "media/chrome_key_systems.h",
     ]
-  }
-
-  if (safe_browsing_mode != 0) {
-    deps +=
-        [ "//components/safe_browsing/content/renderer/phishing_classifier" ]
   }
 
   if (enable_feed_v2) {

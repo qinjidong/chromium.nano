@@ -139,9 +139,6 @@ class ExtensionAllowlist : private ExtensionPrefsObserver {
   // feature).
   bool should_auto_disable_extensions_ = false;
 
-  // Used to subscribe to profile preferences updates.
-  PrefChangeRegistrar pref_change_registrar_;
-
   base::ScopedObservation<ExtensionPrefs, ExtensionPrefsObserver>
       extension_prefs_observation_{this};
 };

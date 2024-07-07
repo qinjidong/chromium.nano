@@ -6,11 +6,8 @@
 
 #include "base/no_destructor.h"
 #include "base/ranges/algorithm.h"
-#include "components/safe_browsing/core/browser/db/v4_protocol_manager_util.h"
 #include "third_party/re2/src/re2/re2.h"
 #include "url/gurl.h"
-
-using safe_browsing::V4ProtocolManagerUtil;
 
 namespace lookalikes {
 
@@ -33,38 +30,6 @@ class SafetyTipsConfigSingleton {
   std::unique_ptr<reputation::SafetyTipsConfig> proto_;
 };
 
-// Given a URL, generates all possible variant URLs to check the blocklist for.
-// This is conceptually almost identical to safe_browsing::UrlToFullHashes, but
-// without the hashing step.
-//
-// Note: Blocking "a.b/c/" does NOT block http://a.b/c without the trailing /.
-void UrlToSafetyTipPatterns(const GURL& url,
-                            std::vector<std::string>* patterns) {
-  std::string canon_host;
-  std::string canon_path;
-  std::string canon_query;
-  V4ProtocolManagerUtil::CanonicalizeUrl(url, &canon_host, &canon_path,
-                                         &canon_query);
-
-  std::vector<std::string> hosts;
-  if (url.HostIsIPAddress()) {
-    hosts.push_back(url.host());
-  } else {
-    V4ProtocolManagerUtil::GenerateHostVariantsToCheck(canon_host, &hosts);
-  }
-
-  std::vector<std::string> paths;
-  V4ProtocolManagerUtil::GeneratePathVariantsToCheck(canon_path, canon_query,
-                                                     &paths);
-
-  for (const std::string& host : hosts) {
-    for (const std::string& path : paths) {
-      DCHECK(path.length() == 0 || path[0] == '/');
-      patterns->push_back(host + path);
-    }
-  }
-}
-
 // Return whether |canonical_url| is a member of the designated cohort.
 bool IsUrlAllowedByCohort(const reputation::SafetyTipsConfig* proto,
                           const GURL& canonical_url,
@@ -84,7 +49,6 @@ bool IsUrlAllowedByCohort(const reputation::SafetyTipsConfig* proto,
   // canonical_index entries correspond to a matching pattern since both sets of
   // indices are considered valid spoof targets.
   std::vector<std::string> patterns;
-  UrlToSafetyTipPatterns(canonical_url, &patterns);
   for (const auto& search_pattern : patterns) {
     for (const unsigned allowed_index : cohort.allowed_index()) {
       // Skip over invalid indices.
@@ -130,7 +94,6 @@ bool IsUrlAllowlistedBySafetyTipsComponent(
   DCHECK(proto);
   DCHECK(visited_url.is_valid());
   std::vector<std::string> patterns;
-  UrlToSafetyTipPatterns(visited_url, &patterns);
   auto allowed_patterns = proto->allowed_pattern();
   for (const auto& pattern : patterns) {
     reputation::UrlPattern search_target;

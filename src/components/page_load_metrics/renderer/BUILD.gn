@@ -19,7 +19,6 @@ source_set("renderer") {
     "//base",
     "//components/page_load_metrics/common",
     "//components/page_load_metrics/common:page_load_metrics_mojom",
-    "//components/subresource_filter/content/renderer",
     "//content/public/common",
     "//content/public/renderer",
     "//net",

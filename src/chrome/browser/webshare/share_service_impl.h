@@ -13,7 +13,6 @@
 #include "base/files/file_path.h"
 #include "base/memory/weak_ptr.h"
 #include "build/build_config.h"
-#include "chrome/browser/webshare/safe_browsing_request.h"
 #include "content/public/browser/document_service.h"
 #include "third_party/blink/public/mojom/webshare/webshare.mojom.h"
 
@@ -56,19 +55,9 @@ class ShareServiceImpl
              ShareCallback callback) override;
 
  private:
-  void OnSafeBrowsingResultReceived(
-      const std::string& title,
-      const std::string& text,
-      const GURL& share_url,
-      std::vector<blink::mojom::SharedFilePtr> files,
-      ShareCallback callback,
-      bool is_safe);
-
   ShareServiceImpl(content::RenderFrameHost& render_frame_host,
                    mojo::PendingReceiver<blink::mojom::ShareService> receiver);
   ~ShareServiceImpl() override;
-
-  std::optional<SafeBrowsingRequest> safe_browsing_request_;
 
 #if BUILDFLAG(IS_CHROMEOS)
   webshare::SharesheetClient sharesheet_client_;

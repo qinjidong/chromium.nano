@@ -67,7 +67,6 @@
 #include "url/gurl.h"
 
 #if BUILDFLAG(ENABLE_DICE_SUPPORT)
-#include "chrome/browser/ui/views/profiles/first_run_flow_controller_dice.h"
 #include "chrome/browser/ui/views/profiles/profile_picker_dice_sign_in_toolbar.h"
 #endif
 
@@ -810,25 +809,6 @@ void ProfilePickerView::FinishInit() {
 std::unique_ptr<ProfileManagementFlowController>
 ProfilePickerView::CreateFlowController(Profile* picker_profile,
                                         ClearHostClosure clear_host_callback) {
-  if (params_.entry_point() ==
-          ProfilePicker::EntryPoint::kLacrosPrimaryProfileFirstRun ||
-      params_.entry_point() == ProfilePicker::EntryPoint::kFirstRun) {
-    auto first_run_exited_callback =
-        base::BindOnce(&ProfilePicker::Params::NotifyFirstRunExited,
-                       // Unretained ok because the controller is owned
-                       // by this through `initialized_steps_`.
-                       base::Unretained(&params_));
-#if BUILDFLAG(IS_CHROMEOS_LACROS)
-    return std::make_unique<FirstRunFlowControllerLacros>(
-        /*host=*/this, std::move(clear_host_callback), picker_profile,
-        std::move(first_run_exited_callback));
-#elif BUILDFLAG(ENABLE_DICE_SUPPORT)
-    return std::make_unique<FirstRunFlowControllerDice>(
-        /*host=*/this, std::move(clear_host_callback), picker_profile,
-        std::move(first_run_exited_callback));
-#endif
-  }
-
   DCHECK(IsClassicProfilePickerFlow(params_));
   return std::make_unique<ProfilePickerFlowController>(
       /*host=*/this, std::move(clear_host_callback), params_.entry_point());

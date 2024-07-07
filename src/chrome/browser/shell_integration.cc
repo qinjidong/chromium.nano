@@ -21,7 +21,6 @@
 #include "build/branding_buildflags.h"
 #include "build/build_config.h"
 #include "build/chromeos_buildflags.h"
-#include "chrome/browser/policy/policy_path_parser.h"
 #include "chrome/common/chrome_paths.h"
 #include "chrome/common/chrome_switches.h"
 #include "components/prefs/pref_service.h"
@@ -167,9 +166,6 @@ void AppendProfileArgs(const base::FilePath& profile_path,
   // Use the same UserDataDir for new launches that we currently have set.
   base::FilePath user_data_dir =
       cmd_line.GetSwitchValuePath(switches::kUserDataDir);
-#if BUILDFLAG(IS_MAC) || BUILDFLAG(IS_WIN)
-  policy::path_parser::CheckUserDataDirPolicy(&user_data_dir);
-#endif
   if (!user_data_dir.empty()) {
     // Make sure user_data_dir is an absolute path.
     user_data_dir = base::MakeAbsoluteFilePath(user_data_dir);

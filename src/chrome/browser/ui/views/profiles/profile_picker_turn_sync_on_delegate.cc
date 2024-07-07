@@ -10,7 +10,6 @@
 #include "base/feature_list.h"
 #include "base/logging.h"
 #include "build/chromeos_buildflags.h"
-#include "chrome/browser/enterprise/util/managed_browser_utils.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/signin/signin_util.h"
 #include "chrome/browser/ui/chrome_pages.h"
@@ -216,7 +215,6 @@ void ProfilePickerTurnSyncOnDelegate::OnSyncConfirmationUIClosed(
   // It does not apply to managed accounts.
   // TODO(crbug.com/40280466): Align Managed and Consumer accounts.
   if (signin_util::IsForceSigninEnabled() &&
-      !chrome::enterprise_util::ProfileCanBeManaged(profile_) &&
       result == LoginUIService::SyncConfirmationUIClosedResult::ABORT_SYNC) {
     CHECK(base::FeatureList::IsEnabled(kForceSigninFlowInProfilePicker));
     HandleCancelSigninChoice(

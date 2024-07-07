@@ -26,6 +26,5 @@ source_set("unit_tests") {
   deps = [
     ":facilitated_payments",
     "//base",
-    "//chrome/test:test_support",
   ]
 }

@@ -9,7 +9,6 @@
 #include "build/build_config.h"
 #include "components/omnibox/browser/buildflags.h"
 #include "components/omnibox/common/omnibox_features.h"
-#include "components/safe_browsing/core/common/features.h"
 #include "components/security_state/core/security_state.h"
 #include "ui/base/ui_base_features.h"
 #include "ui/gfx/vector_icon_types.h"

@@ -21,16 +21,6 @@
 <iron-pages selected="[[selectedTabIndex_]]">
 
   <div>
-    <if expr="is_win or is_macosx">
-      <certificate-list-v2
-          id="provisionedClientCerts"
-          cert-source="[[certificateSourceEnum_.kProvisionedClientCert]]"
-          header-text="From your administrator"
-          hide-export
-          on-hash-copied="onHashCopied_">
-      </certificate-list-v2>
-    </if>
-
     <certificate-list-v2
         id="platformClientCerts"
         cert-source="[[certificateSourceEnum_.kPlatformClientCert]]"

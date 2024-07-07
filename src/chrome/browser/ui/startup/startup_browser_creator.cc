@@ -129,16 +129,13 @@
 #include "base/strings/utf_string_conversions.h"
 #include "chrome/browser/notifications/notification_platform_bridge_win.h"
 #include "chrome/browser/notifications/win/notification_launch_id.h"
-#include "chrome/browser/ui/startup/credential_provider_signin_dialog_win.h"
 #include "chrome/browser/ui/webui/settings/reset_settings_handler.h"
 #include "chrome/browser/web_applications/web_app_provider.h"
-#include "chrome/credential_provider/common/gcp_strings.h"
 #endif  // BUILDFLAG(IS_WIN)
 
 #if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_MAC) || BUILDFLAG(IS_WIN)
 #include "chrome/browser/headless/headless_mode_util.h"
 #include "chrome/browser/ui/startup/web_app_info_recorder_utils.h"
-#include "components/headless/policy/headless_mode_policy.h"
 #endif
 
 #if !BUILDFLAG(IS_CHROMEOS)
@@ -365,11 +362,6 @@ StartupProfileModeReason ShouldShowProfilePickerAtProcessLaunch(
   if (command_line.HasSwitch(switches::kUninstallAppId))
     return StartupProfileModeReason::kUninstallApp;
 
-  // Don't show the picker if we want to perform a GCPW Sign In. It will want to
-  // only launch an incognito window.
-  if (command_line.HasSwitch(credential_provider::kGcpwSigninSwitch))
-    return StartupProfileModeReason::kGcpwSignin;
-
   // If the browser is launched due to activation on Windows native
   // notification, the profile id encoded in the notification launch id should
   // be chosen over the profile picker.
@@ -475,39 +467,6 @@ bool MaybeLaunchAppShortcutWindow(const base::CommandLine& command_line,
                                   const base::FilePath& cur_dir,
                                   chrome::startup::IsFirstRun is_first_run,
                                   Profile* profile) {
-  if (!profile) {
-    return false;
-  }
-
-  if (!command_line.HasSwitch(switches::kApp))
-    return false;
-
-  std::string url_string = command_line.GetSwitchValueASCII(switches::kApp);
-  if (url_string.empty())
-    return false;
-
-#if BUILDFLAG(IS_WIN)  // Fix up Windows shortcuts.
-  base::ReplaceSubstringsAfterOffset(&url_string, 0, "\\x", "%");
-#endif
-  GURL url(url_string);
-
-  // Restrict allowed URLs for --app switch.
-  if (!url.is_empty() && url.is_valid()) {
-    content::ChildProcessSecurityPolicy* policy =
-        content::ChildProcessSecurityPolicy::GetInstance();
-    if (policy->IsWebSafeScheme(url.scheme()) ||
-        url.SchemeIs(url::kFileScheme)) {
-      const content::WebContents* web_contents =
-          apps::OpenExtensionAppShortcutWindow(profile, url);
-      if (web_contents) {
-        web_app::startup::FinalizeWebAppLaunch(
-            web_app::startup::OpenMode::kInWindowByUrl, command_line,
-            is_first_run, chrome::FindBrowserWithTab(web_contents),
-            apps::LaunchContainer::kLaunchContainerWindow);
-        return true;
-      }
-    }
-  }
   return false;
 }
 
@@ -691,7 +650,6 @@ void StartupBrowserCreator::LaunchBrowser(
 
   DCHECK(profile);
 #if BUILDFLAG(IS_WIN)
-  DCHECK(!command_line.HasSwitch(credential_provider::kGcpwSigninSwitch));
   DCHECK(!command_line.HasSwitch(switches::kNotificationLaunchId));
 #endif  // BUILDFLAG(IS_WIN)
   in_synchronous_profile_launch_ =
@@ -963,15 +921,6 @@ bool StartupBrowserCreator::ProcessCmdLineImpl(
   DCHECK_NE(profile_info.mode, StartupProfileMode::kError);
   TRACE_EVENT0("startup", "StartupBrowserCreator::ProcessCmdLineImpl");
   ComputeAndRecordLaunchMode(command_line);
-
-#if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_MAC) || BUILDFLAG(IS_WIN)
-  if (headless::IsHeadlessMode() &&
-      headless::HeadlessModePolicy::IsHeadlessModeDisabled(
-          g_browser_process->local_state())) {
-    LOG(ERROR) << "Headless mode is disallowed by the system admin.";
-    return false;
-  }
-#endif
 
   if (process_startup == chrome::startup::IsProcessStartup::kYes &&
       command_line.HasSwitch(switches::kDisablePromptOnRepost)) {
@@ -1248,34 +1197,6 @@ bool StartupBrowserCreator::ProcessCmdLineImpl(
       return true;
     }
     return false;
-  }
-
-  // If being started for credential provider logon purpose, only show the
-  // signin page.
-  if (command_line.HasSwitch(credential_provider::kGcpwSigninSwitch)) {
-    // Having access to an incognito profile for this action (as checked below)
-    // requires starting with a regular user profile (non-guest) and suppresses
-    // profile picker startups, see `ShouldShowProfilePickerAtProcessLaunch()`.
-    // TODO(http://crbug.com/1293024): Refactor command line processing logic to
-    // validate the flag sets and reliably determine the startup mode.
-    CHECK_EQ(profile_info.mode, StartupProfileMode::kBrowserWindow)
-        << "Failed start for GCPW signin: couldn't pick a profile";
-
-    // Use incognito profile since this is a credential provider logon.
-    Profile* incognito_profile =
-        privacy_safe_profile->GetPrimaryOTRProfile(/*create_if_needed=*/true);
-    DCHECK(incognito_profile->IsIncognitoProfile());
-    // NOTE: All launch urls are ignored when running with --gcpw-signin since
-    // this mode only loads Google's sign in page.
-
-    // If GCPW signin dialog fails, returning false here will allow Chrome to
-    // exit gracefully during the launch.
-    if (!StartGCPWSignin(command_line, incognito_profile))
-      return false;
-
-    OldLaunchModeRecorder().SetLaunchMode(
-        OldLaunchMode::kCredentialProviderSignIn);
-    return true;
   }
 #endif  // BUILDFLAG(IS_WIN)
 

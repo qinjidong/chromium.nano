@@ -16,7 +16,6 @@
 #include "chrome/browser/content_settings/host_content_settings_map_factory.h"
 #include "chrome/browser/metrics/chrome_metrics_service_accessor.h"
 #include "chrome/browser/profiles/profile.h"
-#include "chrome/browser/safe_browsing/advanced_protection_status_manager_factory.h"
 #include "chrome/browser/ssl/https_upgrades_interceptor.h"
 #include "chrome/common/chrome_features.h"
 #include "chrome/common/pref_names.h"
@@ -255,20 +254,6 @@ HttpsFirstModeService::HttpsFirstModeService(Profile* profile,
       base::BindRepeating(&HttpsFirstModeService::OnHttpsFirstModePrefChanged,
                           base::Unretained(this)));
 
-  // Track Advanced Protection status.
-  if (base::FeatureList::IsEnabled(
-          features::kHttpsFirstModeForAdvancedProtectionUsers)) {
-    obs_.Observe(
-        safe_browsing::AdvancedProtectionStatusManagerFactory::GetForProfile(
-            profile_));
-    // On startup, AdvancedProtectionStatusManager runs before this class so we
-    // don't get called back. Run the callback to get the AP setting.
-    OnAdvancedProtectionStatusChanged(
-        safe_browsing::AdvancedProtectionStatusManagerFactory::GetForProfile(
-            profile_)
-            ->IsUnderAdvancedProtection());
-  }
-
   // Make sure the pref state is logged and the synthetic field trial state is
   // created at startup (as the pref may never change over the session).
   HttpsFirstModeSetting setting = GetCurrentSetting();
@@ -364,17 +349,6 @@ void HttpsFirstModeService::OnHttpsFirstModePrefChanged() {
   // Since the user modified the UI pref, explicitly disable any automatic
   // HTTPS-First Mode heuristic.
   profile_->GetPrefs()->SetBoolean(prefs::kHttpsOnlyModeAutoEnabled, false);
-}
-
-void HttpsFirstModeService::OnAdvancedProtectionStatusChanged(bool enabled) {
-  DCHECK(base::FeatureList::IsEnabled(
-      features::kHttpsFirstModeForAdvancedProtectionUsers));
-  // Override the pref if AP is enabled. We explicitly don't unset the pref if
-  // the user is no longer under Advanced Protection.
-  if (enabled &&
-      !profile_->GetPrefs()->GetBoolean(prefs::kHttpsOnlyModeEnabled)) {
-    profile_->GetPrefs()->SetBoolean(prefs::kHttpsOnlyModeEnabled, true);
-  }
 }
 
 bool HttpsFirstModeService::
@@ -641,10 +615,7 @@ HttpsFirstModeServiceFactory::HttpsFirstModeServiceFactory()
           // Don't create a service for non-regular profiles. This includes
           // Incognito (which uses the settings of the main profile) and Guest
           // Mode.
-          ProfileSelections::BuildForRegularProfile()) {
-  DependsOn(
-      safe_browsing::AdvancedProtectionStatusManagerFactory::GetInstance());
-}
+          ProfileSelections::BuildForRegularProfile()) {}
 
 HttpsFirstModeServiceFactory::~HttpsFirstModeServiceFactory() = default;
 

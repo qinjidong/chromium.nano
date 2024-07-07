@@ -269,25 +269,6 @@ void UpdateGaiaProfileInfoIfNeeded(Profile* profile) {
 
 #endif  // !BUILDFLAG(IS_CHROMEOS_ASH)
 
-void RemoveBrowsingDataForProfile(const base::FilePath& profile_path) {
-  // The BrowsingDataRemover relies on many objects that aren't created in unit
-  // tests. Previously this code would depend on content::ResourceDispatcherHost
-  // but that's gone, so do a similar hack for now.
-  if (!g_browser_process->safe_browsing_service())
-    return;
-
-  Profile* profile =
-      g_browser_process->profile_manager()->GetProfileByPath(profile_path);
-  if (!profile)
-    return;
-
-  // For guest profiles the browsing data is in the OTR profile.
-  if (profile->IsGuestSession())
-    profile = profile->GetPrimaryOTRProfile(/*create_if_needed=*/true);
-
-  profile->Wipe();
-}
-
 bool IsDemoSession() {
 #if BUILDFLAG(IS_CHROMEOS_ASH)
   return ash::DemoSession::IsDeviceInDemoMode();

@@ -32,7 +32,6 @@
 #include "chrome/browser/extensions/install_gate.h"
 #include "chrome/browser/extensions/omaha_attributes_handler.h"
 #include "chrome/browser/extensions/pending_extension_manager.h"
-#include "chrome/browser/extensions/safe_browsing_verdict_handler.h"
 #include "chrome/browser/profiles/profile_manager_observer.h"
 #include "chrome/browser/upgrade_detector/upgrade_observer.h"
 #include "components/sync/model/string_ordinal.h"
@@ -677,8 +676,6 @@ class ExtensionService : public ExtensionServiceInterface,
   raw_ptr<Blocklist, DanglingUntriaged> blocklist_ = nullptr;
 
   ExtensionAllowlist allowlist_;
-
-  SafeBrowsingVerdictHandler safe_browsing_verdict_handler_;
 
   OmahaAttributesHandler omaha_attributes_handler_;
 

@@ -22,7 +22,6 @@
 #include "android_webview/browser/cookie_manager.h"
 #include "android_webview/browser/metrics/aw_metrics_service_client.h"
 #include "android_webview/browser/network_service/net_helpers.h"
-#include "android_webview/browser/safe_browsing/aw_safe_browsing_allowlist_manager.h"
 #include "android_webview/browser_jni_headers/AwBrowserContext_jni.h"
 #include "android_webview/common/aw_features.h"
 #include "android_webview/common/aw_switches.h"
@@ -50,9 +49,6 @@
 #include "components/origin_trials/browser/leveldb_persistence_provider.h"
 #include "components/origin_trials/browser/origin_trials.h"
 #include "components/origin_trials/common/features.h"
-#include "components/policy/core/browser/browser_policy_connector_base.h"
-#include "components/policy/core/browser/configuration_policy_pref_store.h"
-#include "components/policy/core/browser/url_blocklist_manager.h"
 #include "components/pref_registry/pref_registry_syncable.h"
 #include "components/prefs/in_memory_pref_store.h"
 #include "components/prefs/json_pref_store.h"
@@ -62,7 +58,6 @@
 #include "components/prefs/pref_service_factory.h"
 #include "components/prefs/segregated_pref_store.h"
 #include "components/profile_metrics/browser_profile_type.h"
-#include "components/safe_browsing/core/common/safe_browsing_prefs.h"
 #include "components/url_formatter/url_fixer.h"
 #include "components/user_prefs/user_prefs.h"
 #include "components/visitedlink/browser/visitedlink_writer.h"
@@ -250,15 +245,6 @@ AwBrowserContext::UpdateServiceWorkerXRequestedWithAllowListOriginMatcher(
 
 // static
 void AwBrowserContext::RegisterPrefs(PrefRegistrySimple* registry) {
-  safe_browsing::RegisterProfilePrefs(registry);
-
-  // Register the Autocomplete Data Retention Policy pref.
-  // The default value '0' represents the latest Chrome major version on which
-  // the retention policy ran. By setting it to a low default value, we're
-  // making sure it runs now (as it only runs once per major version).
-  registry->RegisterIntegerPref(
-      autofill::prefs::kAutocompleteLastVersionRetentionPolicy, 0);
-
   // We only use the autocomplete feature of Autofill, which is controlled via
   // the manager_delegate. We don't use the rest of Autofill, which is why it is
   // hardcoded as disabled here.
@@ -298,15 +284,6 @@ void AwBrowserContext::CreateUserPrefService() {
       base::MakeRefCounted<JsonPrefStore>(GetPrefStorePath()),
       std::move(persistent_prefs)));
 
-  policy::URLBlocklistManager::RegisterProfilePrefs(pref_registry.get());
-  AwBrowserPolicyConnector* browser_policy_connector =
-      AwBrowserProcess::GetInstance()->browser_policy_connector();
-  pref_service_factory.set_managed_prefs(
-      base::MakeRefCounted<policy::ConfigurationPolicyPrefStore>(
-          browser_policy_connector,
-          browser_policy_connector->GetPolicyService(),
-          browser_policy_connector->GetHandlerList(),
-          policy::POLICY_LEVEL_MANDATORY));
   {
     // TODO(crbug.com/40268809): We can potentially use
     // pref_service_factory.set_async(true) instead of ScopedAllowBlocking in

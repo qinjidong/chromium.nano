@@ -14,7 +14,6 @@
 #include "chrome/browser/extensions/event_router_forwarder.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/common/extensions/api/system_private.h"
-#include "components/policy/core/common/policy_pref_names.h"
 #include "components/prefs/pref_service.h"
 #include "google_apis/google_api_keys.h"
 
@@ -54,10 +53,7 @@ namespace system_private = api::system_private;
 
 ExtensionFunction::ResponseAction
 SystemPrivateGetIncognitoModeAvailabilityFunction::Run() {
-  PrefService* prefs =
-      Profile::FromBrowserContext(browser_context())->GetPrefs();
-  int value =
-      prefs->GetInteger(policy::policy_prefs::kIncognitoModeAvailability);
+  int value = 0;
   EXTENSION_FUNCTION_VALIDATE(
       value >= 0 &&
       value < static_cast<int>(std::size(kIncognitoModeAvailabilityStrings)));

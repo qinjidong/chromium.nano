@@ -24,7 +24,6 @@
 #include "base/task/thread_pool.h"
 #include "base/win/registry.h"
 #include "build/branding_buildflags.h"
-#include "chrome/browser/browser_switcher/browser_switcher_policy_migrator.h"
 #include "chrome/browser/browser_switcher/browser_switcher_prefs.h"
 #include "chrome/browser/browser_switcher/browser_switcher_sitelist.h"
 #include "chrome/browser/browser_switcher/ieem_sitelist_parser.h"
@@ -147,12 +146,6 @@ std::optional<std::string>* IeemSitelistUrlForTesting() {
   static base::NoDestructor<std::optional<std::string>>
       ieem_sitelist_url_for_testing;
   return ieem_sitelist_url_for_testing.get();
-}
-
-bool IsLBSExtensionEnabled(Profile* profile) {
-  auto* reg = extensions::ExtensionRegistry::Get(profile);
-  DCHECK(reg);
-  return reg->enabled_extensions().Contains(kLBSExtensionId);
 }
 
 }  // namespace
@@ -329,7 +322,7 @@ void BrowserSwitcherServiceWin::DeleteSitelistCacheFile() {
 }
 
 void BrowserSwitcherServiceWin::UpdateAllCacheFiles() {
-  const bool has_extension = IsLBSExtensionEnabled(profile());
+  const bool has_extension = false;
 
   if (prefs().IsEnabled())
     SavePrefsToFile();

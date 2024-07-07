@@ -103,7 +103,6 @@ if (!is_android) {
       ":headless",
       "//base",
       "//chrome/browser",
-      "//chrome/test:test_support",
       "//content/test:test_support",
       "//pdf",
       "//testing/gtest",

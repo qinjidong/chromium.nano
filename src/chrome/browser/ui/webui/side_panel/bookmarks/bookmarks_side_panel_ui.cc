@@ -38,7 +38,6 @@
 #include "components/page_image_service/features.h"
 #include "components/page_image_service/image_service.h"
 #include "components/page_image_service/image_service_handler.h"
-#include "components/policy/core/common/policy_pref_names.h"
 #include "components/prefs/pref_service.h"
 #include "components/strings/grit/components_strings.h"
 #include "content/public/browser/web_contents.h"
@@ -302,7 +301,5 @@ void BookmarksSidePanelUI::CreateShoppingServiceHandler(
 }
 
 bool BookmarksSidePanelUI::IsIncognitoModeAvailable() {
-  PrefService* prefs = Profile::FromWebUI(web_ui())->GetPrefs();
-  return prefs->GetInteger(policy::policy_prefs::kIncognitoModeAvailability) ==
-         static_cast<int>(policy::IncognitoModeAvailability::kEnabled);
+  return false;
 }

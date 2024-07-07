@@ -41,7 +41,6 @@
 #include "chrome/browser/ui/views/tabs/tab.h"
 #include "chrome/browser/ui/views/user_education/browser_feature_promo_controller.h"
 #include "chrome/common/buildflags.h"
-#include "components/enterprise/buildflags/buildflags.h"
 #include "components/infobars/core/infobar_container.h"
 #include "components/segmentation_platform/public/result.h"
 #include "components/user_education/common/feature_promo_controller.h"
@@ -114,12 +113,6 @@ namespace webapps {
 enum class InstallableWebAppCheckResult;
 struct WebAppBannerData;
 }  // namespace webapps
-
-#if BUILDFLAG(ENTERPRISE_WATERMARK)
-namespace enterprise_watermark {
-class WatermarkView;
-}
-#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // BrowserView
@@ -721,15 +714,6 @@ class BrowserView : public BrowserWindow,
 
   // content::WebContentsObserver:
   void DidFirstVisuallyNonEmptyPaint() override;
-#if BUILDFLAG(ENTERPRISE_WATERMARK)
-  void DidStartNavigation(
-      content::NavigationHandle* navigation_handle) override;
-
-  // TODO: b/330960313 - DocumentOnLoad is not the best signal to use for
-  // determining when a data protections should be enabled, FCP is a better
-  // signal.
-  void DocumentOnLoadCompletedInPrimaryMainFrame() override;
-#endif
 
   // views::ClientView:
   views::CloseRequestResult OnWindowCloseRequested() override;
@@ -829,10 +813,6 @@ class BrowserView : public BrowserWindow,
 
   WebAppFrameToolbarView* web_app_frame_toolbar_for_testing() {
     return web_app_frame_toolbar();
-  }
-
-  enterprise_watermark::WatermarkView* get_watermark_view_for_testing() {
-    return watermark_view_;
   }
 
   void set_on_delay_apply_data_protection_settings_if_empty_called_for_testing(
@@ -1076,7 +1056,6 @@ class BrowserView : public BrowserWindow,
   void ApplyDataProtectionSettings(
       base::WeakPtr<content::WebContents> expected_web_contents,
       const enterprise_data_protection::UrlSettings& settings);
-  void ApplyWatermarkSettings(const std::string& watermark_text);
 
   // Applies data protection settings if there are any to apply, otherwise
   // delay clearing the data protection settings until the page loads.
@@ -1214,12 +1193,6 @@ class BrowserView : public BrowserWindow,
   // The view that contains devtools window for the selected WebContents.
   raw_ptr<views::WebView, AcrossTasksDanglingUntriaged> devtools_web_view_ =
       nullptr;
-
-  // Clear watermark text once the page loads.
-  bool clear_watermark_text_on_page_load_ = false;
-
-  // The view that overlays a watermark on the contents container.
-  raw_ptr<enterprise_watermark::WatermarkView> watermark_view_ = nullptr;
 
   // The view managing the devtools and contents positions.
   // Handled by ContentsLayoutManager.

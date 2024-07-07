@@ -16,7 +16,6 @@ import org.chromium.android_webview.common.FlagOverrideHelper;
 import org.chromium.android_webview.common.Lifetime;
 import org.chromium.android_webview.common.PlatformServiceBridge;
 import org.chromium.android_webview.common.ProductionSupportedFlagList;
-import org.chromium.android_webview.safe_browsing.AwSafeBrowsingSafeModeAction;
 import org.chromium.base.Callback;
 import org.chromium.base.ThreadUtils;
 import org.chromium.base.metrics.RecordHistogram;
@@ -39,9 +38,6 @@ public class AwContentsStatics {
     private static String sUnreachableWebDataUrl;
 
     private static boolean sRecordFullDocument;
-
-    private static final String sSafeBrowsingWarmUpHelper =
-            "com.android.webview.chromium.SafeBrowsingWarmUpHelper";
 
     /** Return the client certificate lookup table. */
     public static ClientCertLookupTable getClientCertLookupTable() {
@@ -86,44 +82,6 @@ public class AwContentsStatics {
 
     public static String getProductVersion() {
         return AwContentsStaticsJni.get().getProductVersion();
-    }
-
-    @CalledByNative
-    private static void safeBrowsingAllowlistAssigned(Callback<Boolean> callback, boolean success) {
-        if (callback == null) return;
-        callback.onResult(success);
-    }
-
-    public static void setSafeBrowsingAllowlist(List<String> urls, Callback<Boolean> callback) {
-        String[] urlArray = urls.toArray(new String[urls.size()]);
-        if (callback == null) {
-            callback = b -> {};
-        }
-        AwContentsStaticsJni.get().setSafeBrowsingAllowlist(urlArray, callback);
-    }
-
-    @SuppressWarnings("NoContextGetApplicationContext")
-    public static void initSafeBrowsing(Context context, final Callback<Boolean> callback) {
-        // Wrap the callback to make sure we always invoke it on the UI thread, as guaranteed by the
-        // API.
-        Callback<Boolean> wrapperCallback =
-                b -> {
-                    if (callback != null) {
-                        PostTask.runOrPostTask(TaskTraits.UI_DEFAULT, callback.bind(b));
-                    }
-                };
-
-        if (AwSafeBrowsingSafeModeAction.isSafeBrowsingDisabled()) {
-            wrapperCallback.onResult(PlatformServiceBridge.getInstance().canUseGms());
-            return;
-        }
-
-        PlatformServiceBridge.getInstance()
-                .warmUpSafeBrowsing(context.getApplicationContext(), wrapperCallback);
-    }
-
-    public static Uri getSafeBrowsingPrivacyPolicyUrl() {
-        return Uri.parse(AwContentsStaticsJni.get().getSafeBrowsingPrivacyPolicyUrl());
     }
 
     public static void setCheckClearTextPermitted(boolean permitted) {
@@ -194,15 +152,11 @@ public class AwContentsStatics {
 
         void logFlagMetrics(String[] switches, String[] features);
 
-        String getSafeBrowsingPrivacyPolicyUrl();
-
         void clearClientCertPreferences(Runnable callback);
 
         String getUnreachableWebDataUrl();
 
         String getProductVersion();
-
-        void setSafeBrowsingAllowlist(String[] urls, Callback<Boolean> callback);
 
         void setCheckClearTextPermitted(boolean permitted);
 

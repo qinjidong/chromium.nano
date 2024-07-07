@@ -42,9 +42,6 @@
 #include "chrome/grit/generated_resources.h"
 #include "components/autofill/content/browser/content_autofill_client.h"
 #include "components/feature_engagement/public/feature_constants.h"
-#include "components/safe_browsing/core/common/features.h"
-#include "components/safe_browsing/core/common/safe_browsing_policy_handler.h"
-#include "components/safe_browsing/core/common/safe_browsing_prefs.h"
 #include "components/user_education/common/user_education_class_properties.h"
 #include "content/public/browser/browser_thread.h"
 #include "ui/base/l10n/l10n_util.h"
@@ -767,23 +764,7 @@ void DownloadToolbarButtonView::BubbleCloser::OnEvent(const ui::Event& event) {
   }
 }
 
-void DownloadToolbarButtonView::ShowIphPromo() {
-#if BUILDFLAG(GOOGLE_CHROME_BRANDING)
-  Profile* profile = browser_->profile();
-  // Don't show IPH Promo if safe browsing level is set by policy.
-  if (safe_browsing::SafeBrowsingPolicyHandler::
-          IsSafeBrowsingProtectionLevelSetByPolicy(profile->GetPrefs())) {
-    return;
-  }
-  if (safe_browsing::GetSafeBrowsingState(*profile->GetPrefs()) ==
-          safe_browsing::SafeBrowsingState::STANDARD_PROTECTION &&
-      !profile->IsOffTheRecord() &&
-      browser_->window()->MaybeShowFeaturePromo(
-          feature_engagement::kIPHDownloadEsbPromoFeature)) {
-    return;
-  }
-#endif
-}
+void DownloadToolbarButtonView::ShowIphPromo() {}
 
 void DownloadToolbarButtonView::OnPartialViewClosed() {
   // We use PostTask to avoid calling the FocusAndActivateWindow

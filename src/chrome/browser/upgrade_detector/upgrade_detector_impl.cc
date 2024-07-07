@@ -26,7 +26,6 @@
 #include "build/build_config.h"
 #include "chrome/browser/browser_process.h"
 #include "chrome/browser/buildflags.h"
-#include "chrome/browser/enterprise/browser_management/management_service_factory.h"
 #include "chrome/browser/google/google_brand.h"
 #include "chrome/browser/obsolete_system/obsolete_system.h"
 #include "chrome/browser/upgrade_detector/build_state.h"
@@ -70,11 +69,6 @@ bool ShouldDetectOutdatedBuilds() {
   // Don't show the bubble if we have a brand code that is NOT organic
   std::string brand;
   if (google_brand::GetBrand(&brand) && !google_brand::IsOrganic(brand)) {
-    return false;
-  }
-
-  // Don't show the bubble for Enterprise users.
-  if (policy::ManagementServiceFactory::GetForPlatform()->IsManaged()) {
     return false;
   }
 

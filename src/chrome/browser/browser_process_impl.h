@@ -79,11 +79,6 @@ class KeyProvider;
 class OSCryptAsync;
 }
 
-namespace policy {
-class ChromeBrowserPolicyConnector;
-class PolicyService;
-}  // namespace policy
-
 namespace webrtc_event_logging {
 class WebRtcEventLogManager;
 }  // namespace webrtc_event_logging
@@ -174,8 +169,6 @@ class BrowserProcessImpl : public BrowserProcess,
   extensions::EventRouterForwarder* extension_event_router_forwarder() override;
   NotificationUIManager* notification_ui_manager() override;
   NotificationPlatformBridge* notification_platform_bridge() override;
-  policy::ChromeBrowserPolicyConnector* browser_policy_connector() override;
-  policy::PolicyService* policy_service() override;
   IconManager* icon_manager() override;
   GpuModeManager* gpu_mode_manager() override;
   void CreateDevToolsProtocolHandler() override;
@@ -198,11 +191,6 @@ class BrowserProcessImpl : public BrowserProcess,
       std::unique_ptr<BackgroundModeManager> manager) override;
 #endif
   StatusTray* status_tray() override;
-  safe_browsing::SafeBrowsingService* safe_browsing_service() override;
-  subresource_filter::RulesetService* subresource_filter_ruleset_service()
-      override;
-  subresource_filter::RulesetService*
-  fingerprinting_protection_ruleset_service() override;
 
   StartupData* startup_data() override;
 
@@ -256,9 +244,6 @@ class BrowserProcessImpl : public BrowserProcess,
   void CreateNotificationUIManager();
   void CreatePrintPreviewDialogController();
   void CreateBackgroundPrintingManager();
-  void CreateSafeBrowsingService();
-  void CreateSubresourceFilterRulesetService();
-  void CreateFingerprintingProtectionRulesetService();
   void CreateOptimizationGuideService();
   void CreateStatusTray();
   void CreateBackgroundModeManager();
@@ -273,11 +258,6 @@ class BrowserProcessImpl : public BrowserProcess,
   void Unpin();
 
   const raw_ptr<StartupData> startup_data_;
-
-  // Must be destroyed after |local_state_|.
-  // Must be destroyed after |profile_manager_|.
-  std::unique_ptr<policy::ChromeBrowserPolicyConnector> const
-      browser_policy_connector_;
 
   // Must be destroyed before |browser_policy_connector_|.
   bool created_profile_manager_ = false;
@@ -364,17 +344,6 @@ class BrowserProcessImpl : public BrowserProcess,
   // itself as a profile attributes storage observer on destruction.
   std::unique_ptr<BackgroundModeManager> background_mode_manager_;
 #endif
-
-  bool created_safe_browsing_service_ = false;
-  scoped_refptr<safe_browsing::SafeBrowsingService> safe_browsing_service_;
-
-  bool created_subresource_filter_ruleset_service_ = false;
-  std::unique_ptr<subresource_filter::RulesetService>
-      subresource_filter_ruleset_service_;
-
-  bool created_fingerprinting_protection_ruleset_service_ = false;
-  std::unique_ptr<subresource_filter::RulesetService>
-      fingerprinting_protection_ruleset_service_;
 
   bool shutting_down_ = false;
 

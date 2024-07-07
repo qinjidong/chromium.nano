@@ -52,7 +52,6 @@
 #include "chrome/browser/themes/theme_service.h"
 #include "chrome/browser/themes/theme_service_factory.h"
 #include "chrome/browser/themes/theme_syncable_service.h"
-#include "chrome/browser/trusted_vault/trusted_vault_service_factory.h"
 #include "chrome/browser/ui/ui_features.h"
 #include "chrome/browser/web_applications/web_app_utils.h"
 #include "chrome/browser/webdata_services/web_data_service_factory.h"
@@ -155,10 +154,6 @@ using content::BrowserThread;
 namespace browser_sync {
 
 namespace {
-
-// A global variable is needed to detect multiprofile scenarios where more than
-// one profile try to register a synthetic field trial.
-bool trusted_vault_synthetic_field_trial_registered = false;
 
 #if BUILDFLAG(IS_WIN)
 constexpr base::FilePath::CharType kLoopbackServerBackendFilename[] =
@@ -595,8 +590,7 @@ ChromeSyncClient::CreateModelTypeControllers(
 }
 
 trusted_vault::TrustedVaultClient* ChromeSyncClient::GetTrustedVaultClient() {
-  return TrustedVaultServiceFactory::GetForProfile(profile_)
-      ->GetTrustedVaultClient(trusted_vault::SecurityDomainId::kChromeSync);
+  return nullptr;
 }
 
 syncer::SyncInvalidationsService*
@@ -807,28 +801,6 @@ void ChromeSyncClient::SetPasswordSyncAllowedChangeCb(
 void ChromeSyncClient::RegisterTrustedVaultAutoUpgradeSyntheticFieldTrial(
     const syncer::TrustedVaultAutoUpgradeSyntheticFieldTrialGroup& group) {
   CHECK(group.is_valid());
-
-  if (!base::FeatureList::IsEnabled(
-          syncer::kTrustedVaultAutoUpgradeSyntheticFieldTrial)) {
-    // Disabled via variations, as additional safeguard.
-    return;
-  }
-
-  // If `trusted_vault_synthetic_field_trial_registered` is true, and given that
-  // each SyncService invokes this function at most once, it means that multiple
-  // profiles are trying to register a synthetic field trial. In that case,
-  // register a special "conflict" group.
-  const std::string group_name =
-      trusted_vault_synthetic_field_trial_registered
-          ? syncer::TrustedVaultAutoUpgradeSyntheticFieldTrialGroup::
-                GetMultiProfileConflictGroupName()
-          : group.name();
-
-  trusted_vault_synthetic_field_trial_registered = true;
-
-  ChromeMetricsServiceAccessor::RegisterSyntheticFieldTrial(
-      syncer::kTrustedVaultAutoUpgradeSyntheticFieldTrialName, group_name,
-      variations::SyntheticTrialAnnotationMode::kCurrentLog);
 }
 
 #if BUILDFLAG(ENABLE_EXTENSIONS)

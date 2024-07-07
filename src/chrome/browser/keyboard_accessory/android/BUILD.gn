@@ -49,7 +49,6 @@ source_set("unit_test") {
     "//chrome/app:generated_resources_grit",
     "//chrome/browser",
     "//chrome/browser/autofill",
-    "//chrome/test:test_support",
     "//components/autofill/content/browser:test_support",
     "//components/autofill/core/browser",
     "//components/device_reauth",

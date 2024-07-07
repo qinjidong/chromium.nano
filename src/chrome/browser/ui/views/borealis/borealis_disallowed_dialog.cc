@@ -20,7 +20,6 @@
 #include "chrome/browser/ui/views/chrome_typography.h"
 #include "chrome/common/webui_url_constants.h"
 #include "chrome/grit/generated_resources.h"
-#include "components/policy/policy_constants.h"
 #include "components/strings/grit/components_strings.h"
 #include "content/public/browser/browser_thread.h"
 #include "ui/aura/window.h"
@@ -114,13 +113,7 @@ class DisallowedPolicy : public BehaviourProvider {
   std::vector<std::pair<std::u16string, GURL>> GetLinks() const override {
     // As of 2023q2 directly-linking to chromeenterprise is common, so we shall
     // do it too.
-    return {
-        {base::UTF8ToUTF16(policy::key::kUserBorealisAllowed),
-         GURL("https://chromeenterprise.google/policies/#UserBorealisAllowed")},
-        {base::UTF8ToUTF16(policy::key::kVirtualMachinesAllowed),
-         GURL("https://chromeenterprise.google/policies/"
-              "#VirtualMachinesAllowed")},
-    };
+    return {};
   }
 };
 

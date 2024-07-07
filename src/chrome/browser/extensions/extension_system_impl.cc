@@ -117,24 +117,6 @@ void ExtensionSystemImpl::Shared::InitPrefs() {
 
   dynamic_user_scripts_store_ = std::make_unique<StateStore>(
       profile_, store_factory_, StateStore::BackendType::SCRIPTS, false);
-
-#if BUILDFLAG(IS_CHROMEOS_ASH)
-  // We can not perform check for Signin Profile here, as it would result in
-  // recursive call upon creation of Signin Profile, so we will create
-  // SigninScreenPolicyProvider lazily in RegisterManagementPolicyProviders.
-
-  const user_manager::User* user =
-      user_manager::UserManager::Get()->GetActiveUser();
-  if (user) {
-    auto device_local_account_type =
-        policy::GetDeviceLocalAccountType(user->GetAccountId().GetUserEmail());
-    if (device_local_account_type.has_value()) {
-      device_local_account_management_policy_provider_ = std::make_unique<
-          chromeos::DeviceLocalAccountManagementPolicyProvider>(
-          device_local_account_type.value());
-    }
-  }
-#endif
 }
 
 void ExtensionSystemImpl::Shared::RegisterManagementPolicyProviders() {

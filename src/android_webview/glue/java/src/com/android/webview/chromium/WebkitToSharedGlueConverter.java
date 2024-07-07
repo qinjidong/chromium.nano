@@ -6,7 +6,6 @@ package com.android.webview.chromium;
 
 import android.os.Build;
 import android.webkit.CookieManager;
-import android.webkit.SafeBrowsingResponse;
 import android.webkit.ServiceWorkerWebSettings;
 import android.webkit.WebMessagePort;
 import android.webkit.WebResourceError;
@@ -22,7 +21,6 @@ import org.chromium.android_webview.AwCookieManager;
 import org.chromium.android_webview.AwServiceWorkerSettings;
 import org.chromium.android_webview.AwSettings;
 import org.chromium.android_webview.common.Lifetime;
-import org.chromium.android_webview.safe_browsing.AwSafeBrowsingResponse;
 import org.chromium.base.Callback;
 import org.chromium.content_public.browser.MessagePort;
 
@@ -64,12 +62,6 @@ public class WebkitToSharedGlueConverter {
 
     public static AwWebResourceError getAwWebResourceError(WebResourceError error) {
         return ((WebResourceErrorAdapter) error).getAwWebResourceError();
-    }
-
-    @RequiresApi(Build.VERSION_CODES.O_MR1)
-    public static Callback<AwSafeBrowsingResponse> getAwSafeBrowsingResponseCallback(
-            SafeBrowsingResponse response) {
-        return ((SafeBrowsingResponseAdapter) response).getAwSafeBrowsingResponseCallback();
     }
 
     public static MessagePort getMessagePort(WebMessagePort messagePort) {

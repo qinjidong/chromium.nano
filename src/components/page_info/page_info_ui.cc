@@ -21,8 +21,6 @@
 #include "components/permissions/permission_manager.h"
 #include "components/permissions/permission_util.h"
 #include "components/prefs/pref_service.h"
-#include "components/safe_browsing/buildflags.h"
-#include "components/safe_browsing/core/common/features.h"
 #include "components/security_interstitials/core/common_string_util.h"
 #include "components/strings/grit/components_branded_strings.h"
 #include "components/strings/grit/components_strings.h"
@@ -41,10 +39,6 @@
 #include "ui/gfx/color_palette.h"
 #include "ui/gfx/color_utils.h"
 #include "ui/native_theme/native_theme.h"  // nogncheck
-#endif
-
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-#include "components/safe_browsing/content/browser/password_protection/password_protection_service.h"
 #endif
 
 namespace {
@@ -465,27 +459,12 @@ PageInfoUI::GetSecurityDescription(const IdentityInfo& identity_info) const {
           IDS_PAGE_INFO_UNWANTED_SOFTWARE_DETAILS_NEW,
           SecurityDescriptionType::SAFE_BROWSING);
     case PageInfo::SAFE_BROWSING_STATUS_SAVED_PASSWORD_REUSE: {
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-      auto security_description = CreateSecurityDescription(
-          SecuritySummaryColor::RED,
-          IDS_PAGE_INFO_CHANGE_PASSWORD_SAVED_PASSWORD_SUMMARY, 0,
-          SecurityDescriptionType::SAFE_BROWSING);
-      security_description->details = identity_info.safe_browsing_details;
-      return security_description;
-#endif
       NOTREACHED_IN_MIGRATION();
       break;
     }
     case PageInfo::SAFE_BROWSING_STATUS_SIGNED_IN_SYNC_PASSWORD_REUSE:
     case PageInfo::SAFE_BROWSING_STATUS_SIGNED_IN_NON_SYNC_PASSWORD_REUSE:
     case PageInfo::SAFE_BROWSING_STATUS_ENTERPRISE_PASSWORD_REUSE: {
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-      auto security_description = CreateSecurityDescription(
-          SecuritySummaryColor::RED, IDS_PAGE_INFO_CHANGE_PASSWORD_SUMMARY, 0,
-          SecurityDescriptionType::SAFE_BROWSING);
-      security_description->details = identity_info.safe_browsing_details;
-      return security_description;
-#endif
       NOTREACHED_IN_MIGRATION();
       break;
     }

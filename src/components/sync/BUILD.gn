@@ -322,12 +322,4 @@ source_set("unit_tests") {
   if (is_ios) {
     sources -= [ "engine/net/http_bridge_unittest.cc" ]
   }
-
-  if (!is_ios) {
-    sources += [ "service/sync_policy_handler_unittest.cc" ]
-    deps += [
-      "//components/policy:generated",
-      "//components/policy/core/browser",
-    ]
-  }
 }

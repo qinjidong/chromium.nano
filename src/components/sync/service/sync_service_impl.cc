@@ -51,7 +51,6 @@
 #include "components/sync/service/sync_auth_manager.h"
 #include "components/sync/service/sync_feature_status_for_migrations_recorder.h"
 #include "components/sync/service/sync_prefs.h"
-#include "components/sync/service/sync_prefs_policy_handler.h"
 #include "components/sync/service/sync_service_utils.h"
 #include "components/sync/service/trusted_vault_histograms.h"
 #include "components/sync/service/trusted_vault_synthetic_field_trial.h"
@@ -376,9 +375,6 @@ void SyncServiceImpl::Initialize() {
                                 IsSignedIn());
     }
   }
-
-  // Update selected types prefs if a policy is applied.
-  sync_prefs_policy_handler_ = std::make_unique<SyncPrefsPolicyHandler>(this);
 
   // If sync is disabled permanently, clean up old data that may be around (e.g.
   // crash during signout).

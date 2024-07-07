@@ -6,18 +6,11 @@
 
 #include "chrome/app/vector_icons/vector_icons.h"
 #include "chrome/browser/download/bubble/download_bubble_prefs.h"
-#include "chrome/browser/download/download_ui_safe_browsing_util.h"
-#include "chrome/browser/enterprise/connectors/common.h"
-#include "chrome/browser/safe_browsing/advanced_protection_status_manager.h"
-#include "chrome/browser/safe_browsing/advanced_protection_status_manager_factory.h"
-#include "chrome/browser/safe_browsing/download_protection/download_protection_service.h"
 #include "chrome/browser/ui/color/chrome_color_id.h"
 #include "chrome/browser/ui/download/download_item_mode.h"
 #include "chrome/grit/generated_resources.h"
 #include "components/download/public/common/download_danger_type.h"
 #include "components/prefs/pref_service.h"
-#include "components/safe_browsing/core/common/features.h"
-#include "components/safe_browsing/core/common/proto/csd.pb.h"
 #include "components/vector_icons/vector_icons.h"
 #include "ui/base/l10n/l10n_util.h"
 #include "ui/base/ui_base_features.h"
@@ -25,7 +18,6 @@
 
 using download::DownloadItem;
 using offline_items_collection::FailState;
-using TailoredVerdict = safe_browsing::ClientDownloadResponse::TailoredVerdict;
 using TailoredWarningType = DownloadUIModel::TailoredWarningType;
 
 DownloadBubbleRowViewInfoObserver::DownloadBubbleRowViewInfoObserver() =
@@ -113,25 +105,6 @@ void DownloadBubbleRowViewInfo::PopulateForInProgressOrComplete() {
       break;
   }
 
-  if (enterprise_connectors::ShouldPromptReviewForDownload(
-          model_->profile(), model_->GetDownloadItem())) {
-    switch (model_->GetDangerType()) {
-      case download::DOWNLOAD_DANGER_TYPE_DANGEROUS_CONTENT:
-        primary_button_command_ = DownloadCommands::Command::REVIEW;
-        return;
-      case download::DOWNLOAD_DANGER_TYPE_POTENTIALLY_UNWANTED:
-        secondary_text_color_ = kColorDownloadItemTextWarning;
-        primary_button_command_ = DownloadCommands::Command::REVIEW;
-        return;
-      case download::DOWNLOAD_DANGER_TYPE_SENSITIVE_CONTENT_WARNING:
-        secondary_text_color_ = kColorDownloadItemTextWarning;
-        primary_button_command_ = DownloadCommands::Command::REVIEW;
-        return;
-      default:
-        break;
-    }
-  }
-
   if (TailoredWarningType type = model_->GetTailoredWarningType();
       type != TailoredWarningType::kNoTailoredWarning) {
     PopulateForTailoredWarning(type);
@@ -144,14 +117,6 @@ void DownloadBubbleRowViewInfo::PopulateForInProgressOrComplete() {
         PopulateSuspiciousUiPattern();
         return;
       } else {
-        if (WasSafeBrowsingVerdictObtained(model_->GetDownloadItem())) {
-          PopulateSuspiciousUiPattern();
-          return;
-        }
-        if (ShouldShowWarningForNoSafeBrowsing(model_->profile())) {
-          PopulateForFileTypeWarningNoSafeBrowsing();
-          return;
-        }
         PopulateSuspiciousUiPattern();
         return;
       }
@@ -164,12 +129,6 @@ void DownloadBubbleRowViewInfo::PopulateForInProgressOrComplete() {
       return;
     case download::DOWNLOAD_DANGER_TYPE_UNCOMMON_CONTENT: {
       bool request_ap_verdicts = false;
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-      request_ap_verdicts =
-          safe_browsing::AdvancedProtectionStatusManagerFactory::GetForProfile(
-              model_->profile())
-              ->IsUnderAdvancedProtection();
-#endif
       if (request_ap_verdicts) {
         has_subpage_ = true;
         secondary_text_color_ = kColorDownloadItemTextWarning;
@@ -236,12 +195,7 @@ void DownloadBubbleRowViewInfo::PopulateForInterrupted(
       return;
     }
     case download::DOWNLOAD_DANGER_TYPE_SENSITIVE_CONTENT_BLOCK: {
-      if (enterprise_connectors::ShouldPromptReviewForDownload(
-              model_->profile(), model_->GetDownloadItem())) {
-        primary_button_command_ = DownloadCommands::Command::REVIEW;
-      } else {
-        has_subpage_ = true;
-      }
+      has_subpage_ = true;
       return;
     }
     case download::DOWNLOAD_DANGER_TYPE_DANGEROUS_FILE:
@@ -367,6 +321,5 @@ void DownloadBubbleRowViewInfo::Reset() {
 }
 
 bool DownloadBubbleRowViewInfo::ShouldShowDeepScanNotice() const {
-  return ShouldShowDeepScanPromptNotice(model_->profile(),
-                                        model_->GetDangerType());
+  return false;
 }

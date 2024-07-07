@@ -16,7 +16,6 @@ android_library("java") {
   deps = [
     ":java_resources",
     "//base:base_java",
-    "//chrome/browser/enterprise/util:java",
     "//chrome/browser/preferences:java",
     "//chrome/browser/profiles/android:java",
     "//chrome/browser/tab:java",
@@ -60,7 +59,6 @@ robolectric_library("junit") {
     ":java_resources",
     "//base:base_java_test_support",
     "//base:base_junit_test_support",
-    "//chrome/browser/enterprise/util:java",
     "//chrome/browser/preferences:java",
     "//chrome/browser/profiles/android:java",
     "//chrome/browser/ui/android/native_page:java",

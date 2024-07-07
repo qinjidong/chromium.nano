@@ -21,16 +21,12 @@
 #include "build/build_config.h"
 #include "build/chromeos_buildflags.h"
 #include "chrome/browser/browser_process.h"
-#include "chrome/browser/enterprise/connectors/common.h"
 #include "chrome/browser/platform_util.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/profiles/profile_manager.h"
 #include "chrome/browser/ui/browser_dialogs.h"
 #include "chrome/browser/ui/chrome_select_file_policy.h"
 #include "chrome/grit/generated_resources.h"
-#include "components/enterprise/buildflags/buildflags.h"
-#include "components/enterprise/common/proto/connectors.pb.h"
-#include "components/safe_browsing/buildflags.h"
 #include "content/public/browser/browser_task_traits.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/file_select_listener.h"
@@ -51,12 +47,6 @@
 #if BUILDFLAG(IS_CHROMEOS_ASH)
 #include "chrome/browser/ash/file_manager/fileapi_util.h"
 #include "content/public/browser/site_instance.h"
-#endif
-
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-#include "chrome/browser/safe_browsing/download_protection/download_protection_service.h"
-#include "chrome/browser/safe_browsing/download_protection/download_protection_util.h"
-#include "chrome/browser/safe_browsing/safe_browsing_service.h"
 #endif
 
 using blink::mojom::FileChooserFileInfo;
@@ -88,57 +78,6 @@ bool IsValidProfile(Profile* profile) {
     return true;
   return g_browser_process->profile_manager()->IsValidProfile(profile);
 }
-
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-
-// Safe Browsing checks are only applied when `params->mode` is
-// `kSave`, which is only for PPAPI requests.
-bool IsDownloadAllowedBySafeBrowsing(
-    safe_browsing::DownloadCheckResult result) {
-  using Result = safe_browsing::DownloadCheckResult;
-  switch (result) {
-    // Only allow downloads that are marked as SAFE or UNKNOWN by SafeBrowsing.
-    // All other types are going to be blocked. UNKNOWN could be the result of a
-    // failed safe browsing ping.
-    case Result::UNKNOWN:
-    case Result::SAFE:
-    case Result::ALLOWLISTED_BY_POLICY:
-      return true;
-
-    case Result::DANGEROUS:
-    case Result::UNCOMMON:
-    case Result::DANGEROUS_HOST:
-    case Result::POTENTIALLY_UNWANTED:
-    case Result::DANGEROUS_ACCOUNT_COMPROMISE:
-      return false;
-
-    // Safe Browsing should only return these results for client downloads, not
-    // for PPAPI downloads.
-    case Result::ASYNC_SCANNING:
-    case Result::ASYNC_LOCAL_PASSWORD_SCANNING:
-    case Result::BLOCKED_PASSWORD_PROTECTED:
-    case Result::BLOCKED_TOO_LARGE:
-    case Result::SENSITIVE_CONTENT_BLOCK:
-    case Result::SENSITIVE_CONTENT_WARNING:
-    case Result::DEEP_SCANNED_SAFE:
-    case Result::PROMPT_FOR_SCANNING:
-    case Result::PROMPT_FOR_LOCAL_PASSWORD_SCANNING:
-    case Result::DEEP_SCANNED_FAILED:
-    case Result::BLOCKED_SCAN_FAILED:
-    case Result::IMMEDIATE_DEEP_SCAN:
-      NOTREACHED_IN_MIGRATION();
-      return true;
-  }
-  NOTREACHED_IN_MIGRATION();
-  return false;
-}
-
-void InterpretSafeBrowsingVerdict(base::OnceCallback<void(bool)> recipient,
-                                  safe_browsing::DownloadCheckResult result) {
-  std::move(recipient).Run(IsDownloadAllowedBySafeBrowsing(result));
-}
-
-#endif
 
 }  // namespace
 
@@ -329,85 +268,8 @@ void FileSelectHelper::PerformContentAnalysisIfNeeded(
   if (AbortIfWebContentsDestroyed())
     return;
 
-#if BUILDFLAG(ENTERPRISE_CLOUD_CONTENT_ANALYSIS)
-  enterprise_connectors::ContentAnalysisDelegate::Data data;
-  if (enterprise_connectors::ContentAnalysisDelegate::IsEnabled(
-          profile_, web_contents_->GetLastCommittedURL(), &data,
-          enterprise_connectors::AnalysisConnector::FILE_ATTACHED)) {
-    data.reason =
-        enterprise_connectors::ContentAnalysisRequest::FILE_PICKER_DIALOG;
-    data.paths.reserve(list.size());
-    for (const auto& file : list) {
-      if (file && file->is_native_file())
-        data.paths.push_back(file->get_native_file()->file_path);
-    }
-
-    if (data.paths.empty()) {
-      NotifyListenerAndEnd(std::move(list));
-    } else {
-      enterprise_connectors::ContentAnalysisDelegate::CreateForWebContents(
-          web_contents_, std::move(data),
-          base::BindOnce(&FileSelectHelper::ContentAnalysisCompletionCallback,
-                         this, std::move(list)),
-          safe_browsing::DeepScanAccessPoint::UPLOAD);
-    }
-  } else {
-    NotifyListenerAndEnd(std::move(list));
-  }
-#else
-  NotifyListenerAndEnd(std::move(list));
-#endif  // BUILDFLAG(ENTERPRISE_CLOUD_CONTENT_ANALYSIS)
-}
-
-#if BUILDFLAG(ENTERPRISE_CLOUD_CONTENT_ANALYSIS)
-void FileSelectHelper::ContentAnalysisCompletionCallback(
-    std::vector<blink::mojom::FileChooserFileInfoPtr> list,
-    const enterprise_connectors::ContentAnalysisDelegate::Data& data,
-    enterprise_connectors::ContentAnalysisDelegate::Result& result) {
-  if (AbortIfWebContentsDestroyed())
-    return;
-
-  DCHECK_EQ(data.text.size(), 0u);
-  DCHECK_EQ(result.text_results.size(), 0u);
-  DCHECK_EQ(data.paths.size(), result.paths_results.size());
-  DCHECK_GE(list.size(), result.paths_results.size());
-
-  // If the user chooses to upload a folder and the folder contains sensitive
-  // files, block the entire folder and update `result` to reflect the block
-  // verdict for all files scanned.
-  if (dialog_type_ == ui::SelectFileDialog::SELECT_UPLOAD_FOLDER) {
-    if (base::Contains(result.paths_results, false)) {
-      list.clear();
-      for (size_t index = 0; index < data.paths.size(); ++index) {
-        result.paths_results[index] = false;
-      }
-    }
-    // Early return for folder upload, regardless of list being empty or not.
-    NotifyListenerAndEnd(std::move(list));
-    return;
-  }
-
-  // For single or multiple file uploads, remove any files that did not pass the
-  // deep scan. Non-native files are skipped.
-  size_t i = 0;
-  for (auto it = list.begin(); it != list.end();) {
-    if ((*it)->is_native_file()) {
-      if (!result.paths_results[i]) {
-        it = list.erase(it);
-      } else {
-        ++it;
-      }
-      ++i;
-    } else {
-      // Skip non-native files by incrementing the iterator without changing `i`
-      // so that no result is skipped.
-      ++it;
-    }
-  }
-
   NotifyListenerAndEnd(std::move(list));
 }
-#endif  // BUILDFLAG(ENTERPRISE_CLOUD_CONTENT_ANALYSIS)
 
 void FileSelectHelper::NotifyListenerAndEnd(
     std::vector<blink::mojom::FileChooserFileInfoPtr> list) {
@@ -616,65 +478,8 @@ void FileSelectHelper::GetSanitizedFilenameOnUIThread(
 
   base::FilePath default_file_path = profile_->last_selected_directory().Append(
       GetSanitizedFileName(params->default_file_name));
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-  // Mode `kSave` is only for PPAPI writes, which are checked by Safe Browsing.
-  // See comments on
-  // //third_party/blink/public/mojom/choosers/file_chooser.mojom.
-  if (params->mode == FileChooserParams::Mode::kSave) {
-    CheckDownloadRequestWithSafeBrowsing(default_file_path, std::move(params));
-    return;
-  }
-#endif
   RunFileChooserOnUIThread(default_file_path, std::move(params));
 }
-
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-void FileSelectHelper::CheckDownloadRequestWithSafeBrowsing(
-    const base::FilePath& default_file_path,
-    FileChooserParamsPtr params) {
-  // Download Protection is not supported on Android.
-  safe_browsing::SafeBrowsingService* sb_service =
-      g_browser_process->safe_browsing_service();
-
-  if (!sb_service || !sb_service->download_protection_service() ||
-      !sb_service->download_protection_service()->enabled()) {
-    RunFileChooserOnUIThread(default_file_path, std::move(params));
-    return;
-  }
-
-  std::vector<base::FilePath::StringType> alternate_extensions;
-  if (select_file_types_) {
-    for (const auto& extensions_list : select_file_types_->extensions) {
-      for (const auto& extension_in_list : extensions_list) {
-        base::FilePath::StringType extension =
-            default_file_path.ReplaceExtension(extension_in_list)
-                .FinalExtension();
-        alternate_extensions.push_back(extension);
-      }
-    }
-  }
-
-  GURL requestor_url = params->requestor;
-  sb_service->download_protection_service()->CheckPPAPIDownloadRequest(
-      requestor_url, render_frame_host_, default_file_path,
-      alternate_extensions, profile_,
-      base::BindOnce(
-          &InterpretSafeBrowsingVerdict,
-          base::BindOnce(&FileSelectHelper::ProceedWithSafeBrowsingVerdict,
-                         this, default_file_path, std::move(params))));
-}
-
-void FileSelectHelper::ProceedWithSafeBrowsingVerdict(
-    const base::FilePath& default_file_path,
-    FileChooserParamsPtr params,
-    bool allowed_by_safe_browsing) {
-  if (!allowed_by_safe_browsing) {
-    RunFileChooserEnd();
-    return;
-  }
-  RunFileChooserOnUIThread(default_file_path, std::move(params));
-}
-#endif
 
 void FileSelectHelper::RunFileChooserOnUIThread(
     const base::FilePath& default_file_path,

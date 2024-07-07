@@ -10,7 +10,6 @@
 #include "chrome/browser/web_applications/web_app_helpers.h"
 #include "components/custom_handlers/protocol_handler_registry.h"
 #include "components/payments/content/payment_request_web_contents_manager.h"
-#include "components/subresource_filter/content/browser/devtools_interaction_tracker.h"
 #include "third_party/blink/public/common/manifest/manifest_util.h"
 #include "ui/gfx/image/image.h"
 
@@ -49,19 +48,7 @@ PageHandler::~PageHandler() {
   Disable();
 }
 
-void PageHandler::ToggleAdBlocking(bool enabled) {
-  if (!web_contents_)
-    return;
-
-  // Create the DevtoolsInteractionTracker lazily (note that this call is a
-  // no-op if the object was already created).
-  subresource_filter::DevtoolsInteractionTracker::CreateForWebContents(
-      web_contents_.get());
-
-  subresource_filter::DevtoolsInteractionTracker::FromWebContents(
-      web_contents_.get())
-      ->ToggleForceActivation(enabled);
-}
+void PageHandler::ToggleAdBlocking(bool enabled) {}
 
 protocol::Response PageHandler::Enable() {
   enabled_ = true;

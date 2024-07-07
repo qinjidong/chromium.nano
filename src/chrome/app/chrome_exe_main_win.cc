@@ -38,7 +38,6 @@
 #include "chrome/app/exit_code_watcher_win.h"
 #include "chrome/app/main_dll_loader_win.h"
 #include "chrome/app/packed_resources_integrity.h"
-#include "chrome/browser/policy/policy_path_parser.h"
 #include "chrome/browser/win/chrome_process_finder.h"
 #include "chrome/chrome_elf/chrome_elf_main.h"
 #include "chrome/common/chrome_paths_internal.h"
@@ -104,7 +103,6 @@ bool AttemptFastNotify(const base::CommandLine& command_line) {
   base::FilePath user_data_dir;
   if (!chrome::GetDefaultUserDataDirectory(&user_data_dir))
     return false;
-  policy::path_parser::CheckUserDataDirPolicy(&user_data_dir);
 
   HWND chrome = chrome::FindRunningChromeWindow(user_data_dir);
   if (!chrome)

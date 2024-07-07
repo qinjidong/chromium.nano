@@ -73,14 +73,6 @@ public class PasswordCheckupLauncher {
         activity.startActivity(intent);
     }
 
-    @CalledByNative
-    static void launchSafetyCheck(WindowAndroid windowAndroid) {
-        if (windowAndroid.getContext().get() == null) return; // Window not available yet/anymore.
-        (new SettingsLauncherImpl())
-                .launchSettingsActivity(
-                        windowAndroid.getContext().get(), SettingsFragment.SAFETY_CHECK);
-    }
-
     private static boolean tryLaunchingNativePasswordCheckup(Activity activity) {
         GooglePasswordManagerUIProvider googlePasswordManagerUIProvider =
                 AppHooks.get().createGooglePasswordManagerUIProvider();

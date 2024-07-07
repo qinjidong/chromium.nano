@@ -17,9 +17,6 @@
 #include "build/chromeos_buildflags.h"
 #include "chrome/app/vector_icons/vector_icons.h"
 #include "chrome/browser/browser_process.h"
-#include "chrome/browser/enterprise/browser_management/browser_management_service.h"
-#include "chrome/browser/enterprise/browser_management/management_service_factory.h"
-#include "chrome/browser/enterprise/util/managed_browser_utils.h"
 #include "chrome/browser/feature_engagement/tracker_factory.h"
 #include "chrome/browser/lifetime/application_lifetime.h"
 #include "chrome/browser/profiles/profile.h"
@@ -82,10 +79,6 @@
 #include "ui/gfx/image/image_skia_operations.h"
 #include "ui/strings/grit/ui_strings.h"
 #include "ui/views/accessibility/view_accessibility.h"
-
-#if BUILDFLAG(IS_MAC) || BUILDFLAG(IS_WIN) || BUILDFLAG(IS_LINUX)
-#include "chrome/browser/enterprise/signin/enterprise_signin_prefs.h"
-#endif
 
 #if BUILDFLAG(IS_CHROMEOS_LACROS)
 #include "components/trusted_vault/features.h"
@@ -549,52 +542,14 @@ void ProfileMenuView::BuildIdentity() {
         IsSyncPaused(profile)
             ? l10n_util::GetStringUTF16(IDS_PROFILES_LOCAL_PROFILE_STATE)
             : base::UTF8ToUTF16(account_info.email);
-    auto account_manager = chrome::GetAccountManagerIdentity(profile);
     std::u16string management_label;
     ui::ImageModel badge_image_model;
-
-    if (chrome::enterprise_util::CanShowEnterpriseBadging(
-            browser()->profile())) {
-      management_label =
-          account_manager
-              ? l10n_util::GetStringFUTF16(IDS_PROFILES_MANAGED_BY,
-                                           base::UTF8ToUTF16(*account_manager))
-              : std::u16string();
-
-      auto management_environment =
-          chrome::enterprise_util::GetManagementEnvironment(
-              profile, identity_manager->FindExtendedAccountInfoByAccountId(
-                           identity_manager->GetPrimaryAccountId(
-                               signin::ConsentLevel::kSignin)));
-
-      if (management_environment !=
-          chrome::enterprise_util::ManagementEnvironment::kNone) {
-        policy::BrowserManagementService* management_service =
-            static_cast<policy::BrowserManagementService*>(
-                policy::ManagementServiceFactory::GetForProfile(
-                    browser()->profile()));
-        if (management_service->GetMetadata().GetManagementLogo().IsEmpty()) {
-          badge_image_model = ui::ImageModel::FromVectorIcon(
-              vector_icons::kBusinessIcon, ui::kColorMenuIcon, 16);
-        } else {
-          badge_image_model = ui::ImageModel::FromImage(
-              management_service->GetMetadata().GetManagementLogo());
-        }
-      }
-    }
-
     SetProfileIdentityInfo(
         profile_name, background_color, edit_button_params,
         ui::ImageModel::FromImage(account_info.account_image),
         badge_image_model, menu_title_, menu_subtitle_, management_label);
   } else {
     std::string profile_user_display_name, profile_user_email;
-#if BUILDFLAG(IS_MAC) || BUILDFLAG(IS_WIN) || BUILDFLAG(IS_LINUX)
-    profile_user_display_name = profile->GetPrefs()->GetString(
-        enterprise_signin::prefs::kProfileUserDisplayName);
-    profile_user_email = profile->GetPrefs()->GetString(
-        enterprise_signin::prefs::kProfileUserEmail);
-#endif
     menu_title_ =
         profile_user_display_name.empty()
             ? l10n_util::GetStringUTF16(IDS_PROFILES_LOCAL_PROFILE_STATE)
@@ -853,7 +808,6 @@ void ProfileMenuView::BuildFeatureButtons() {
       identity_manager->HasPrimaryAccount(signin::ConsentLevel::kSync);
 
   bool hide_signout_button_for_managed_profiles =
-      chrome::enterprise_util::UserAcceptedAccountManagement(profile) &&
       base::FeatureList::IsEnabled(kDisallowManagedProfileSignout);
 
   bool add_sign_out_button = has_unconsented_account && !has_primary_account &&

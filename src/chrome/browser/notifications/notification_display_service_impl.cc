@@ -18,7 +18,6 @@
 #include "chrome/browser/notifications/notification_display_service_factory.h"
 #include "chrome/browser/notifications/persistent_notification_handler.h"
 #include "chrome/browser/profiles/profile.h"
-#include "chrome/browser/safe_browsing/tailored_security/notification_handler_desktop.h"
 #include "chrome/browser/updates/announcement_notification/announcement_notification_handler.h"
 #include "chrome/common/pref_names.h"
 #include "components/pref_registry/pref_registry_syncable.h"
@@ -86,13 +85,6 @@ NotificationDisplayServiceImpl::NotificationDisplayServiceImpl(Profile* profile)
         NotificationHandler::Type::SEND_TAB_TO_SELF,
         std::make_unique<send_tab_to_self::DesktopNotificationHandler>(
             profile_));
-#endif
-
-#if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_CHROMEOS) || BUILDFLAG(IS_MAC) || \
-    BUILDFLAG(IS_WIN)
-    AddNotificationHandler(
-        NotificationHandler::Type::TAILORED_SECURITY,
-        std::make_unique<safe_browsing::TailoredSecurityNotificationHandler>());
 #endif
 
 #if BUILDFLAG(ENABLE_EXTENSIONS)

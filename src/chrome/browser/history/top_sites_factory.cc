@@ -27,7 +27,6 @@
 #include "components/grit/components_scaled_resources.h"
 #include "components/history/core/browser/history_constants.h"
 #include "components/history/core/browser/top_sites_impl.h"
-#include "components/policy/core/common/policy_pref_names.h"
 #include "components/pref_registry/pref_registry_syncable.h"
 #include "components/prefs/pref_service.h"
 #include "components/search/ntp_features.h"
@@ -53,40 +52,6 @@ struct RawPrepopulatedPage {
   SkColor color;         // The best color to highlight the page (should
                          // roughly match favicon).
 };
-
-#if !BUILDFLAG(IS_ANDROID)
-// Android does not use prepopulated pages.
-const RawPrepopulatedPage kRawPrepopulatedPages[] = {
-    {
-        IDS_WEBSTORE_URL,
-        IDS_EXTENSION_WEB_STORE_TITLE_SHORT,
-        IDR_WEBSTORE_ICON_32,
-        SkColorSetRGB(63, 132, 197),
-    },
-};
-#endif
-
-void InitializePrepopulatedPageList(
-    Profile* profile,
-    history::PrepopulatedPageList* prepopulated_pages) {
-#if !BUILDFLAG(IS_ANDROID)
-  DCHECK(prepopulated_pages);
-  PrefService* pref_service = profile->GetPrefs();
-  bool hide_web_store_icon =
-      pref_service->GetBoolean(policy::policy_prefs::kHideWebStoreIcon);
-
-  prepopulated_pages->reserve(std::size(kRawPrepopulatedPages));
-  for (size_t i = 0; i < std::size(kRawPrepopulatedPages); ++i) {
-    const RawPrepopulatedPage& page = kRawPrepopulatedPages[i];
-    if (hide_web_store_icon && page.url_id == IDS_WEBSTORE_URL)
-      continue;
-
-    prepopulated_pages->push_back(history::PrepopulatedPage(
-        GURL(l10n_util::GetStringUTF8(page.url_id)),
-        l10n_util::GetStringUTF16(page.title_id), page.favicon_id, page.color));
-  }
-#endif
-}
 
 }  // namespace
 
@@ -143,8 +108,6 @@ TopSitesFactory::~TopSitesFactory() = default;
 scoped_refptr<RefcountedKeyedService> TopSitesFactory::BuildServiceInstanceFor(
     content::BrowserContext* context) const {
   history::PrepopulatedPageList prepopulated_pages;
-  InitializePrepopulatedPageList(Profile::FromBrowserContext(context),
-                                 &prepopulated_pages);
   return BuildTopSites(context, prepopulated_pages);
 }
 

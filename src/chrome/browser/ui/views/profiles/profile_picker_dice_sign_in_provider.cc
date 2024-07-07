@@ -22,7 +22,6 @@
 #include "chrome/browser/signin/signin_util.h"
 #include "chrome/browser/themes/theme_service.h"
 #include "chrome/browser/themes/theme_service_factory.h"
-#include "chrome/browser/trusted_vault/trusted_vault_encryption_keys_tab_helper.h"
 #include "chrome/browser/ui/browser_navigator.h"
 #include "chrome/browser/ui/browser_navigator_params.h"
 #include "chrome/browser/ui/views/profiles/profile_picker_view.h"
@@ -221,10 +220,6 @@ void ProfilePickerDiceSignInProvider::OnProfileInitialized(
   web_modal::WebContentsModalDialogManager::CreateForWebContents(contents());
   web_modal::WebContentsModalDialogManager::FromWebContents(contents())
       ->SetDelegate(this);
-
-  // To allow passing encryption keys during interactions with the page,
-  // instantiate TrustedVaultEncryptionKeysTabHelper.
-  TrustedVaultEncryptionKeysTabHelper::CreateForWebContents(contents());
 
   // Record that the sign in process starts. Its end is recorded automatically
   // when the primary account is set.

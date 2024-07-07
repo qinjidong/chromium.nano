@@ -16,8 +16,6 @@ import androidx.annotation.Nullable;
 import org.chromium.android_webview.AwContentsClient;
 import org.chromium.android_webview.AwHistogramRecorder;
 import org.chromium.android_webview.AwRenderProcess;
-import org.chromium.android_webview.SafeBrowsingAction;
-import org.chromium.android_webview.safe_browsing.AwSafeBrowsingResponse;
 import org.chromium.base.Callback;
 import org.chromium.base.Log;
 import org.chromium.base.TraceEvent;
@@ -146,30 +144,6 @@ abstract class SharedWebViewContentsClientAdapter extends AwContentsClient {
                         mWebView,
                         new WebResourceRequestAdapter(request),
                         new WebResourceErrorAdapter(error));
-            }
-        }
-    }
-
-    @Override
-    public void onSafeBrowsingHit(
-            AwWebResourceRequest request,
-            int threatType,
-            final Callback<AwSafeBrowsingResponse> callback) {
-        try (TraceEvent event =
-                TraceEvent.scoped("WebViewContentsClientAdapter.onSafeBrowsingHit")) {
-            AwHistogramRecorder.recordCallbackInvocation(
-                    AwHistogramRecorder.WebViewCallbackType.ON_SAFE_BROWSING_HIT);
-            if (mSupportLibClient.isFeatureAvailable(Features.SAFE_BROWSING_HIT)) {
-                mSupportLibClient.onSafeBrowsingHit(
-                        mWebView, new WebResourceRequestAdapter(request), threatType, callback);
-            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-                GlueApiHelperForOMR1.onSafeBrowsingHit(
-                        mWebViewClient, mWebView, request, threatType, callback);
-
-            } else {
-                callback.onResult(
-                        new AwSafeBrowsingResponse(
-                                SafeBrowsingAction.SHOW_INTERSTITIAL, /* reporting= */ true));
             }
         }
     }

@@ -21,7 +21,6 @@ import org.chromium.chrome.browser.browsing_data.ClearBrowsingDataFragment;
 import org.chromium.chrome.browser.browsing_data.ClearBrowsingDataFragmentAdvanced;
 import org.chromium.chrome.browser.browsing_data.ClearBrowsingDataTabsFragment;
 import org.chromium.chrome.browser.password_manager.settings.PasswordSettings;
-import org.chromium.chrome.browser.safety_check.SafetyCheckSettingsFragment;
 import org.chromium.chrome.browser.sync.settings.GoogleServicesSettings;
 import org.chromium.chrome.browser.sync.settings.ManageSyncSettings;
 import org.chromium.components.browser_ui.settings.SettingsLauncher;
@@ -58,8 +57,6 @@ public class SettingsLauncherImpl implements SettingsLauncher {
                                 /* isFetcherSuppliedFromOutside= */ false);
                 break;
             case SettingsFragment.SAFETY_CHECK:
-                fragmentArgs = SafetyCheckSettingsFragment.createBundle(true);
-                break;
             case SettingsFragment.MAIN:
             case SettingsFragment.PAYMENT_METHODS:
             case SettingsFragment.SITE:
@@ -132,7 +129,7 @@ public class SettingsLauncherImpl implements SettingsLauncher {
             case SettingsFragment.PAYMENT_METHODS:
                 return AutofillPaymentMethodsFragment.class;
             case SettingsFragment.SAFETY_CHECK:
-                return SafetyCheckSettingsFragment.class;
+                return null;
             case SettingsFragment.SITE:
                 return SiteSettings.class;
             case SettingsFragment.ACCESSIBILITY:

@@ -43,7 +43,6 @@
 #include "components/favicon/core/favicon_service.h"
 #include "components/history/core/browser/history_service.h"
 #include "components/history/core/browser/top_sites.h"
-#include "components/policy/core/common/policy_pref_names.h"
 #include "components/prefs/pref_change_registrar.h"
 #include "components/sessions/core/session_types.h"
 #include "components/strings/grit/components_strings.h"
@@ -163,7 +162,6 @@ bool CreateIconFile(const gfx::ImageSkia& image_skia,
 // Updates the "Tasks" category of the JumpList.
 bool UpdateTaskCategory(
     JumpListUpdater* jumplist_updater,
-    policy::IncognitoModeAvailability incognito_availability,
     const base::FilePath& cmd_line_profile_dir) {
   base::FilePath chrome_path;
   if (!base::PathService::Get(base::FILE_EXE, &chrome_path))
@@ -177,7 +175,7 @@ bool UpdateTaskCategory(
   // collection. We use our application icon as the icon for this item.
   // We remove '&' characters from this string so we can share it with our
   // system menu.
-  if (incognito_availability != policy::IncognitoModeAvailability::kForced) {
+  {
     scoped_refptr<ShellLinkItem> chrome = CreateShellLink(cmd_line_profile_dir);
     std::u16string chrome_title = l10n_util::GetStringUTF16(IDS_NEW_WINDOW);
     base::ReplaceSubstringsAfterOffset(&chrome_title, 0, u"&",
@@ -189,7 +187,7 @@ bool UpdateTaskCategory(
 
   // Create an IShellLink object which launches Chrome in incognito mode, and
   // add it to the collection.
-  if (incognito_availability != policy::IncognitoModeAvailability::kDisabled) {
+  {
     scoped_refptr<ShellLinkItem> incognito =
         CreateShellLink(cmd_line_profile_dir);
     incognito->GetCommandLine()->AppendSwitch(switches::kIncognito);
@@ -269,12 +267,6 @@ JumpList::JumpList(Profile* profile)
   // kIncognitoModeAvailability is monitored for changes on Incognito mode.
   pref_change_registrar_ = std::make_unique<PrefChangeRegistrar>();
   pref_change_registrar_->Init(profile_->GetPrefs());
-  // base::Unretained is safe since |this| is guaranteed to outlive
-  // pref_change_registrar_.
-  pref_change_registrar_->Add(
-      policy::policy_prefs::kIncognitoModeAvailability,
-      base::BindRepeating(&JumpList::OnIncognitoAvailabilityChanged,
-                          base::Unretained(this)));
 }
 
 JumpList::~JumpList() {
@@ -587,10 +579,6 @@ void JumpList::PostRunUpdate() {
 
   base::FilePath profile_dir = profile_->GetPath();
 
-  // Check if incognito windows (or normal windows) are disabled by policy.
-  policy::IncognitoModeAvailability incognito_availability =
-      IncognitoModePrefs::GetAvailability(profile_->GetPrefs());
-
   auto update_transaction = std::make_unique<UpdateTransaction>();
   if (most_visited_should_update_)
     update_transaction->most_visited_icons = std::move(most_visited_icons_);
@@ -606,7 +594,7 @@ void JumpList::PostRunUpdate() {
       &JumpList::RunUpdateJumpList, app_id_, profile_dir, most_visited_pages_,
       recently_closed_pages_, GetCmdLineProfileDir(),
       most_visited_should_update_, recently_closed_should_update_,
-      incognito_availability, update_transaction.get());
+      update_transaction.get());
 
   // Post a task to update the JumpList, which consists of 1) create new icons,
   // 2) notify the OS, 3) delete old icons.
@@ -707,7 +695,6 @@ void JumpList::RunUpdateJumpList(
     const base::FilePath& cmd_line_profile_dir,
     bool most_visited_should_update,
     bool recently_closed_should_update,
-    policy::IncognitoModeAvailability incognito_availability,
     UpdateTransaction* update_transaction) {
   DCHECK(update_transaction);
 
@@ -720,7 +707,7 @@ void JumpList::RunUpdateJumpList(
       app_id, most_visited_icon_dir, recently_closed_icon_dir,
       most_visited_pages, recently_closed_pages, cmd_line_profile_dir,
       most_visited_should_update, recently_closed_should_update,
-      incognito_availability, update_transaction);
+      update_transaction);
 
   // Delete any obsolete icon files.
   if (most_visited_should_update) {
@@ -743,7 +730,6 @@ void JumpList::CreateNewJumpListAndNotifyOS(
     const base::FilePath& cmd_line_profile_dir,
     bool most_visited_should_update,
     bool recently_closed_should_update,
-    policy::IncognitoModeAvailability incognito_availability,
     UpdateTransaction* update_transaction) {
   DCHECK(update_transaction);
 
@@ -823,8 +809,7 @@ void JumpList::CreateNewJumpListAndNotifyOS(
   }
 
   // Update the "Tasks" category of the JumpList.
-  if (!UpdateTaskCategory(&jumplist_updater, incognito_availability,
-                          cmd_line_profile_dir))
+  if (!UpdateTaskCategory(&jumplist_updater, cmd_line_profile_dir))
     return;
 
   base::ElapsedTimer commit_update_timer;

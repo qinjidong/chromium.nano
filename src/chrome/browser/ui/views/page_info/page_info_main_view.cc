@@ -52,10 +52,6 @@
 #include "ui/views/layout/flex_layout.h"
 #include "ui/views/view_class_properties.h"
 
-#if BUILDFLAG(FULL_SAFE_BROWSING)
-#include "chrome/browser/safe_browsing/chrome_password_protection_service.h"
-#endif
-
 namespace {
 
 constexpr int kMinPermissionRowHeight = 40;

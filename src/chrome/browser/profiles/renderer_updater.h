@@ -97,13 +97,6 @@ class RendererUpdater : public KeyedService
   const raw_ptr<BoundSessionCookieRefreshService>
       bound_session_cookie_refresh_service_ = nullptr;
 #endif
-
-  PrefChangeRegistrar pref_change_registrar_;
-
-  // Prefs that we sync to the renderers.
-  BooleanPrefMember force_google_safesearch_;
-  IntegerPrefMember force_youtube_restrict_;
-  StringPrefMember allowed_domains_for_apps_;
 };
 
 #endif  // CHROME_BROWSER_PROFILES_RENDERER_UPDATER_H_

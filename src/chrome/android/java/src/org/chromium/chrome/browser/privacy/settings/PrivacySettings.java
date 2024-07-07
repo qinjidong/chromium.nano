@@ -30,9 +30,6 @@ import org.chromium.chrome.browser.privacy_sandbox.PrivacySandboxBridge;
 import org.chromium.chrome.browser.privacy_sandbox.PrivacySandboxReferrer;
 import org.chromium.chrome.browser.privacy_sandbox.PrivacySandboxSettingsBaseFragment;
 import org.chromium.chrome.browser.quick_delete.QuickDeleteController;
-import org.chromium.chrome.browser.safe_browsing.SafeBrowsingBridge;
-import org.chromium.chrome.browser.safe_browsing.metrics.SettingsAccessPoint;
-import org.chromium.chrome.browser.safe_browsing.settings.SafeBrowsingSettingsFragment;
 import org.chromium.chrome.browser.settings.ChromeBaseSettingsFragment;
 import org.chromium.chrome.browser.settings.ChromeManagedPreferenceDelegate;
 import org.chromium.chrome.browser.settings.SettingsLauncherImpl;
@@ -138,20 +135,6 @@ public class PrivacySettings extends ChromeBaseSettingsFragment
         mIncognitoLockSettings = new IncognitoLockSettings(incognitoReauthPreference, getProfile());
         mIncognitoLockSettings.setUpIncognitoReauthPreference(getActivity());
 
-        Preference safeBrowsingPreference = findPreference(PREF_SAFE_BROWSING);
-        safeBrowsingPreference.setSummary(
-                SafeBrowsingSettingsFragment.getSafeBrowsingSummaryString(
-                        getContext(), getProfile()));
-        safeBrowsingPreference.setOnPreferenceClickListener(
-                (preference) -> {
-                    preference
-                            .getExtras()
-                            .putInt(
-                                    SafeBrowsingSettingsFragment.ACCESS_POINT,
-                                    SettingsAccessPoint.PARENT_SETTINGS);
-                    return false;
-                });
-
         setHasOptionsMenu(true);
 
         ChromeSwitchPreference canMakePaymentPref =
@@ -176,20 +159,11 @@ public class PrivacySettings extends ChromeBaseSettingsFragment
                     public boolean isPreferenceClickDisabled(Preference preference) {
                         // Advanced Protection automatically enables HTTPS-Only Mode so
                         // lock the setting.
-                        return isPreferenceControlledByPolicy(preference)
-                                || new SafeBrowsingBridge(getProfile()).isUnderAdvancedProtection();
+                        return isPreferenceControlledByPolicy(preference);
                     }
                 });
         httpsFirstModePref.setChecked(
                 UserPrefs.get(getProfile()).getBoolean(Pref.HTTPS_ONLY_MODE_ENABLED));
-        if (new SafeBrowsingBridge(getProfile()).isUnderAdvancedProtection()) {
-            httpsFirstModePref.setSummary(
-                    getContext()
-                            .getResources()
-                            .getString(
-                                    R.string
-                                            .settings_https_first_mode_with_advanced_protection_summary));
-        }
 
         Preference syncAndServicesLink = findPreference(PREF_SYNC_AND_SERVICES_LINK);
         syncAndServicesLink.setSummary(buildSyncAndServicesLink());
@@ -312,13 +286,6 @@ public class PrivacySettings extends ChromeBaseSettingsFragment
         Preference secureDnsPref = findPreference(PREF_SECURE_DNS);
         if (secureDnsPref != null && secureDnsPref.isVisible()) {
             secureDnsPref.setSummary(SecureDnsSettings.getSummary(getContext()));
-        }
-
-        Preference safeBrowsingPreference = findPreference(PREF_SAFE_BROWSING);
-        if (safeBrowsingPreference != null && safeBrowsingPreference.isVisible()) {
-            safeBrowsingPreference.setSummary(
-                    SafeBrowsingSettingsFragment.getSafeBrowsingSummaryString(
-                            getContext(), getProfile()));
         }
 
         Preference usageStatsPref = findPreference(PREF_USAGE_STATS);

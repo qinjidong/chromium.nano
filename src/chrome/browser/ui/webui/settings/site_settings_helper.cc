@@ -34,7 +34,6 @@
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/serial/serial_chooser_context.h"
 #include "chrome/browser/serial/serial_chooser_context_factory.h"
-#include "chrome/browser/subresource_filter/subresource_filter_profile_context_factory.h"
 #include "chrome/browser/ui/ui_features.h"
 #include "chrome/browser/ui/url_identity.h"
 #include "chrome/browser/usb/usb_chooser_context.h"
@@ -60,9 +59,6 @@
 #include "components/prefs/pref_service.h"
 #include "components/privacy_sandbox/privacy_sandbox_features.h"
 #include "components/strings/grit/components_strings.h"
-#include "components/subresource_filter/content/browser/subresource_filter_content_settings_manager.h"
-#include "components/subresource_filter/content/browser/subresource_filter_profile_context.h"
-#include "components/subresource_filter/core/browser/subresource_filter_features.h"
 #include "components/url_formatter/elide_url.h"
 #include "components/url_formatter/url_formatter.h"
 #include "content/public/browser/permission_controller.h"
@@ -281,19 +277,6 @@ SiteSettingSource CalculateSiteSettingSource(
 
   if (info.source == SettingSource::kExtension) {
     return SiteSettingSource::kExtension;  // Source #5.
-  }
-
-  if (content_type == ContentSettingsType::ADS &&
-      base::FeatureList::IsEnabled(
-          subresource_filter::kSafeBrowsingSubresourceFilter)) {
-    subresource_filter::SubresourceFilterContentSettingsManager*
-        settings_manager =
-            SubresourceFilterProfileContextFactory::GetForProfile(profile)
-                ->settings_manager();
-
-    if (settings_manager->GetSiteActivationFromMetadata(origin)) {
-      return SiteSettingSource::kAdsFilterBlocklist;  // Source #6.
-    }
   }
 
   DCHECK_NE(SettingSource::kNone, info.source);
@@ -561,11 +544,6 @@ std::vector<ContentSettingsType> GetVisiblePermissionCategories(
     if (base::FeatureList::IsEnabled(
             features::kWebBluetoothNewPermissionsBackend)) {
       base_types->push_back(ContentSettingsType::BLUETOOTH_GUARD);
-    }
-
-    if (base::FeatureList::IsEnabled(
-            subresource_filter::kSafeBrowsingSubresourceFilter)) {
-      base_types->push_back(ContentSettingsType::ADS);
     }
 
     if (base::FeatureList::IsEnabled(

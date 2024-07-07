@@ -13,7 +13,6 @@
 #include "build/chromeos_buildflags.h"
 #include "chrome/browser/content_settings/host_content_settings_map_factory.h"
 #include "chrome/browser/picture_in_picture/picture_in_picture_window_manager.h"
-#include "chrome/browser/policy/policy_util.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/common/pref_names.h"
 #include "chrome/grit/generated_resources.h"
@@ -365,9 +364,7 @@ bool IsTransientActivationRequiredForGetDisplayMedia(
     return true;
   }
 
-  return !policy::IsOriginInAllowlist(
-      contents->GetURL(), prefs,
-      prefs::kScreenCaptureWithoutGestureAllowedForOrigins);
+  return false;
 }
 #endif  // !BUILDFLAG(IS_ANDROID)
 

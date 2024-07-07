@@ -7,10 +7,6 @@
 
 #include "extensions/common/manifest_handler.h"
 
-namespace policy {
-class Schema;
-}
-
 namespace extensions {
 
 // Handles the "storage.managed_schema" manifest key.
@@ -23,13 +19,6 @@ class StorageSchemaManifestHandler : public ManifestHandler {
       delete;
 
   ~StorageSchemaManifestHandler() override;
-
-  // Returns the managed storage schema defined for |extension|.
-  // If the schema is invalid then the Schema returned is invalid too, and
-  // the failure reason is stored in |error|.
-  // This function does file I/O and must be called on a thread that allows I/O.
-  static policy::Schema GetSchema(const Extension* extension,
-                                  std::string* error);
 
  private:
   // ManifestHandler implementation:

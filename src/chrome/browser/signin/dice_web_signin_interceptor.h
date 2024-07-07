@@ -19,7 +19,6 @@
 #include "chrome/browser/signin/web_signin_interceptor.h"
 #include "chrome/browser/ui/webui/signin/signin_utils.h"
 #include "components/keyed_service/core/keyed_service.h"
-#include "components/policy/core/browser/signin/profile_separation_policies.h"
 #include "components/search_engines/template_url_data.h"
 #include "components/signin/public/base/signin_metrics.h"
 #include "components/signin/public/base/signin_prefs.h"
@@ -35,9 +34,6 @@ namespace content {
 class WebContents;
 }
 
-namespace policy {
-class UserCloudSigninRestrictionPolicyFetcher;
-}
 namespace user_prefs {
 class PrefRegistrySyncable;
 }
@@ -149,12 +145,6 @@ class DiceWebSigninInterceptor : public KeyedService,
   // showing on screen).
   bool is_interception_in_progress() const {
     return state_->is_interception_in_progress_;
-  }
-
-  void SetInterceptedAccountProfileSeparationPoliciesForTesting(
-      std::optional<policy::ProfileSeparationPolicies> value) {
-    intercepted_account_profile_separation_policies_response_for_testing_ =
-        std::move(value);
   }
 
   // KeyedService:
@@ -323,21 +313,6 @@ class DiceWebSigninInterceptor : public KeyedService,
   // this account.
   bool HasUserDeclinedProfileCreation(const std::string& email) const;
 
-  // Fetches the value of the cloud user level value of the
-  // ManagedAccountsSigninRestriction policy for 'account_info' and runs
-  // `callback` with the result. This is a network call that has a 5 seconds
-  // timeout.
-  void EnsureAccountLevelSigninRestrictionFetchInProgress(
-      const AccountInfo& account_info,
-      base::OnceCallback<void(const policy::ProfileSeparationPolicies&)>
-          callback);
-
-  // Called when the the value of the cloud user level value of the
-  // ManagedAccountsSigninRestriction is received.
-  void OnAccountLevelManagedAccountsSigninRestrictionReceived(
-      const AccountInfo& account_info,
-      const policy::ProfileSeparationPolicies& profile_separation_policies);
-
   // Records the heuristic outcome and latency metrics.
   void RecordSigninInterceptionHeuristicOutcome(
       SigninInterceptionHeuristicOutcome outcome) const;
@@ -387,16 +362,6 @@ class DiceWebSigninInterceptor : public KeyedService,
     // Used for metrics.
     base::TimeTicks interception_start_time_;
     bool was_interception_ui_displayed_ = false;
-
-    // Used to fetch the cloud user level policy value of the profile separation
-    // policies. This can only fetch one policy value for one account at the
-    // time.
-    std::unique_ptr<policy::UserCloudSigninRestrictionPolicyFetcher>
-        account_level_signin_restriction_policy_fetcher_;
-    // Value of  the profile separation policies for the intercepted account. If
-    // no value is set, then we have not yet received the policy value.
-    std::optional<policy::ProfileSeparationPolicies>
-        intercepted_account_profile_separation_policies_;
   };
 
   const raw_ptr<Profile, DanglingUntriaged> profile_;
@@ -407,14 +372,6 @@ class DiceWebSigninInterceptor : public KeyedService,
       account_info_update_observation_{this};
 
   std::unique_ptr<ResetableState> state_;
-
-  // Value that should be return when trying to the value of the profile
-  // separation policies for the intercepted account. This should never be
-  // used in place of `intercepted_account_profile_separation_policies_`.
-  // This field is excluded from `ResetableState` as tests do not expect to
-  // reset this value, it is expected to be sticky across tests.
-  std::optional<policy::ProfileSeparationPolicies>
-      intercepted_account_profile_separation_policies_response_for_testing_;
 };
 
 #endif  // CHROME_BROWSER_SIGNIN_DICE_WEB_SIGNIN_INTERCEPTOR_H_

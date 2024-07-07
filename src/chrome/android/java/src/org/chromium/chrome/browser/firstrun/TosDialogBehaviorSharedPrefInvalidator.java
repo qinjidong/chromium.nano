@@ -14,7 +14,6 @@ import org.chromium.base.Log;
 import org.chromium.base.ThreadUtils;
 import org.chromium.base.supplier.OneshotSupplierImpl;
 import org.chromium.chrome.browser.enterprise.util.EnterpriseInfo;
-import org.chromium.chrome.browser.policy.PolicyServiceFactory;
 import org.chromium.components.policy.PolicyService;
 
 /**
@@ -43,7 +42,6 @@ public class TosDialogBehaviorSharedPrefInvalidator {
         FirstRunAppRestrictionInfo appRestrictionInfo =
                 FirstRunAppRestrictionInfo.takeMaybeInitialized();
         OneshotSupplierImpl<PolicyService> policyServiceSupplier = new OneshotSupplierImpl<>();
-        policyServiceSupplier.set(PolicyServiceFactory.getGlobalPolicyService());
         SkipTosDialogPolicyListener policyListener =
                 new SkipTosDialogPolicyListener(
                         appRestrictionInfo,

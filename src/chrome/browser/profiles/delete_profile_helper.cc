@@ -396,15 +396,6 @@ void DeleteProfileHelper::OnLoadProfileForProfileDeletion(
     // devices) via sync.
     DisableSyncForProfileDeletion(profile);
 
-    // The Profile Data doesn't get wiped until Chrome closes. Since we promised
-    // that the user's data would be removed, do so immediately.
-    //
-    // With DestroyProfileOnBrowserClose, this adds a KeepAlive. So the Profile*
-    // only gets deleted *after* browsing data is removed. This also clears some
-    // keepalives in the process, e.g. due to background extensions getting
-    // uninstalled.
-    profiles::RemoveBrowsingDataForProfile(profile_dir);
-
     // Clean-up pref data that won't be cleaned up by deleting the profile dir.
     profile->GetPrefs()->OnStoreDeletionFromDisk();
   } else {

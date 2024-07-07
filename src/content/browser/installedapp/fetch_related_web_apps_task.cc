@@ -16,7 +16,6 @@
 namespace content {
 
 namespace {
-constexpr char kWebAppPlatformName[] = "webapp";
 
 // Filters out nullopt from |matched_app_results| and returns result.
 FetchRelatedAppsTaskResult RemoveNullResults(
@@ -49,25 +48,6 @@ void FetchRelatedWebAppsTask::Start(
     FetchRelatedAppsTaskCallback done_callback) {
   base::ConcurrentCallbacks<std::optional<blink::mojom::RelatedApplication>>
       concurrent;
-
-  for (auto& related_app : related_applications) {
-    if (!related_app->id.has_value()) {
-      continue;
-    }
-
-    if (related_app->platform != kWebAppPlatformName) {
-      continue;
-    }
-
-    GURL manifest_id(related_app->id.value());
-
-    if (!manifest_id.is_valid()) {
-      continue;
-    }
-
-    GetContentClient()->browser()->QueryInstalledWebAppsByManifestId(
-        frame_url, manifest_id, browser_context_, concurrent.CreateCallback());
-  }
 
   std::move(concurrent)
       .Done(base::BindOnce(&RemoveNullResults).Then(std::move(done_callback)));

@@ -18,7 +18,6 @@
 #include "base/task/single_thread_task_runner.h"
 #include "build/build_config.h"
 #include "chrome/browser/browser_switcher/browser_switcher_sitelist.h"
-#include "chrome/browser/policy/profile_policy_connector.h"
 #include "chrome/browser/profiles/profile.h"
 #include "components/pref_registry/pref_registry_syncable.h"
 #include "components/prefs/pref_service.h"
@@ -103,14 +102,10 @@ RuleSet::RuleSet(RuleSet&&) = default;
 RuleSet::~RuleSet() = default;
 
 BrowserSwitcherPrefs::BrowserSwitcherPrefs(Profile* profile)
-    : BrowserSwitcherPrefs(
-          profile->GetPrefs(),
-          profile->GetProfilePolicyConnector()->policy_service()) {}
+    : BrowserSwitcherPrefs(profile->GetPrefs()) {}
 
-BrowserSwitcherPrefs::BrowserSwitcherPrefs(
-    PrefService* prefs,
-    policy::PolicyService* policy_service)
-    : policy_service_(policy_service), prefs_(prefs) {
+BrowserSwitcherPrefs::BrowserSwitcherPrefs(PrefService* prefs)
+    : prefs_(prefs) {
   filtering_change_registrar_.Init(prefs_);
 
   const struct {
@@ -167,17 +162,11 @@ BrowserSwitcherPrefs::BrowserSwitcherPrefs(
         pref_name, base::BindRepeating(&BrowserSwitcherPrefs::MarkDirty,
                                        base::Unretained(this)));
   }
-
-  if (policy_service_)
-    policy_service_->AddObserver(policy::POLICY_DOMAIN_CHROME, this);
 }
 
 BrowserSwitcherPrefs::~BrowserSwitcherPrefs() = default;
 
-void BrowserSwitcherPrefs::Shutdown() {
-  if (policy_service_)
-    policy_service_->RemoveObserver(policy::POLICY_DOMAIN_CHROME, this);
-}
+void BrowserSwitcherPrefs::Shutdown() {}
 
 // static
 void BrowserSwitcherPrefs::RegisterProfilePrefs(
@@ -292,16 +281,6 @@ const std::vector<std::string>& BrowserSwitcherPrefs::GetChromeParameters()
   return chrome_params_;
 }
 #endif
-
-void BrowserSwitcherPrefs::OnPolicyUpdated(const policy::PolicyNamespace& ns,
-                                           const policy::PolicyMap& previous,
-                                           const policy::PolicyMap& current) {
-  // Let all the other policy observers run first, so that prefs are up-to-date
-  // when we run our own callbacks.
-  base::SingleThreadTaskRunner::GetCurrentDefault()->PostTask(
-      FROM_HERE, base::BindOnce(&BrowserSwitcherPrefs::RunCallbacksIfDirty,
-                                weak_ptr_factory_.GetWeakPtr()));
-}
 
 base::CallbackListSubscription
 BrowserSwitcherPrefs::RegisterPrefsChangedCallback(

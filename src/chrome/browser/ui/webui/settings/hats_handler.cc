@@ -21,7 +21,6 @@
 #include "components/prefs/pref_service.h"
 #include "components/privacy_sandbox/privacy_sandbox_prefs.h"
 #include "components/privacy_sandbox/privacy_sandbox_settings.h"
-#include "components/safe_browsing/core/common/features.h"
 #include "components/version_info/version_info.h"
 #include "content/public/browser/visibility.h"
 #include "content/public/browser/web_contents.h"
@@ -90,53 +89,6 @@ void HatsHandler::HandleSecurityPageHatsRequest(const base::Value::List& args) {
   // The third one is the total amount of time a user spent on the security page
   // in focus.
   CHECK_EQ(3U, args.size());
-
-  Profile* profile = Profile::FromWebUI(web_ui());
-
-  // Enterprise users consideration.
-  // If the admin disabled the survey, the survey will not be requested.
-  if (!safe_browsing::IsSafeBrowsingSurveysEnabled(*profile->GetPrefs())) {
-    return;
-  }
-
-  // Request HaTS survey.
-  HatsService* hats_service = HatsServiceFactory::GetForProfile(
-      profile, /* create_if_necessary = */ true);
-
-  // The HaTS service may not be available for the profile, for example if it
-  // is a guest profile.
-  if (!hats_service) {
-    return;
-  }
-
-  // Do not send the survey if the user didn't stay on the page long enough.
-  if (args[2].GetDouble() <
-      features::kHappinessTrackingSurveysForSecurityPageTime.Get()
-          .InMilliseconds()) {
-    return;
-  }
-
-  auto interaction = static_cast<SecurityPageInteraction>(args[0].GetInt());
-  if (features::kHappinessTrackingSurveysForSecurityPageRequireInteraction
-          .Get() &&
-      interaction == SecurityPageInteraction::NO_INTERACTION) {
-    return;
-  }
-
-  // Generate the Product Specific bits data from |profile| and |args|.
-  SurveyStringData product_specific_string_data =
-      GetSecurityPageProductSpecificStringData(profile, args);
-
-  hats_service->LaunchSurvey(
-      kHatsSurveyTriggerSettingsSecurity,
-      /*success_callback*/ base::DoNothing(),
-      /*failure_callback*/ base::DoNothing(),
-      /*product_specific_bits_data=*/{},
-      /*product_specific_string_data=*/product_specific_string_data);
-
-  // Log histogram that indicates that a survey is requested from the security
-  // page.
-  base::UmaHistogramBoolean("Feedback.SecurityPage.SurveyRequested", true);
 }
 
 /**
@@ -150,8 +102,6 @@ SurveyStringData HatsHandler::GetSecurityPageProductSpecificStringData(
     Profile* profile,
     const base::Value::List& args) {
   auto interaction = static_cast<SecurityPageInteraction>(args[0].GetInt());
-  auto safe_browsing_setting =
-      static_cast<SafeBrowsingSetting>(args[1].GetInt());
 
   std::string security_page_interaction_type = "";
   std::string safe_browsing_setting_before = "";
@@ -188,41 +138,6 @@ SurveyStringData HatsHandler::GetSecurityPageProductSpecificStringData(
     }
   }
 
-  switch (safe_browsing_setting) {
-    case SafeBrowsingSetting::ENHANCED: {
-      safe_browsing_setting_before = "enhanced_protection";
-      break;
-    }
-    case SafeBrowsingSetting::STANDARD: {
-      safe_browsing_setting_before = "standard_protection";
-      break;
-    }
-    case SafeBrowsingSetting::DISABLED: {
-      safe_browsing_setting_before = "no_protection";
-      break;
-    }
-  }
-
-  bool safe_browsing_enabled =
-      profile->GetPrefs()->GetBoolean(prefs::kSafeBrowsingEnabled);
-  bool safe_browsing_enhanced_enabled =
-      profile->GetPrefs()->GetBoolean(prefs::kSafeBrowsingEnhanced);
-  if (safe_browsing_enhanced_enabled) {
-    safe_browsing_setting_current = "enhanced_protection";
-  } else if (safe_browsing_enabled) {
-    safe_browsing_setting_current = "standard_protection";
-  } else {
-    safe_browsing_setting_current = "no_protection";
-  }
-
-  std::string friendlier_safe_browsing_settings_enabled =
-      (base::FeatureList::IsEnabled(
-           safe_browsing::kFriendlierSafeBrowsingSettingsStandardProtection) &&
-       base::FeatureList::IsEnabled(
-           safe_browsing::kFriendlierSafeBrowsingSettingsEnhancedProtection))
-          ? "true"
-          : "false";
-
   std::string client_channel =
       std::string(version_info::GetChannelString(chrome::GetChannel()));
 
@@ -232,8 +147,6 @@ SurveyStringData HatsHandler::GetSecurityPageProductSpecificStringData(
       {"Safe Browsing Setting After Trigger", safe_browsing_setting_current},
       {"Client Channel", client_channel},
       {"Time On Page", base::NumberToString(args[2].GetDouble())},
-      {"Friendlier Safe Browsing Settings",
-       friendlier_safe_browsing_settings_enabled},
   };
 }
 

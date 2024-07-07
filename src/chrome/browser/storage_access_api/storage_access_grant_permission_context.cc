@@ -410,15 +410,6 @@ void StorageAccessGrantPermissionContext::DecidePermission(
     std::move(callback).Run(CONTENT_SETTING_BLOCK);
     return;
   }
-
-  first_party_sets::FirstPartySetsPolicyServiceFactory::GetForBrowserContext(
-      browser_context())
-      ->ComputeFirstPartySetMetadata(
-          requesting_site, &embedding_site,
-          base::BindOnce(&StorageAccessGrantPermissionContext::
-                             CheckForAutoGrantOrAutoDenial,
-                         weak_factory_.GetWeakPtr(), std::move(request_data),
-                         std::move(callback)));
 }
 
 void StorageAccessGrantPermissionContext::CheckForAutoGrantOrAutoDenial(

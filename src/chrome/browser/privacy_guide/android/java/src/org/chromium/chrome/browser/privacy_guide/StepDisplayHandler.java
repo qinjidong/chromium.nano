@@ -12,11 +12,6 @@ public interface StepDisplayHandler {
     boolean shouldDisplayHistorySync();
 
     /**
-     * @return Whether the Privacy Guide Safe Browsing page should be displayed.
-     */
-    boolean shouldDisplaySafeBrowsing();
-
-    /**
      * @return Whether the Privacy Guide Cookies page should be displayed.
      */
     boolean shouldDisplayCookies();

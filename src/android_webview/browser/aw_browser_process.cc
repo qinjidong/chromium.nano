@@ -22,7 +22,6 @@
 #include "components/crash/core/common/crash_key.h"
 #include "components/embedder_support/origin_trials/origin_trials_settings_storage.h"
 #include "components/os_crypt/async/browser/os_crypt_async.h"
-#include "components/safe_browsing/core/common/features.h"
 #include "content/public/browser/browser_task_traits.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/process_visibility_util.h"
@@ -92,8 +91,6 @@ void AwBrowserProcess::PreMainMessageLoopRun() {
 
   // Trigger async initialization of OSCrypt key providers.
   std::ignore = os_crypt_async_->GetInstance(base::DoNothing());
-
-  InitSafeBrowsing();
 }
 
 PrefService* AwBrowserProcess::local_state() {
@@ -114,12 +111,6 @@ void AwBrowserProcess::OnLoseForeground() {
     local_state_->CommitPendingWrite();
 }
 
-AwBrowserPolicyConnector* AwBrowserProcess::browser_policy_connector() {
-  if (!browser_policy_connector_)
-    CreateBrowserPolicyConnector();
-  return browser_policy_connector_.get();
-}
-
 VisibilityMetricsLogger* AwBrowserProcess::visibility_metrics_logger() {
   if (!visibility_metrics_logger_) {
     visibility_metrics_logger_ = std::make_unique<VisibilityMetricsLogger>();
@@ -130,77 +121,6 @@ VisibilityMetricsLogger* AwBrowserProcess::visibility_metrics_logger() {
         }));
   }
   return visibility_metrics_logger_.get();
-}
-
-void AwBrowserProcess::CreateBrowserPolicyConnector() {
-  DCHECK(!browser_policy_connector_);
-
-  browser_policy_connector_ =
-      aw_feature_list_creator_->TakeBrowserPolicyConnector();
-  DCHECK(browser_policy_connector_);
-}
-
-void AwBrowserProcess::InitSafeBrowsing() {
-  CreateSafeBrowsingUIManager();
-  CreateSafeBrowsingAllowlistManager();
-}
-
-void AwBrowserProcess::CreateSafeBrowsingUIManager() {
-  safe_browsing_ui_manager_ = new AwSafeBrowsingUIManager();
-}
-
-void AwBrowserProcess::CreateSafeBrowsingAllowlistManager() {
-  scoped_refptr<base::SequencedTaskRunner> background_task_runner =
-      base::ThreadPool::CreateSequencedTaskRunner(
-          {base::MayBlock(), base::TaskPriority::BEST_EFFORT});
-  scoped_refptr<base::SingleThreadTaskRunner> io_task_runner =
-      content::GetIOThreadTaskRunner({});
-  safe_browsing_allowlist_manager_ =
-      std::make_unique<AwSafeBrowsingAllowlistManager>(background_task_runner,
-                                                       io_task_runner);
-}
-
-safe_browsing::RemoteSafeBrowsingDatabaseManager*
-AwBrowserProcess::GetSafeBrowsingDBManager() {
-  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
-
-  if (!safe_browsing_db_manager_) {
-    safe_browsing_db_manager_ =
-        new safe_browsing::RemoteSafeBrowsingDatabaseManager();
-  }
-
-  if (!safe_browsing_db_manager_started_) {
-    // V4ProtocolConfig is not used. Just create one with empty values..
-    safe_browsing::V4ProtocolConfig config("", false, "", "");
-    safe_browsing_db_manager_->StartOnSBThread(
-        GetSafeBrowsingUIManager()->GetURLLoaderFactoryOnSBThread(), config);
-    safe_browsing_db_manager_started_ = true;
-  }
-
-  return safe_browsing_db_manager_.get();
-}
-
-safe_browsing::TriggerManager*
-AwBrowserProcess::GetSafeBrowsingTriggerManager() {
-  DCHECK_CURRENTLY_ON(BrowserThread::UI);
-
-  if (!safe_browsing_trigger_manager_) {
-    safe_browsing_trigger_manager_ =
-        std::make_unique<safe_browsing::TriggerManager>(
-            GetSafeBrowsingUIManager(),
-            /*local_state_prefs=*/nullptr);
-  }
-
-  return safe_browsing_trigger_manager_.get();
-}
-
-AwSafeBrowsingAllowlistManager*
-AwBrowserProcess::GetSafeBrowsingAllowlistManager() const {
-  return safe_browsing_allowlist_manager_.get();
-}
-
-AwSafeBrowsingUIManager* AwBrowserProcess::GetSafeBrowsingUIManager() const {
-  return safe_browsing_ui_manager_.get();
 }
 
 os_crypt_async::OSCryptAsync* AwBrowserProcess::GetOSCryptAsync() const {

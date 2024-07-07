@@ -45,7 +45,6 @@
 #include "components/constrained_window/constrained_window_views.h"
 #include "components/no_state_prefetch/browser/no_state_prefetch_manager.h"
 #include "components/password_manager/content/common/web_ui_constants.h"
-#include "components/policy/core/common/policy_pref_names.h"
 #include "components/prefs/pref_service.h"
 #include "content/public/browser/browser_url_handler.h"
 #include "content/public/browser/navigation_entry.h"
@@ -149,13 +148,6 @@ bool AdjustNavigateParamsForURL(NavigateParams* params) {
   if (profile->IsOffTheRecord() ||
       params->disposition == WindowOpenDisposition::OFF_THE_RECORD) {
     profile = profile->GetOriginalProfile();
-
-    // If incognito is forced, we punt.
-    PrefService* prefs = profile->GetPrefs();
-    if (prefs && IncognitoModePrefs::GetAvailability(prefs) ==
-                     policy::IncognitoModeAvailability::kForced) {
-      return false;
-    }
 
     params->disposition = WindowOpenDisposition::SINGLETON_TAB;
     params->browser = GetOrCreateBrowser(profile, params->user_gesture);

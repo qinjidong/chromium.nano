@@ -102,9 +102,6 @@ class SelectFileDialogExtension : public ui::SelectFileDialog {
     std::optional<std::string> lacros_window_id;
     // Set to true only if SelectFileAsh opened the dialog.
     bool is_lacros = false;
-    // The URL or Component type of the caller that opened the dialog (Save
-    // As/File Picker).
-    std::optional<policy::DlpFileDestination> dialog_caller;
   };
   void SelectFileWithFileManagerParams(Type type,
                                        const std::u16string& title,
@@ -152,10 +149,6 @@ class SelectFileDialogExtension : public ui::SelectFileDialog {
       SelectFileDialog::Listener* listener,
       std::unique_ptr<ui::SelectFilePolicy> policy);
   ~SelectFileDialogExtension() override;
-
-  // Applies DLP policies if there's any, then notifies listeners accordingly.
-  void ApplyPolicyAndNotifyListener(
-      std::optional<policy::DlpFileDestination> dialog_caller);
 
   // Invokes the appropriate file selection callback on our listener.
   void NotifyListener(std::vector<ui::SelectedFileInfo> selection_files);

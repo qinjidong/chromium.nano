@@ -9,7 +9,6 @@
 #include "base/metrics/user_metrics_action.h"
 #include "chrome/browser/notifications/metrics/notification_metrics_logger_factory.h"
 #include "chrome/browser/profiles/profile.h"
-#include "components/safe_browsing/core/common/safe_browsing_prefs.h"
 #include "content/public/common/persistent_notification_status.h"
 #include "third_party/blink/public/mojom/notifications/notification.mojom.h"
 
@@ -53,7 +52,6 @@ void NotificationMetricsLogger::LogPersistentNotificationSize(
     const blink::PlatformNotificationData& notification_data,
     const GURL& origin) {
   // This method should only be called for ESB users.
-  DCHECK(safe_browsing::IsEnhancedProtectionEnabled(*profile->GetPrefs()));
   base::UmaHistogramCounts1000("Notifications.Persistent.Origin.SizeInBytes",
                                origin.spec().size());
   base::UmaHistogramCounts1000("Notifications.Persistent.Title.SizeInBytes",

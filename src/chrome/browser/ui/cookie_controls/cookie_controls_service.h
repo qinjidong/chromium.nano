@@ -23,10 +23,6 @@ namespace base {
 class Value;
 }  // namespace base
 
-namespace policy {
-class PolicyChangeRegistrar;
-}
-
 // Handles the global state for cookie settings for the incognito NTP.
 class CookieControlsService : public KeyedService,
                               content_settings::CookieSettings::Observer {
@@ -67,7 +63,6 @@ class CookieControlsService : public KeyedService,
                                                const base::Value* current);
 
   raw_ptr<Profile> profile_;
-  std::unique_ptr<policy::PolicyChangeRegistrar> policy_registrar_;
   scoped_refptr<content_settings::CookieSettings> incognito_cookie_settings_;
   scoped_refptr<content_settings::CookieSettings> regular_cookie_settings_;
   base::ScopedMultiSourceObservation<content_settings::CookieSettings,

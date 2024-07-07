@@ -95,12 +95,6 @@ void SetDesktopUserAgentOverride(content::WebContents* web_contents,
 int GetHighestKnownUniversalApiContractVersionForTesting();
 #endif  // BUILDFLAG(IS_WIN)
 
-// Returns the UserAgentReductionEnterprisePolicyState enum value corresponding
-// to the provided integer policy value for UserAgentReduction.
-// TODO(crbug.com/40843535): Remove this function with policy.
-embedder_support::UserAgentReductionEnterprisePolicyState
-GetUserAgentReductionFromPrefs(const PrefService* pref_service);
-
 }  // namespace embedder_support
 
 #endif  // COMPONENTS_EMBEDDER_SUPPORT_USER_AGENT_UTILS_H_

@@ -12,15 +12,8 @@ source_set("browser_tests") {
     "//base",
     "//base/test:test_support",
     "//chrome/browser",
-    "//chrome/test:test_support",
     "//components/plus_addresses",
     "//content/test:test_support",
     "//testing/gtest",
   ]
-
-  if (is_android) {
-    deps += [ "//chrome/test:test_support_ui_android" ]
-  } else {
-    deps += [ "//chrome/test:test_support_ui" ]
-  }
 }

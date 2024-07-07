@@ -19,7 +19,6 @@
 #include "content/public/common/content_features.h"
 
 #if BUILDFLAG(IS_CHROMEOS)
-#include "chrome/browser/web_applications/isolated_web_apps/policy/isolated_web_app_external_install_options.h"
 #include "chrome/common/pref_names.h"
 #include "components/prefs/pref_service.h"
 #endif
@@ -82,27 +81,6 @@ IsolatedWebAppTrustChecker::Result IsolatedWebAppTrustChecker::IsTrusted(
   return {.status = Result::Status::kErrorPublicKeysNotTrusted,
           .message = "The public key(s) are not trusted."};
 }
-
-#if BUILDFLAG(IS_CHROMEOS)
-bool IsolatedWebAppTrustChecker::IsTrustedViaPolicy(
-    const web_package::SignedWebBundleId& web_bundle_id) const {
-  const PrefService::Preference* pref = profile_->GetPrefs()->FindPreference(
-      prefs::kIsolatedWebAppInstallForceList);
-  if (!pref) {
-    NOTREACHED_IN_MIGRATION();
-    return false;
-  }
-
-  return base::ranges::any_of(
-      pref->GetValue()->GetList(),
-      [&web_bundle_id](const base::Value& force_install_entry) {
-        auto options =
-            IsolatedWebAppExternalInstallOptions::FromPolicyPrefValue(
-                force_install_entry);
-        return options.has_value() && options->web_bundle_id() == web_bundle_id;
-      });
-}
-#endif  // BUILDFLAG(IS_CHROMEOS)
 
 void SetTrustedWebBundleIdsForTesting(  // IN-TEST
     base::flat_set<web_package::SignedWebBundleId> trusted_web_bundle_ids) {

@@ -25,7 +25,6 @@ import androidx.annotation.Nullable;
 
 import org.chromium.android_webview.common.Lifetime;
 import org.chromium.android_webview.permission.AwPermissionRequest;
-import org.chromium.android_webview.safe_browsing.AwSafeBrowsingResponse;
 import org.chromium.base.Callback;
 import org.chromium.base.ContextUtils;
 import org.chromium.base.Log;
@@ -635,11 +634,6 @@ public abstract class AwContentsClient {
     public abstract void onPageCommitVisible(String url);
 
     public abstract void onReceivedError(AwWebResourceRequest request, AwWebResourceError error);
-
-    protected abstract void onSafeBrowsingHit(
-            AwWebResourceRequest request,
-            int threatType,
-            Callback<AwSafeBrowsingResponse> callback);
 
     public abstract void onReceivedHttpError(
             AwWebResourceRequest request, WebResourceResponseInfo response);

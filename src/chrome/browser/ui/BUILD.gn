@@ -11,7 +11,6 @@ import("//build/config/ui.gni")
 import("//chrome/browser/buildflags.gni")
 import("//chrome/common/features.gni")
 import("//components/compose/features.gni")
-import("//components/enterprise/buildflags/buildflags.gni")
 import("//components/feed/features.gni")
 import("//components/lens/features.gni")
 import("//components/metrics/generate_allowlist_from_histograms_file.gni")
@@ -105,7 +104,6 @@ static_library("ui") {
     "cookie_controls/cookie_controls_service_factory.h",
     "crypto_module_password_dialog.h",
     "cryptuiapi_shim.h",
-    "enterprise_startup_dialog.h",
     "file_system_access_dialogs.cc",
     "file_system_access_dialogs.h",
     "find_bar/find_bar.h",
@@ -172,16 +170,6 @@ static_library("ui") {
     "profiles/profile_error_dialog.h",
     "recently_audible_helper.cc",
     "recently_audible_helper.h",
-    "safety_hub/safety_hub_constants.cc",
-    "safety_hub/safety_hub_constants.h",
-    "safety_hub/safety_hub_service.cc",
-    "safety_hub/safety_hub_service.h",
-    "safety_hub/safety_hub_util.cc",
-    "safety_hub/safety_hub_util.h",
-    "safety_hub/unused_site_permissions_service.cc",
-    "safety_hub/unused_site_permissions_service.h",
-    "safety_hub/unused_site_permissions_service_factory.cc",
-    "safety_hub/unused_site_permissions_service_factory.h",
     "screen_capture_notification_ui.h",
     "search_engines/edit_search_engine_controller.cc",
     "search_engines/edit_search_engine_controller.h",
@@ -294,8 +282,6 @@ static_library("ui") {
     "webui/gcm_internals_ui.h",
     "webui/internals/internals_ui.cc",
     "webui/internals/internals_ui.h",
-    "webui/interstitials/interstitial_ui.cc",
-    "webui/interstitials/interstitial_ui.h",
     "webui/local_state/local_state_ui.cc",
     "webui/local_state/local_state_ui.h",
     "webui/location_internals/location_internals_handler.cc",
@@ -326,10 +312,6 @@ static_library("ui") {
     "webui/omnibox/omnibox_page_handler.h",
     "webui/omnibox/omnibox_ui.cc",
     "webui/omnibox/omnibox_ui.h",
-    "webui/policy/policy_ui.cc",
-    "webui/policy/policy_ui.h",
-    "webui/policy/policy_ui_handler.cc",
-    "webui/policy/policy_ui_handler.h",
     "webui/predictors/predictors_handler.cc",
     "webui/predictors/predictors_handler.h",
     "webui/predictors/predictors_ui.cc",
@@ -411,7 +393,6 @@ static_library("ui") {
     "//components/cross_device/logging",
     "//components/dom_distiller/core",
     "//components/paint_preview/buildflags",
-    "//components/safe_browsing:buildflags",
     "//components/sync",
     "//components/sync_user_events",
     "//components/translate/content/browser",
@@ -459,7 +440,6 @@ static_library("ui") {
     "//chrome/browser/profiling_host",
     "//chrome/browser/resources:dev_ui_resources",
     "//chrome/browser/resources:resources",
-    "//chrome/browser/safe_browsing",
     "//chrome/browser/share",
     "//chrome/browser/storage_access_api",
     "//chrome/browser/themes",
@@ -526,8 +506,6 @@ static_library("ui") {
     "//components/embedder_support",
     "//components/embedder_support:browser_util",
     "//components/encrypted_messages:encrypted_message_proto",
-    "//components/enterprise",
-    "//components/enterprise/buildflags:buildflags",
     "//components/error_page/content/browser",
     "//components/facilitated_payments/core/features",
     "//components/favicon/content",
@@ -539,7 +517,6 @@ static_library("ui") {
     "//components/feedback/content",
     "//components/feedback/redaction_tool",
     "//components/find_in_page",
-    "//components/fingerprinting_protection_filter/browser",
     "//components/flags_ui",
     "//components/gcm_driver",
     "//components/google/core/common",
@@ -601,8 +578,6 @@ static_library("ui") {
     "//components/permissions",
     "//components/plus_addresses",
     "//components/plus_addresses:features",
-    "//components/policy/content",
-    "//components/policy/core/browser",
     "//components/pref_registry",
     "//components/privacy_sandbox",
     "//components/privacy_sandbox:privacy_sandbox_prefs",
@@ -615,24 +590,11 @@ static_library("ui") {
     "//components/reading_list/features:flags",
     "//components/renderer_context_menu",
     "//components/resources",
-    "//components/safe_browsing/content/browser",
-    "//components/safe_browsing/content/browser:client_side_detection",
-    "//components/safe_browsing/content/browser/password_protection",
-    "//components/safe_browsing/content/browser/web_ui",
-    "//components/safe_browsing/core/browser/db:database_manager",
-    "//components/safe_browsing/core/browser/db:util",
-    "//components/safe_browsing/core/browser/password_protection:password_protection_metrics_util",
-    "//components/safe_browsing/core/browser/tailored_security_service",
-    "//components/safe_browsing/core/common",
-    "//components/safe_browsing/core/common:safe_browsing_prefs",
-    "//components/safe_browsing/core/common/hashprefix_realtime:hash_realtime_utils",
-    "//components/safe_browsing/core/common/proto:csd_proto",
     "//components/schema_org/common:improved_mojom",
     "//components/search",
     "//components/search_engines",
     "//components/security_interstitials/content:security_interstitial_page",
     "//components/security_interstitials/core",
-    "//components/security_interstitials/core:unsafe_resource",
     "//components/security_state/content",
     "//components/security_state/core",
     "//components/segmentation_platform/public",
@@ -647,8 +609,6 @@ static_library("ui") {
     "//components/ssl_errors",
     "//components/startup_metric_utils",
     "//components/strings",
-    "//components/subresource_filter/content/browser",
-    "//components/subresource_filter/core/browser",
     "//components/supervised_user/core/browser",
     "//components/sync",
     "//components/sync_preferences",
@@ -747,7 +707,6 @@ static_library("ui") {
     # TODO(crbug.com/40161499): Remove this circular dependency.
     "//chrome/browser/devtools",
     "//chrome/browser/favicon",
-    "//chrome/browser/safe_browsing",
     "//chrome/browser/profiling_host",
 
     "//chrome/browser/permissions",
@@ -774,49 +733,23 @@ static_library("ui") {
   if (is_win || is_linux || is_mac || is_chromeos_ash) {
     sources += [
       "passwords/password_cross_domain_confirmation_popup_view.h",
-      "webui/connectors_internals/connectors_internals_page_handler.cc",
-      "webui/connectors_internals/connectors_internals_page_handler.h",
-      "webui/connectors_internals/connectors_internals_ui.cc",
-      "webui/connectors_internals/connectors_internals_ui.h",
-      "webui/connectors_internals/device_trust_utils.cc",
-      "webui/connectors_internals/device_trust_utils.h",
     ]
 
     deps += [
-      "//chrome/browser/enterprise/connectors/device_trust:features",
-      "//chrome/browser/enterprise/connectors/device_trust/attestation/common:types",
-      "//chrome/browser/enterprise/connectors/device_trust/common",
-      "//chrome/browser/ui/webui/connectors_internals:mojo_bindings",
       "//components/device_signals/core/browser",
     ]
-
-    if (enterprise_client_certificates) {
-      deps += [ "//components/enterprise/client_certificates/core" ]
-    }
-  }
-
-  if (enterprise_data_controls) {
-    deps += [ "//chrome/browser/enterprise/data_controls" ]
   }
 
   if (is_chromeos) {
     sources += [
       "chromeos/window_pin_util.h",
-      "webui/dlp_internals/dlp_internals_page_handler.cc",
-      "webui/dlp_internals/dlp_internals_page_handler.h",
-      "webui/dlp_internals/dlp_internals_ui.cc",
-      "webui/dlp_internals/dlp_internals_ui.h",
-      "webui/trusted_vault/trusted_vault_dialog_delegate.cc",
-      "webui/trusted_vault/trusted_vault_dialog_delegate.h",
     ]
     deps += [
-      "//chrome/browser/ui/webui/dlp_internals:mojo_bindings",
       "//chromeos/components/kiosk",
       "//chromeos/constants",
       "//chromeos/crosapi/cpp",
       "//chromeos/crosapi/cpp:crosapi_constants",
       "//chromeos/dbus/dlp",
-      "//components/enterprise/data_controls:data_controls",
     ]
   }
 
@@ -926,8 +859,6 @@ static_library("ui") {
       "android/plus_addresses/plus_address_creation_controller_android.h",
       "android/plus_addresses/plus_address_creation_view_android.cc",
       "android/plus_addresses/plus_address_creation_view_android.h",
-      "android/safe_browsing/password_reuse_dialog_view_android.cc",
-      "android/safe_browsing/password_reuse_dialog_view_android.h",
       "android/simple_message_box_android.cc",
       "android/ssl_client_certificate_selector.cc",
       "android/start_surface/start_surface_android.cc",
@@ -1061,7 +992,6 @@ static_library("ui") {
       "//components/resources:android_resources",
       "//components/search_provider_logos",
       "//components/security_state/content/android",
-      "//components/subresource_filter/core/browser",
       "//components/thin_webview:thin_webview",
       "//components/translate/content/android",
       "//components/webauthn/android",
@@ -1423,32 +1353,6 @@ static_library("ui") {
       "sad_tab_helper.cc",
       "sad_tab_helper.h",
       "sad_tab_types.h",
-      "safety_hub/abusive_notification_permissions_manager.cc",
-      "safety_hub/abusive_notification_permissions_manager.h",
-      "safety_hub/card_data_helper.cc",
-      "safety_hub/card_data_helper.h",
-      "safety_hub/extensions_result.cc",
-      "safety_hub/extensions_result.h",
-      "safety_hub/menu_notification.cc",
-      "safety_hub/menu_notification.h",
-      "safety_hub/menu_notification_service.cc",
-      "safety_hub/menu_notification_service.h",
-      "safety_hub/menu_notification_service_factory.cc",
-      "safety_hub/menu_notification_service_factory.h",
-      "safety_hub/notification_permission_review_service.cc",
-      "safety_hub/notification_permission_review_service.h",
-      "safety_hub/notification_permission_review_service_factory.cc",
-      "safety_hub/notification_permission_review_service_factory.h",
-      "safety_hub/password_status_check_result.cc",
-      "safety_hub/password_status_check_result.h",
-      "safety_hub/password_status_check_service.cc",
-      "safety_hub/password_status_check_service.h",
-      "safety_hub/password_status_check_service_factory.cc",
-      "safety_hub/password_status_check_service_factory.h",
-      "safety_hub/safe_browsing_result.cc",
-      "safety_hub/safe_browsing_result.h",
-      "safety_hub/safety_hub_prefs.cc",
-      "safety_hub/safety_hub_prefs.h",
       "scoped_tabbed_browser_displayer.cc",
       "scoped_tabbed_browser_displayer.h",
       "search/instant_controller.cc",
@@ -1847,8 +1751,6 @@ static_library("ui") {
       "webui/password_manager/sync_handler.h",
       "webui/plural_string_handler.cc",
       "webui/plural_string_handler.h",
-      "webui/policy_indicator_localized_strings_provider.cc",
-      "webui/policy_indicator_localized_strings_provider.h",
       "webui/privacy_sandbox/privacy_sandbox_dialog_handler.cc",
       "webui/privacy_sandbox/privacy_sandbox_dialog_handler.h",
       "webui/privacy_sandbox/privacy_sandbox_dialog_ui.cc",
@@ -1914,10 +1816,6 @@ static_library("ui") {
       "webui/settings/recent_site_settings_helper.h",
       "webui/settings/reset_settings_handler.cc",
       "webui/settings/reset_settings_handler.h",
-      "webui/settings/safety_check_handler.cc",
-      "webui/settings/safety_check_handler.h",
-      "webui/settings/safety_hub_handler.cc",
-      "webui/settings/safety_hub_handler.h",
       "webui/settings/search_engines_handler.cc",
       "webui/settings/search_engines_handler.h",
       "webui/settings/settings_clear_browsing_data_handler.cc",
@@ -1999,10 +1897,6 @@ static_library("ui") {
       "webui/suggest_internals/suggest_internals_handler.h",
       "webui/suggest_internals/suggest_internals_ui.cc",
       "webui/suggest_internals/suggest_internals_ui.h",
-      "webui/support_tool/support_tool_ui.cc",
-      "webui/support_tool/support_tool_ui.h",
-      "webui/support_tool/support_tool_ui_utils.cc",
-      "webui/support_tool/support_tool_ui_utils.h",
       "webui/sync_file_system_internals/dump_database_handler.cc",
       "webui/sync_file_system_internals/dump_database_handler.h",
       "webui/sync_file_system_internals/extension_statuses_handler.cc",
@@ -2109,9 +2003,6 @@ static_library("ui") {
       "//chrome/browser/new_tab_page/modules/v2/most_relevant_tab_resumption:mojo_bindings",
       "//chrome/browser/new_tab_page/modules/v2/tab_resumption:mojo_bindings",
       "//chrome/browser/profile_resetter:profile_reset_report_proto",
-      "//chrome/browser/safe_browsing",
-      "//chrome/browser/safe_browsing:advanced_protection",
-      "//chrome/browser/support_tool:support_tool_proto",
       "//chrome/browser/ui/browser_window",
       "//chrome/browser/ui/color:color_headers",
       "//chrome/browser/ui/color:mixers",
@@ -2148,9 +2039,7 @@ static_library("ui") {
       "//components/commerce/core:shopping_service",
       "//components/commerce/core/webui",
       "//components/endpoint_fetcher:endpoint_fetcher",
-      "//components/enterprise/common:files_scan_data",
       "//components/feedback/proto",
-      "//components/headless/policy",
       "//components/history_embeddings",
       "//components/keep_alive_registry",
       "//components/manta",
@@ -2169,8 +2058,6 @@ static_library("ui") {
       "//components/performance_manager:site_data_proto",
       "//components/power_bookmarks/core:features",
       "//components/reading_list/features:flags",
-      "//components/safe_browsing/core/common:safe_browsing_policy_handler",
-      "//components/safety_check",
       "//components/saved_tab_groups:core",
       "//components/saved_tab_groups:saved_tab_group_bridge",
       "//components/search_engines:generate_search_engine_icons",
@@ -3181,12 +3068,6 @@ static_library("ui") {
       "webui/ash/emoji/seal.h",
       "webui/ash/emoji/seal_utils.cc",
       "webui/ash/emoji/seal_utils.h",
-      "webui/ash/enterprise_reporting/enterprise_reporting_page_handler.cc",
-      "webui/ash/enterprise_reporting/enterprise_reporting_page_handler.h",
-      "webui/ash/enterprise_reporting/enterprise_reporting_ui.cc",
-      "webui/ash/enterprise_reporting/enterprise_reporting_ui.h",
-      "webui/ash/enterprise_reporting/history_converter.cc",
-      "webui/ash/enterprise_reporting/history_converter.h",
       "webui/ash/extended_updates/extended_updates_dialog.cc",
       "webui/ash/extended_updates/extended_updates_dialog.h",
       "webui/ash/extended_updates/extended_updates_page_handler.cc",
@@ -3842,7 +3723,6 @@ static_library("ui") {
       "//chrome/browser/chromeos/extensions/wm",
       "//chrome/browser/chromeos/launcher_search:search_util",
       "//chrome/browser/chromeos/office_web_app",
-      "//chrome/browser/enterprise/connectors/device_trust/attestation/ash",
       "//chrome/browser/media/router/discovery/access_code:access_code_cast_feature",
       "//chrome/browser/media/router/discovery/access_code:discovery_resources_proto",
       "//chrome/browser/nearby_sharing:share_target",
@@ -3852,7 +3732,6 @@ static_library("ui") {
       "//chrome/browser/nearby_sharing/contacts",
       "//chrome/browser/nearby_sharing/local_device_data",
       "//chrome/browser/nearby_sharing/logging:util",
-      "//chrome/browser/policy:onc",
       "//chrome/browser/push_notification:push_notification",
       "//chrome/browser/scalable_iph:scalable_iph_factory",
       "//chrome/browser/screen_ai/public:optical_character_recognizer",
@@ -3863,7 +3742,6 @@ static_library("ui") {
       "//chrome/browser/ui/webui/ash/borealis_installer:mojo_bindings",
       "//chrome/browser/ui/webui/ash/cloud_upload:mojo_bindings",
       "//chrome/browser/ui/webui/ash/crostini_upgrader:mojo_bindings",
-      "//chrome/browser/ui/webui/ash/enterprise_reporting:mojo_bindings",
       "//chrome/browser/ui/webui/ash/extended_updates:mojo_bindings",
       "//chrome/browser/ui/webui/ash/launcher_internals:mojo_bindings",
       "//chrome/browser/ui/webui/ash/login/mojom:mojom",
@@ -3883,7 +3761,6 @@ static_library("ui") {
       "//chrome/browser/ui/webui/nearby_share:mojom",
       "//chrome/browser/web_applications",
       "//chrome/browser/webshare:storage",
-      "//chrome/services/file_util/public/cpp",
       "//chromeos/ash/components/account_manager",
       "//chromeos/ash/components/assistant:buildflags",
       "//chromeos/ash/components/audio",
@@ -4008,7 +3885,6 @@ static_library("ui") {
       "//components/content_relationship_verification",
       "//components/desks_storage",
       "//components/endpoint_fetcher",
-      "//components/enterprise/connectors",
       "//components/exo",
       "//components/login",
       "//components/metrics/structured:structured_events",
@@ -4178,7 +4054,6 @@ static_library("ui") {
       "webui/signin/profile_picker_lacros_sign_in_provider.h",
     ]
     deps += [
-      "//chrome/browser/policy:onc",
       "//chromeos/crosapi/mojom",
       "//chromeos/lacros",
       "//chromeos/startup",
@@ -4248,8 +4123,6 @@ static_library("ui") {
       "startup/web_app_startup_utils.h",
       "tab_contents/chrome_web_contents_menu_helper.cc",
       "tab_contents/chrome_web_contents_menu_helper.h",
-      "tab_contents/chrome_web_contents_view_handle_drop.cc",
-      "tab_contents/chrome_web_contents_view_handle_drop.h",
       "views/autofill/payments/webauthn_dialog_view.cc",
       "views/autofill/payments/webauthn_dialog_view.h",
       "views/close_bubble_on_tab_activation_helper.cc",
@@ -4381,10 +4254,6 @@ static_library("ui") {
       "views/profiles/profile_picker_view.cc",
       "views/profiles/profile_picker_view.h",
       "views/profiles/profile_picker_web_contents_host.h",
-      "webui/intro/intro_handler.cc",
-      "webui/intro/intro_handler.h",
-      "webui/intro/intro_ui.cc",
-      "webui/intro/intro_ui.h",
       "webui/profile_helper.cc",
       "webui/profile_helper.h",
       "webui/settings/settings_default_browser_handler.cc",
@@ -4423,10 +4292,6 @@ static_library("ui") {
       "webui/signin/signin_utils_desktop.h",
       "webui/signin/turn_sync_on_helper.cc",
       "webui/signin/turn_sync_on_helper.h",
-      "webui/signin/turn_sync_on_helper_delegate_impl.cc",
-      "webui/signin/turn_sync_on_helper_delegate_impl.h",
-      "webui/signin/turn_sync_on_helper_policy_fetch_tracker.cc",
-      "webui/signin/turn_sync_on_helper_policy_fetch_tracker.h",
     ]
 
     deps += [
@@ -4449,8 +4314,6 @@ static_library("ui") {
         "signin/dice_web_signin_interceptor_delegate.h",
         "views/profiles/dice_web_signin_interception_bubble_view.cc",
         "views/profiles/dice_web_signin_interception_bubble_view.h",
-        "views/profiles/first_run_flow_controller_dice.cc",
-        "views/profiles/first_run_flow_controller_dice.h",
         "views/profiles/profile_picker_dice_reauth_provider.cc",
         "views/profiles/profile_picker_dice_reauth_provider.h",
         "views/profiles/profile_picker_dice_sign_in_provider.cc",
@@ -4465,24 +4328,6 @@ static_library("ui") {
         "webui/signin/dice_web_signin_intercept_ui.h",
         "webui/signin/inline_login_handler_impl.cc",
         "webui/signin/inline_login_handler_impl.h",
-        "webui/welcome/bookmark_handler.cc",
-        "webui/welcome/bookmark_handler.h",
-        "webui/welcome/bookmark_item.cc",
-        "webui/welcome/bookmark_item.h",
-        "webui/welcome/google_apps_handler.cc",
-        "webui/welcome/google_apps_handler.h",
-        "webui/welcome/helpers.cc",
-        "webui/welcome/helpers.h",
-        "webui/welcome/ntp_background_fetcher.cc",
-        "webui/welcome/ntp_background_fetcher.h",
-        "webui/welcome/ntp_background_handler.cc",
-        "webui/welcome/ntp_background_handler.h",
-        "webui/welcome/set_as_default_handler.cc",
-        "webui/welcome/set_as_default_handler.h",
-        "webui/welcome/welcome_handler.cc",
-        "webui/welcome/welcome_handler.h",
-        "webui/welcome/welcome_ui.cc",
-        "webui/welcome/welcome_ui.h",
       ]
     }
   }
@@ -4660,9 +4505,6 @@ static_library("ui") {
 
     deps += [
       "//chrome/browser/apps/app_shim",
-      "//chrome/browser/enterprise/connectors/device_trust/key_management/core/mac",
-      "//chrome/browser/updater:browser_updater_client",
-      "//chrome/updater:browser_sources",
       "//components/remote_cocoa/app_shim",
       "//components/remote_cocoa/browser",
       "//extensions/components/native_app_window",
@@ -4687,10 +4529,6 @@ static_library("ui") {
       "network_profile_bubble.h",
       "pdf/adobe_reader_info_win.cc",
       "pdf/adobe_reader_info_win.h",
-      "startup/credential_provider_signin_dialog_win.cc",
-      "startup/credential_provider_signin_dialog_win.h",
-      "startup/credential_provider_signin_info_fetcher_win.cc",
-      "startup/credential_provider_signin_info_fetcher_win.h",
       "views/apps/app_window_desktop_native_widget_aura_win.cc",
       "views/apps/app_window_desktop_native_widget_aura_win.h",
       "views/apps/app_window_desktop_window_tree_host_win.cc",
@@ -4756,7 +4594,6 @@ static_library("ui") {
       "//chrome/browser/ui/startup:buildflags",
       "//chrome/browser/win:mica_titlebar",
       "//chrome/browser/win/conflicts:module_info",
-      "//chrome/credential_provider/common:common_constants",
       "//chrome/services/util_win/public/mojom:mojom",
       "//components/lens",
       "//components/search_engines",
@@ -4775,7 +4612,6 @@ static_library("ui") {
         "webui/settings/incompatible_applications_handler_win.cc",
         "webui/settings/incompatible_applications_handler_win.h",
       ]
-      deps += [ "//chrome/updater/app/server/win:updater_legacy_idl" ]
     } else {
       sources += [ "webui/help/version_updater_basic.cc" ]
     }
@@ -5953,18 +5789,6 @@ static_library("ui") {
       "views/relaunch_notification/relaunch_required_timer_internal.h",
       "views/sad_tab_view.cc",
       "views/sad_tab_view.h",
-      "views/safe_browsing/deep_scanning_failure_modal_dialog.cc",
-      "views/safe_browsing/deep_scanning_failure_modal_dialog.h",
-      "views/safe_browsing/deep_scanning_modal_dialog.cc",
-      "views/safe_browsing/deep_scanning_modal_dialog.h",
-      "views/safe_browsing/password_reuse_modal_warning_dialog.cc",
-      "views/safe_browsing/password_reuse_modal_warning_dialog.h",
-      "views/safe_browsing/prompt_for_scanning_modal_dialog.cc",
-      "views/safe_browsing/prompt_for_scanning_modal_dialog.h",
-      "views/safe_browsing/tailored_security_desktop_dialog_manager.cc",
-      "views/safe_browsing/tailored_security_desktop_dialog_manager.h",
-      "views/safe_browsing/tailored_security_unconsented_modal.cc",
-      "views/safe_browsing/tailored_security_unconsented_modal.h",
       "views/send_tab_to_self/manage_account_devices_link_view.cc",
       "views/send_tab_to_self/manage_account_devices_link_view.h",
       "views/send_tab_to_self/send_tab_to_self_bubble_device_button.cc",
@@ -6576,8 +6400,6 @@ static_library("ui") {
         "views/desktop_capture/screen_capture_permission_checker_mac.h",
         "views/permissions/permission_prompt_notifications_mac.cc",
         "views/permissions/permission_prompt_notifications_mac.h",
-        "views/policy/enterprise_startup_dialog_mac_util.h",
-        "views/policy/enterprise_startup_dialog_mac_util.mm",
         "views/webauthn/authenticator_touch_id_view.cc",
         "views/webauthn/authenticator_touch_id_view.h",
         "views/webauthn/mac_authentication_view.h",
@@ -6634,8 +6456,6 @@ static_library("ui") {
         "bookmarks/bookmark_bubble_sign_in_delegate.h",
         "views/accessibility/accessibility_focus_highlight.cc",
         "views/accessibility/accessibility_focus_highlight.h",
-        "views/policy/enterprise_startup_dialog_view.cc",
-        "views/policy/enterprise_startup_dialog_view.h",
         "views/promos/bubble_signin_promo_signin_button_view.cc",
         "views/promos/bubble_signin_promo_signin_button_view.h",
         "views/promos/bubble_signin_promo_view.cc",
@@ -6670,8 +6490,6 @@ static_library("ui") {
         "views/frame/opaque_browser_frame_view_layout.h",
         "views/frame/opaque_browser_frame_view_layout_delegate.cc",
         "views/frame/opaque_browser_frame_view_layout_delegate.h",
-        "views/policy/idle_dialog_view.cc",
-        "views/policy/idle_dialog_view.h",
         "views/screen_capture_notification_ui_views.cc",
         "views/sharing_hub/sharing_hub_bubble_view_impl.cc",
         "views/sharing_hub/sharing_hub_bubble_view_impl.h",
@@ -6718,10 +6536,6 @@ static_library("ui") {
 
       deps += [ "//components/compose/core/browser" ]
     }
-  }
-
-  if (enterprise_watermark) {
-    deps += [ "//chrome/browser/enterprise/watermark:watermark_view_lib" ]
   }
 
   # TODO(https://crbug.com/330808104): Delete this code.
@@ -7066,26 +6880,6 @@ static_library("ui") {
     }
   }
 
-  if (safe_browsing_mode > 0) {
-    deps += [
-      "//components/safe_browsing/content/browser:safe_browsing_blocking_page",
-    ]
-  }
-
-  if (safe_browsing_mode == 1) {
-    sources += [
-      "webui/reset_password/reset_password_ui.cc",
-      "webui/reset_password/reset_password_ui.h",
-    ]
-
-    deps += [
-      "//chrome/browser/ui/webui/reset_password:mojo_bindings",
-      "//chrome/common/safe_browsing:proto",
-      "//components/safe_browsing/core/browser/password_protection:password_protection_metrics_util",
-      "//components/safe_browsing/core/common/proto:csd_proto",
-    ]
-  }
-
   if (use_dbus) {
     deps += [ "//dbus" ]
   }
@@ -7290,7 +7084,6 @@ static_library("test_support") {
       "webui/help/test_version_updater.h",
     ]
     deps += [
-      "//chrome/test:test_support_ui",
       "//components/embedder_support:embedder_support",
       "//components/media_message_center:media_message_center",
       "//components/media_router/browser:browser",

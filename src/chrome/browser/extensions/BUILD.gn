@@ -8,7 +8,6 @@ import("//build/config/features.gni")
 import("//build/config/ozone.gni")
 import("//build/config/ui.gni")
 import("//chrome/common/features.gni")
-import("//components/enterprise/buildflags/buildflags.gni")
 import("//extensions/buildflags/buildflags.gni")
 import("//mojo/public/tools/bindings/mojom.gni")
 import("//pdf/features.gni")
@@ -141,12 +140,6 @@ static_library("extensions") {
     "api/downloads/downloads_api.h",
     "api/downloads_internal/downloads_internal_api.cc",
     "api/downloads_internal/downloads_internal_api.h",
-    "api/enterprise_hardware_platform/enterprise_hardware_platform_api.cc",
-    "api/enterprise_hardware_platform/enterprise_hardware_platform_api.h",
-    "api/enterprise_reporting_private/conversion_utils.cc",
-    "api/enterprise_reporting_private/conversion_utils.h",
-    "api/enterprise_reporting_private/enterprise_reporting_private_api.cc",
-    "api/enterprise_reporting_private/enterprise_reporting_private_api.h",
     "api/extension_action/extension_action_api.cc",
     "api/extension_action/extension_action_api.h",
     "api/extension_action/extension_page_actions_api_constants.cc",
@@ -287,14 +280,6 @@ static_library("extensions") {
     "api/resources_private/resources_private_api.h",
     "api/runtime/chrome_runtime_api_delegate.cc",
     "api/runtime/chrome_runtime_api_delegate.h",
-    "api/safe_browsing_private/safe_browsing_private_api.cc",
-    "api/safe_browsing_private/safe_browsing_private_api.h",
-    "api/safe_browsing_private/safe_browsing_private_event_router.cc",
-    "api/safe_browsing_private/safe_browsing_private_event_router.h",
-    "api/safe_browsing_private/safe_browsing_private_event_router_factory.cc",
-    "api/safe_browsing_private/safe_browsing_private_event_router_factory.h",
-    "api/safe_browsing_private/safe_browsing_util.cc",
-    "api/safe_browsing_private/safe_browsing_util.h",
     "api/search/search_api.cc",
     "api/search/search_api.h",
     "api/sessions/session_id.cc",
@@ -325,10 +310,6 @@ static_library("extensions") {
     "api/side_panel/side_panel_api.h",
     "api/side_panel/side_panel_service.cc",
     "api/side_panel/side_panel_service.h",
-    "api/storage/managed_value_store_cache.cc",
-    "api/storage/managed_value_store_cache.h",
-    "api/storage/policy_value_store.cc",
-    "api/storage/policy_value_store.h",
     "api/storage/setting_sync_data.cc",
     "api/storage/setting_sync_data.h",
     "api/storage/settings_sync_processor.cc",
@@ -409,8 +390,6 @@ static_library("extensions") {
     "blocklist_check.h",
     "blocklist_factory.cc",
     "blocklist_factory.h",
-    "blocklist_state_fetcher.cc",
-    "blocklist_state_fetcher.h",
     "bookmark_app_util.cc",
     "bookmark_app_util.h",
     "browser_context_keyed_service_factories.cc",
@@ -654,15 +633,11 @@ static_library("extensions") {
     "permissions/site_permissions_helper.h",
     "permissions_based_management_policy_provider.cc",
     "permissions_based_management_policy_provider.h",
-    "policy_handlers.cc",
-    "policy_handlers.h",
     "pref_mapping.cc",
     "pref_mapping.h",
     "pref_transformer_interface.h",
     "profile_util.cc",
     "profile_util.h",
-    "safe_browsing_verdict_handler.cc",
-    "safe_browsing_verdict_handler.h",
     "scoped_active_install.cc",
     "scoped_active_install.h",
     "settings_api_helpers.cc",
@@ -721,14 +696,6 @@ static_library("extensions") {
     "window_controller_list_observer.h",
   ]
 
-  # Chrome OS does not support Native Messaging policies.
-  if (!is_chromeos) {
-    sources += [
-      "api/messaging/native_messaging_policy_handler.cc",
-      "api/messaging/native_messaging_policy_handler.h",
-    ]
-  }
-
   configs += [
     "//build/config:precompiled_headers",
     "//build/config/compiler:wexit_time_destructors",
@@ -747,9 +714,6 @@ static_library("extensions") {
 
     # TODO(crbug.com/40124309): Remove this circular dependency.
     "//chrome/browser/web_applications/extensions",
-
-    # TODO(crbug.com/41437292): Remove this circular dependency.
-    "//chrome/browser/safe_browsing",
   ]
 
   # Since browser and browser_extensions actually depend on each other,
@@ -762,9 +726,6 @@ static_library("extensions") {
     "//chrome/common",
     "//chrome/common/extensions/api",
     "//components/omnibox/browser",
-    "//components/safe_browsing/core/browser/db:util",
-    "//components/safe_browsing/core/common/proto:csd_proto",
-    "//components/safe_browsing/core/common/proto:realtimeapi_proto",
     "//components/signin/core/browser",
     "//components/translate/content/browser",
     "//content/public/browser",
@@ -806,16 +767,12 @@ static_library("extensions") {
     "//chrome/browser/profiles",
     "//chrome/browser/profiles:profile",
     "//chrome/browser/resource_coordinator:mojo_bindings",
-    "//chrome/browser/safe_browsing",
-    "//chrome/browser/safe_browsing:metrics_collector",
     "//chrome/browser/ui/tabs:tab_enums",
     "//chrome/browser/web_applications",
     "//components/cbor:cbor",
     "//components/commerce/core:pref_names",
     "//components/device_reauth",
     "//components/optimization_guide/core:features",
-    "//components/safe_browsing/content/browser",
-    "//components/safe_browsing/core/browser:safe_browsing_metrics_collector",
     "//components/security_interstitials/content:security_interstitial_page",
     "//components/site_engagement/core/mojom:mojo_bindings",
     "//components/supervised_user/core/browser",
@@ -827,7 +784,6 @@ static_library("extensions") {
     # TODO(crbug.com/40124309): Remove this dependency:
     "//chrome/browser/web_applications/extensions",
     "//chrome/common/extensions/api:extensions_features",
-    "//chrome/common/safe_browsing:proto",
     "//chrome/services/file_util/public/mojom:mojom",
     "//chrome/services/removable_storage_writer/public/mojom",
     "//components/affiliations/core/browser:affiliations",
@@ -851,8 +807,6 @@ static_library("extensions") {
     "//components/drive",
     "//components/embedder_support",
     "//components/embedder_support:browser_util",
-    "//components/enterprise",
-    "//components/enterprise/buildflags",
     "//components/favicon/content",
     "//components/feedback",
     "//components/gcm_driver",
@@ -884,20 +838,12 @@ static_library("extensions") {
     "//components/payments/core",
     "//components/performance_manager",
     "//components/permissions",
-    "//components/policy:generated",
-    "//components/policy/core/browser",
     "//components/pref_registry",
     "//components/privacy_sandbox:privacy_sandbox_prefs",
     "//components/privacy_sandbox:tracking_protection_prefs",
     "//components/proxy_config",
     "//components/reading_list/core",
     "//components/resources",
-    "//components/safe_browsing:buildflags",
-    "//components/safe_browsing/content/browser/web_ui:web_ui",
-    "//components/safe_browsing/core/browser/db:database_manager",
-    "//components/safe_browsing/core/common",
-    "//components/safe_browsing/core/common:safe_browsing_prefs",
-    "//components/safe_browsing/core/common/proto:csd_proto",
     "//components/search_engines",
     "//components/services/app_service",
     "//components/services/patch/content",
@@ -1011,14 +957,6 @@ static_library("extensions") {
       "api/document_scan/scanner_discovery_runner.h",
       "api/document_scan/start_scan_runner.cc",
       "api/document_scan/start_scan_runner.h",
-      "api/enterprise_device_attributes/enterprise_device_attributes_api.cc",
-      "api/enterprise_device_attributes/enterprise_device_attributes_api.h",
-      "api/enterprise_kiosk_input/enterprise_kiosk_input_api.cc",
-      "api/enterprise_kiosk_input/enterprise_kiosk_input_api.h",
-      "api/enterprise_networking_attributes/enterprise_networking_attributes_api.cc",
-      "api/enterprise_networking_attributes/enterprise_networking_attributes_api.h",
-      "api/enterprise_platform_keys/enterprise_platform_keys_api.cc",
-      "api/enterprise_platform_keys/enterprise_platform_keys_api.h",
       "api/file_system/consent_provider_impl.cc",
       "api/file_system/consent_provider_impl.h",
       "api/file_system/request_file_system_notification.cc",
@@ -1093,8 +1031,6 @@ static_library("extensions") {
     ]
   } else {
     sources += [
-      "api/enterprise_reporting_private/chrome_desktop_report_request_helper.cc",
-      "api/enterprise_reporting_private/chrome_desktop_report_request_helper.h",
       "api/messaging/native_message_process_host.cc",
       "api/messaging/native_message_process_host.h",
       "api/messaging/native_messaging_launch_from_native.cc",
@@ -1106,8 +1042,6 @@ static_library("extensions") {
       "preinstalled_apps.h",
     ]
     deps += [
-      "//components/enterprise",
-      "//components/enterprise/common/proto:connectors_proto",
       "//components/keep_alive_registry",
     ]
     if (is_posix) {
@@ -1122,8 +1056,6 @@ static_library("extensions") {
     sources += [
       "api/crash_report_private/crash_report_private_api.cc",
       "api/crash_report_private/crash_report_private_api.h",
-      "api/enterprise_platform_keys_private/enterprise_platform_keys_private_api.cc",
-      "api/enterprise_platform_keys_private/enterprise_platform_keys_private_api.h",
       "api/file_handlers/non_native_file_system_delegate_chromeos.cc",
       "api/file_handlers/non_native_file_system_delegate_chromeos.h",
       "api/file_system/chrome_file_system_delegate_ash.cc",
@@ -1254,8 +1186,6 @@ static_library("extensions") {
 
   if (is_chromeos_lacros) {
     sources += [
-      "api/enterprise_reporting_private/chrome_desktop_report_request_helper.cc",
-      "api/enterprise_reporting_private/chrome_desktop_report_request_helper.h",
       "api/file_browser_handler/file_browser_handler_flow_lacros.cc",
       "api/file_browser_handler/file_browser_handler_flow_lacros.h",
       "api/file_system/chrome_file_system_delegate_lacros.cc",
@@ -1276,8 +1206,6 @@ static_library("extensions") {
       "//chromeos/lacros",
       "//chromeos/startup",
       "//chromeos/ui/base",
-      "//components/enterprise",
-      "//components/enterprise/common/proto:connectors_proto",
       "//components/keep_alive_registry",
     ]
   }
@@ -1292,8 +1220,6 @@ static_library("extensions") {
 
   if (is_mac) {
     sources += [
-      "api/enterprise_reporting_private/keychain_data_helper_mac.cc",
-      "api/enterprise_reporting_private/keychain_data_helper_mac.h",
       "global_shortcut_listener_mac.h",
       "global_shortcut_listener_mac.mm",
       "system_display/display_info_provider_mac.cc",
@@ -1394,13 +1320,6 @@ static_library("extensions") {
   } else {
     sources += [ "api/braille_display_private/braille_controller_stub.cc" ]
   }
-
-  if (enterprise_data_controls) {
-    deps += [
-      "//components/enterprise/buildflags",
-      "//components/enterprise/data_controls",
-    ]
-  }
 }
 
 proto_library("cws_item_service_proto") {
@@ -1455,9 +1374,6 @@ static_library("test_support") {
     "//chrome/browser/profiles:profile",
     "//chrome/browser/ui",
     "//components/crx_file",
-    "//components/policy/core/common:test_support",
-    "//components/safe_browsing/core/browser/db:database_manager",
-    "//components/safe_browsing/core/browser/db:v4_test_util",
     "//components/services/unzip:in_process",
     "//components/services/unzip/content",
     "//components/sessions",
@@ -1492,8 +1408,5 @@ fuzzer_test("extension_management_internal_fuzzer") {
     # While //c/b/extensions should've been sufficient, there are cyclic
     # dependencies that require us linking against the whole //c/b.
     "//chrome/browser",
-
-    # Pull test-specific stubs for symbols needed by //c/b.
-    "//chrome/test:test_support",
   ]
 }

@@ -35,7 +35,6 @@
 #include "chrome/browser/web_applications/mojom/user_display_mode.mojom.h"
 #include "chrome/browser/web_applications/os_integration/os_integration_manager.h"
 #include "chrome/browser/web_applications/os_integration/web_app_shortcuts_menu.h"
-#include "chrome/browser/web_applications/policy/web_app_policy_manager.h"
 #include "chrome/browser/web_applications/web_app.h"
 #include "chrome/browser/web_applications/web_app_command_manager.h"
 #include "chrome/browser/web_applications/web_app_constants.h"
@@ -342,14 +341,6 @@ void WebAppInstallFinalizer::OnOriginAssociationValidated(
   // caller provided a new value.
   if (options.chromeos_data.has_value())
     web_app->SetWebAppChromeOsData(options.chromeos_data.value());
-
-  if (provider_->policy_manager().IsWebAppInDisabledList(app_id) &&
-      web_app->chromeos_data().has_value() &&
-      !web_app->chromeos_data()->is_disabled) {
-    std::optional<WebAppChromeOsData> cros_data = web_app->chromeos_data();
-    cros_data->is_disabled = true;
-    web_app->SetWebAppChromeOsData(std::move(cros_data));
-  }
 
 #if BUILDFLAG(IS_CHROMEOS_ASH)
   // `WebApp::system_web_app_data` has a default value already. Only override if

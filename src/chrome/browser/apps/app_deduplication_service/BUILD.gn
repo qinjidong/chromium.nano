@@ -58,7 +58,6 @@ source_set("unit_tests") {
     "//chrome/browser/apps/almanac_api_client",
     "//chrome/browser/apps/app_service",
     "//chrome/common:constants",
-    "//chrome/test:test_support",
     "//components/version_info:channel",
     "//content/test:test_support",
     "//net",

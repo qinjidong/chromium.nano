@@ -7,7 +7,6 @@
 #include "base/metrics/histogram_functions.h"
 #include "base/metrics/user_metrics.h"
 #include "chrome/browser/command_updater_impl.h"
-#include "chrome/browser/enterprise/util/managed_browser_utils.h"
 #include "chrome/browser/new_tab_page/promos/promo_service.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/search/search.h"
@@ -24,10 +23,6 @@
 #include "chrome/common/webui_url_constants.h"
 #include "components/password_manager/core/common/password_manager_features.h"
 #include "components/performance_manager/public/features.h"
-#include "components/safe_browsing/content/browser/web_ui/safe_browsing_ui.h"
-#include "components/safe_browsing/core/common/safe_browsing_policy_handler.h"
-#include "components/safe_browsing/core/common/safe_browsing_prefs.h"
-#include "components/safe_browsing/core/common/safebrowsing_referral_methods.h"
 #include "components/user_education/common/tutorial_identifier.h"
 #include "components/user_education/common/tutorial_service.h"
 #include "ui/base/interaction/element_identifier.h"
@@ -74,21 +69,16 @@ void BrowserCommandHandler::CanExecuteCommand(
       // Nothing to do.
       break;
     case Command::kOpenSafetyCheck:
-      can_execute = !chrome::enterprise_util::IsBrowserManaged(profile_);
+      can_execute = true;
       break;
-    case Command::kOpenSafeBrowsingEnhancedProtectionSettings: {
-      bool managed = safe_browsing::SafeBrowsingPolicyHandler::
-          IsSafeBrowsingProtectionLevelSetByPolicy(profile_->GetPrefs());
-      bool already_enabled =
-          safe_browsing::IsEnhancedProtectionEnabled(*(profile_->GetPrefs()));
-      can_execute = !managed && !already_enabled;
-    } break;
+    case Command::kOpenSafeBrowsingEnhancedProtectionSettings:
+      can_execute = true;
+      break;
     case Command::kOpenFeedbackForm:
       can_execute = true;
       break;
     case Command::kOpenPrivacyGuide:
-      can_execute = !chrome::enterprise_util::IsBrowserManaged(profile_) &&
-                    !profile_->IsChild();
+      can_execute = !profile_->IsChild();
       base::UmaHistogramBoolean("Privacy.Settings.PrivacyGuide.CanShowNTPPromo",
                                 can_execute);
       break;
@@ -243,11 +233,7 @@ void BrowserCommandHandler::StartTabGroupTutorial() {
   }
 }
 
-void BrowserCommandHandler::NavigateToEnhancedProtectionSetting() {
-  chrome::ShowSafeBrowsingEnhancedProtectionWithIph(
-      chrome::FindBrowserWithProfile(profile_),
-      safe_browsing::SafeBrowsingSettingReferralMethod::kPromoSlingerReferral);
-}
+void BrowserCommandHandler::NavigateToEnhancedProtectionSetting() {}
 
 void BrowserCommandHandler::OpenPasswordManager() {
   chrome::ShowPasswordManager(chrome::FindBrowserWithProfile(profile_));

@@ -19,7 +19,6 @@ import org.chromium.chrome.browser.omaha.RequestGenerator;
 import org.chromium.chrome.browser.partnerbookmarks.PartnerBookmark;
 import org.chromium.chrome.browser.partnerbookmarks.PartnerBookmarksProviderIterator;
 import org.chromium.chrome.browser.password_manager.GooglePasswordManagerUIProvider;
-import org.chromium.chrome.browser.policy.PolicyAuditor;
 import org.chromium.chrome.browser.sync.TrustedVaultClient;
 import org.chromium.chrome.browser.ui.signin.GoogleActivityController;
 import org.chromium.chrome.browser.usage_stats.DigitalWellbeingClient;
@@ -134,14 +133,6 @@ public abstract class AppHooks {
 
     /** Returns the singleton instance of GooglePlayWebApkInstallDelegate. */
     public GooglePlayWebApkInstallDelegate getGooglePlayWebApkInstallDelegate() {
-        return null;
-    }
-
-    /**
-     * @return An instance of PolicyAuditor that notifies the policy system of the user's activity.
-     * Only applicable when the user has a policy active, that is tracking the activity.
-     */
-    public PolicyAuditor getPolicyAuditor() {
         return null;
     }
 

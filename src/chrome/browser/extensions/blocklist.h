@@ -25,13 +25,7 @@ namespace content {
 class BrowserContext;
 }
 
-namespace safe_browsing {
-class SafeBrowsingDatabaseManager;
-}
-
 namespace extensions {
-
-class BlocklistStateFetcher;
 
 // The blocklist of extensions backed by safe browsing.
 class Blocklist : public KeyedService {
@@ -93,14 +87,6 @@ class Blocklist : public KeyedService {
   void IsBlocklisted(const ExtensionId& extension_id,
                      IsBlocklistedCallback callback);
 
-  // Used to mock BlocklistStateFetcher in unit tests. Blocklist owns the
-  // |fetcher|.
-  void SetBlocklistStateFetcherForTest(BlocklistStateFetcher* fetcher);
-
-  // Reset the owned BlocklistStateFetcher to null and return the current
-  // BlocklistStateFetcher.
-  BlocklistStateFetcher* ResetBlocklistStateFetcherForTest();
-
   // Reset the listening for an updated database.
   void ResetDatabaseUpdatedListenerForTest();
 
@@ -118,13 +104,6 @@ class Blocklist : public KeyedService {
 
  private:
   friend class ScopedDatabaseManagerForTest;
-
-  // Use via ScopedDatabaseManagerForTest.
-  static void SetDatabaseManager(
-      scoped_refptr<safe_browsing::SafeBrowsingDatabaseManager>
-          database_manager);
-  static scoped_refptr<safe_browsing::SafeBrowsingDatabaseManager>
-  GetDatabaseManager();
 
   void ObserveNewDatabase();
 
@@ -148,8 +127,6 @@ class Blocklist : public KeyedService {
 
   // The cached BlocklistState's, received from BlocklistStateFetcher.
   BlocklistStateMap blocklist_state_cache_;
-
-  std::unique_ptr<BlocklistStateFetcher> state_fetcher_;
 
   // The list of ongoing requests for blocklist states that couldn't be
   // served directly from the cache. A new request is created in

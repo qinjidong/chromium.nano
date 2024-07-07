@@ -13,7 +13,6 @@
 #include "chrome/common/extensions/api/settings_private.h"
 #include "components/password_manager/core/common/password_manager_pref_names.h"
 #include "components/prefs/pref_service.h"
-#include "components/safe_browsing/core/common/safe_browsing_prefs.h"
 #include "components/signin/public/identity_manager/identity_manager.h"
 
 namespace {
@@ -22,13 +21,6 @@ namespace {
 bool IsUserAllowedToUseLeakDetection(Profile* profile) {
   return !profile->IsGuestSession() &&
          IdentityManagerFactory::GetForProfileIfExists(profile);
-}
-
-// Returns whether the effective value of the Safe Browsing preferences for
-// |profile| is standard protection.
-bool IsSafeBrowsingStandard(Profile* profile) {
-  return profile->GetPrefs()->GetBoolean(prefs::kSafeBrowsingEnabled) &&
-         !profile->GetPrefs()->GetBoolean(prefs::kSafeBrowsingEnhanced);
 }
 
 }  // namespace
@@ -44,16 +36,6 @@ GeneratedPasswordLeakDetectionPref::GeneratedPasswordLeakDetectionPref(
   user_prefs_registrar_.Init(profile->GetPrefs());
   user_prefs_registrar_.Add(
       password_manager::prefs::kPasswordLeakDetectionEnabled,
-      base::BindRepeating(
-          &GeneratedPasswordLeakDetectionPref::OnSourcePreferencesChanged,
-          base::Unretained(this)));
-  user_prefs_registrar_.Add(
-      prefs::kSafeBrowsingEnabled,
-      base::BindRepeating(
-          &GeneratedPasswordLeakDetectionPref::OnSourcePreferencesChanged,
-          base::Unretained(this)));
-  user_prefs_registrar_.Add(
-      prefs::kSafeBrowsingEnhanced,
       base::BindRepeating(
           &GeneratedPasswordLeakDetectionPref::OnSourcePreferencesChanged,
           base::Unretained(this)));
@@ -76,8 +58,7 @@ GeneratedPasswordLeakDetectionPref::SetPref(const base::Value* value) {
     return extensions::settings_private::SetPrefResult::PREF_TYPE_MISMATCH;
   }
 
-  if (!IsSafeBrowsingStandard(profile_) ||
-      !IsUserAllowedToUseLeakDetection(profile_)) {
+  if (!IsUserAllowedToUseLeakDetection(profile_)) {
     return extensions::settings_private::SetPrefResult::PREF_NOT_MODIFIABLE;
   }
 
@@ -105,7 +86,6 @@ settings_api::PrefObject GeneratedPasswordLeakDetectionPref::GetPrefObject()
   pref_object.value = base::Value(backing_preference->GetValue()->GetBool() &&
                                   IsUserAllowedToUseLeakDetection(profile_));
   pref_object.user_control_disabled =
-      !IsSafeBrowsingStandard(profile_) ||
       !IsUserAllowedToUseLeakDetection(profile_);
   if (!backing_preference->IsUserModifiable()) {
     pref_object.enforcement = settings_api::Enforcement::kEnforced;

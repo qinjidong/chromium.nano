@@ -32,8 +32,6 @@
 #include "android_webview/browser/network_service/aw_proxying_restricted_cookie_manager.h"
 #include "android_webview/browser/network_service/aw_proxying_url_loader_factory.h"
 #include "android_webview/browser/network_service/aw_url_loader_throttle.h"
-#include "android_webview/browser/safe_browsing/aw_safe_browsing_navigation_throttle.h"
-#include "android_webview/browser/safe_browsing/aw_url_checker_delegate_impl.h"
 #include "android_webview/browser/supervised_user/aw_supervised_user_throttle.h"
 #include "android_webview/browser/supervised_user/aw_supervised_user_url_classifier.h"
 #include "android_webview/browser/tracing/aw_tracing_delegate.h"
@@ -71,14 +69,7 @@
 #include "components/navigation_interception/intercept_navigation_delegate.h"
 #include "components/page_load_metrics/browser/metrics_navigation_throttle.h"
 #include "components/page_load_metrics/browser/metrics_web_contents_observer.h"
-#include "components/policy/content/policy_blocklist_navigation_throttle.h"
-#include "components/policy/core/browser/browser_policy_connector_base.h"
 #include "components/prefs/pref_service.h"
-#include "components/safe_browsing/content/browser/async_check_tracker.h"
-#include "components/safe_browsing/content/browser/browser_url_loader_throttle.h"
-#include "components/safe_browsing/content/browser/mojo_safe_browsing_impl.h"
-#include "components/safe_browsing/core/common/features.h"
-#include "components/safe_browsing/core/common/hashprefix_realtime/hash_realtime_utils.h"
 #include "components/url_matcher/url_matcher.h"
 #include "components/url_matcher/url_util.h"
 #include "components/version_info/version_info.h"
@@ -131,8 +122,7 @@
 
 using content::BrowserThread;
 using content::WebContents;
-using safe_browsing::AsyncCheckTracker;
-using safe_browsing::hash_realtime_utils::HashRealTimeSelection;
+
 using AttributionReportingOsRegistrar =
     content::ContentBrowserClient::AttributionReportingOsRegistrar;
 
@@ -177,28 +167,6 @@ class XrwNavigationThrottle : public content::NavigationThrottle {
 
   const char* GetNameForLogging() override { return "XrwNavigationThrottle"; }
 };
-
-// Get async check tracker to make Safe Browsing v5 check asynchronous
-base::WeakPtr<AsyncCheckTracker> GetAsyncCheckTracker(
-    const base::RepeatingCallback<content::WebContents*()>& wc_getter,
-    int frame_tree_node_id) {
-  if (!base::FeatureList::IsEnabled(
-          safe_browsing::kSafeBrowsingAsyncRealTimeCheck)) {
-    return nullptr;
-  }
-  content::WebContents* web_contents = wc_getter.Run();
-  // Check whether current frame is a pre-rendered frame. WebView does not
-  // support NoStatePrefetch, so we do not check for that.
-  if (web_contents == nullptr ||
-      web_contents->IsPrerenderedFrame(frame_tree_node_id)) {
-    return nullptr;
-  }
-
-  return AsyncCheckTracker::GetOrCreateForWebContents(
-             web_contents,
-             AwBrowserProcess::GetInstance()->GetSafeBrowsingUIManager())
-      ->GetWeakPtr();
-}
 
 }  // anonymous namespace
 
@@ -332,13 +300,7 @@ AwContentBrowserClient::GetWebContentsViewDelegate(
 }
 
 void AwContentBrowserClient::RenderProcessWillLaunch(
-    content::RenderProcessHost* host) {
-  // Grant content: scheme access to the whole renderer process, since we impose
-  // per-view access checks, and access is granted by default (see
-  // AwSettings.mAllowContentUrlAccess).
-  content::ChildProcessSecurityPolicy::GetInstance()->GrantRequestScheme(
-      host->GetID(), url::kContentScheme);
-}
+    content::RenderProcessHost* host) {}
 
 bool AwContentBrowserClient::IsExplicitNavigation(
     ui::PageTransition transition) {
@@ -623,16 +585,6 @@ AwContentBrowserClient::CreateThrottlesForNavigation(
     throttles.push_back(std::move(intercept_navigation_throttle));
   }
 
-  throttles.push_back(std::make_unique<PolicyBlocklistNavigationThrottle>(
-      navigation_handle,
-      AwBrowserContext::FromWebContents(navigation_handle->GetWebContents())));
-
-  std::unique_ptr<AwSafeBrowsingNavigationThrottle> safe_browsing_throttle =
-      AwSafeBrowsingNavigationThrottle::MaybeCreateThrottleFor(
-          navigation_handle);
-  if (safe_browsing_throttle) {
-    throttles.push_back(std::move(safe_browsing_throttle));
-  }
   if (base::FeatureList::IsEnabled(kWebViewOptimizeXrwNavigationFlow)) {
     throttles.push_back(
         std::make_unique<XrwNavigationThrottle>(navigation_handle));
@@ -655,33 +607,9 @@ AwContentBrowserClient::CreateURLLoaderThrottles(
     std::optional<int64_t> navigation_id) {
   DCHECK_CURRENTLY_ON(BrowserThread::UI);
 
-  // Set lookup mechanism based on feature flag
-  HashRealTimeSelection hash_real_time_selection;
-  base::WeakPtr<AsyncCheckTracker> async_check_tracker;
-  if (base::FeatureList::IsEnabled(safe_browsing::kHashPrefixRealTimeLookups)) {
-    hash_real_time_selection = HashRealTimeSelection::kDatabaseManager;
-    async_check_tracker = GetAsyncCheckTracker(wc_getter, frame_tree_node_id);
-  } else {
-    hash_real_time_selection = HashRealTimeSelection::kNone;
-    async_check_tracker = nullptr;
-  }
+  async_check_tracker = nullptr;
 
   std::vector<std::unique_ptr<blink::URLLoaderThrottle>> result;
-  result.push_back(safe_browsing::BrowserURLLoaderThrottle::Create(
-      base::BindRepeating(
-          [](AwContentBrowserClient* client) {
-            return client->GetSafeBrowsingUrlCheckerDelegate();
-          },
-          base::Unretained(this)),
-      wc_getter, frame_tree_node_id, navigation_id,
-      // TODO(crbug.com/40663467): rt_lookup_service is
-      // used to perform real time URL check, which is gated by UKM opted-in.
-      // Since AW currently doesn't support UKM, this feature is not enabled.
-      /* rt_lookup_service */ nullptr,
-      /* hash_realtime_service */ nullptr,
-      /* hash_realtime_selection */
-      hash_real_time_selection,
-      /* async_check_tracker */ async_check_tracker));
 
   if (request.destination == network::mojom::RequestDestination::kDocument) {
     const bool is_load_url =
@@ -719,45 +647,10 @@ AwContentBrowserClient::CreateURLLoaderThrottlesForKeepAlive(
     const base::RepeatingCallback<content::WebContents*()>& wc_getter,
     int frame_tree_node_id) {
   DCHECK_CURRENTLY_ON(BrowserThread::UI);
-  // Set lookup mechanism based on feature flag
-  HashRealTimeSelection hash_real_time_selection =
-      (base::FeatureList::IsEnabled(safe_browsing::kHashPrefixRealTimeLookups))
-          ? HashRealTimeSelection::kDatabaseManager
-          : HashRealTimeSelection::kNone;
 
   std::vector<std::unique_ptr<blink::URLLoaderThrottle>> result;
 
-  result.push_back(safe_browsing::BrowserURLLoaderThrottle::Create(
-      base::BindRepeating(
-          [](AwContentBrowserClient* client) {
-            return client->GetSafeBrowsingUrlCheckerDelegate();
-          },
-          base::Unretained(this)),
-      wc_getter, frame_tree_node_id, /*navigation_id=*/std::nullopt,
-      // TODO(crbug.com/40663467): rt_lookup_service is
-      // used to perform real time URL check, which is gated by UKM opted-in.
-      // Since AW currently doesn't support UKM, this feature is not enabled.
-      /* rt_lookup_service */ nullptr,
-      /* hash_realtime_service */ nullptr,
-      /* hash_realtime_selection */
-      hash_real_time_selection,
-      /* async_check_tracker */ nullptr));
-
   return result;
-}
-
-scoped_refptr<safe_browsing::UrlCheckerDelegate>
-AwContentBrowserClient::GetSafeBrowsingUrlCheckerDelegate() {
-  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
-
-  if (!safe_browsing_url_checker_delegate_) {
-    safe_browsing_url_checker_delegate_ = new AwUrlCheckerDelegateImpl(
-        AwBrowserProcess::GetInstance()->GetSafeBrowsingDBManager(),
-        AwBrowserProcess::GetInstance()->GetSafeBrowsingUIManager(),
-        AwBrowserProcess::GetInstance()->GetSafeBrowsingAllowlistManager());
-  }
-
-  return safe_browsing_url_checker_delegate_;
 }
 
 bool AwContentBrowserClient::ShouldOverrideUrlLoading(
@@ -811,19 +704,6 @@ bool AwContentBrowserClient::ShouldOverrideUrlLoading(
   }
 
   std::u16string url = base::UTF8ToUTF16(gurl.possibly_invalid_spec());
-
-  AwSettings* aw_settings = AwSettings::FromWebContents(web_contents);
-  if ((gurl.SchemeIs(url::kHttpScheme) || gurl.SchemeIs(url::kHttpsScheme)) &&
-      aw_settings->enterprise_authentication_app_link_policy_enabled() &&
-      android_webview::AwBrowserProcess::GetInstance()
-          ->GetEnterpriseAuthenticationAppLinkManager()
-          ->IsEnterpriseAuthenticationUrl(gurl)) {
-    bool success = client_bridge->SendBrowseIntent(url);
-    if (success) {
-      *ignore_navigation = true;
-      return true;
-    }
-  }
 
   net::HttpRequestHeaders request_headers;
   if (is_prerendering) {
